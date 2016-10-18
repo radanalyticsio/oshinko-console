@@ -1,22 +1,7 @@
-/**
- * Created by croberts on 10/17/16.
- */
-
-
 'use strict';
 
 angular.module('openshiftConsole')
-  .config([
-    '$routeProvider',
-    function($routeProvider) {
-      $routeProvider.when('/project/:project/oshinko', {
-        templateUrl: 'views/clusters.html',
-        controller: 'ClustersCtrl'
-      })
-    }
-  ])
-
-  .controller('ClustersCtrl',
+    .controller('ClustersCtrl',
         function($scope, $interval, $location, $route,
                  DataService, ProjectsService, $routeParams,
                  $rootScope, $filter) {
@@ -38,13 +23,13 @@ angular.module('openshiftConsole')
                 $scope.predicate = predicate;
             };
             $scope.breadcrumbs = [
-              {
-                title: $scope.projectName,
-                link: "project/" + $scope.projectName
-              },
-              {
-                title: "Spark Clusters"
-              }
+                {
+                    title: $scope.projectName,
+                    link: "project/" + $scope.projectName
+                },
+                {
+                    title: "Spark Clusters"
+                }
             ];
 
             function oshinkoCluster(resource) {
@@ -190,49 +175,48 @@ angular.module('openshiftConsole')
             });
         }
     )
-  .run(function(extensionRegistry) {
-    var template = [
-          '<div row ',
-          'ng-show="item.url" ',
-          'class="icon-row" ',
-          'title="Connect to container">',
+    .run(function(extensionRegistry) {
+        var template = [
+            '<div row ',
+            'ng-show="item.url" ',
+            'class="icon-row" ',
+            'title="Connect to container">',
             '<div>',
-              '<i class="fa fa-share" aria-hidden="true"></i>',
+            '<i class="fa fa-share" aria-hidden="true"></i>',
             '</div>',
             '<div flex>',
-              '<a ng-click="item.onClick($event)" ',
-                'ng-href="{{item.url}}">',
-                'Oshinko Console',
-              '</a>',
+            '<a ng-click="item.onClick($event)" ',
+            'ng-href="{{item.url}}">',
+            'Oshinko Console',
+            '</a>',
             '</div>',
-          '</div>'
+            '</div>'
         ].join('');
 
-    extensionRegistry.add('container-links', _.spread(function(container, pod) {
+        extensionRegistry.add('container-links', _.spread(function(container, pod) {
 
-      var gotoContainerView = function($event) {
-        window.location.href = "/project/oshinko/oshinko";
-      };
-      var oshinkoPort = _.find((container.ports || []), function(port) {
-        return port.name && port.name.toLowerCase() === 'o-rest-port';
-      });
+            var gotoContainerView = function($event) {
+                window.location.href = "/project/oshinko/oshinko";
+            };
+            var oshinkoPort = _.find((container.ports || []), function(port) {
+                return port.name && port.name.toLowerCase() === 'o-rest-port';
+            });
 
-      if(!oshinkoPort) {
-        return;
-      }
-      // if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
-      //   return;
-      // }
+            if(!oshinkoPort) {
+                return;
+            }
+            // if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
+            //   return;
+            // }
 
-      return {
-        type: 'dom',
-        node: template,
-        onClick: gotoContainerView,
-        url: "/project/oshinko/oshinko"
-      };
+            return {
+                type: 'dom',
+                node: template,
+                onClick: gotoContainerView,
+                url: "/project/oshinko/oshinko"
+            };
 
-    }));
-  });
-
+        }));
+    });
 
 
