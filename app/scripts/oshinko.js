@@ -1,11 +1,121 @@
 'use strict';
 
 angular.module('openshiftConsole')
+  .factory('ClusterActions', function ($uibModal) {
+    function deleteCluster(clusterName) {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        controller: 'ClusterDeleteCtrl',
+        templateUrl: '/views/' + 'delete-cluster.html',
+        resolve: {
+          dialogData: function () {
+            return {clusterName: clusterName};
+          }
+        }
+      });
+
+      modalInstance.result.then(function () {
+        console.info("Modal completed");
+      }, function () {
+        console.info('Modal dismissed at: ' + new Date());
+      });
+    }
+
+    function newCluster() {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        controller: 'ClusterNewCtrl',
+        templateUrl: '/views/' + 'new-cluster.html',
+        resolve: {
+          dialogData: function () {
+            return {};
+          }
+        }
+      });
+
+      modalInstance.result.then(function () {
+        console.info("Modal completed");
+      }, function () {
+        console.info('Modal dismissed at: ' + new Date());
+      });
+    }
+
+    function scaleCluster(cluster, workerCount) {
+      var modalInstance = $uibModal.open({
+        animation: true,
+        controller: 'ClusterDeleteCtrl',
+        templateUrl: '/views/' + 'scale-cluster.html',
+        resolve: {
+          dialogData: function () {
+            return {
+              clusterName: cluster,
+              workerCount: workerCount
+            };
+          }
+        }
+      });
+
+      modalInstance.result.then(function () {
+        console.info("Modal completed");
+      }, function () {
+        console.info('Modal dismissed at: ' + new Date());
+      });
+    }
+
+    return {
+      deleteCluster: deleteCluster,
+      newCluster: newCluster,
+      scaleCluster: scaleCluster,
+    };
+  })
+  .factory('clusterData', [
+    '$http',
+    '$q',
+    "OSHINKO_CFG",
+    function ($http, $q, OSHINKO_CFG) {
+      console.log(OSHINKO_CFG.restPort);
+      var urlBase = OSHINKO_CFG.restPort;
+
+      function sendDeleteCluster(clusterName) {
+        return $http({
+          method: "DELETE",
+          url: urlBase + '/clusters/' + clusterName,
+          data: '',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+      }
+
+      function sendCreateCluster(clusterName, workerCount) {
+        var jsonData = {
+          "masterCount": 1,
+          "workerCount": workerCount,
+          "name": clusterName
+        };
+        return $http.post(urlBase + "/clusters", jsonData);
+      }
+
+      function sendScaleCluster(clusterName, workerCount) {
+        var jsonData = {
+          "masterCount": 1,
+          "workerCount": workerCount,
+          "name": clusterName
+        };
+        return $http.put(urlBase + '/clusters/' + clusterName, jsonData);
+      }
+
+      return {
+        sendDeleteCluster: sendDeleteCluster,
+        sendCreateCluster: sendCreateCluster,
+        sendScaleCluster: sendScaleCluster,
+      };
+    }
+  ])
   .controller('ClustersCtrl',
     function ($scope, $interval, $location, $route,
-              DataService, ProjectsService, $routeParams,
+              ClusterActions, DataService, ProjectsService, $routeParams,
               $rootScope, $filter) {
-
       var watches = [];
       var services, pods;
       $scope.projectName = $routeParams.project;
@@ -31,6 +141,7 @@ angular.module('openshiftConsole')
           title: "Spark Clusters"
         }
       ];
+      angular.extend($scope, ClusterActions);
 
       function oshinkoCluster(resource) {
         if (label(resource, "oshinko-cluster")) {
@@ -228,4 +339,125 @@ angular.module('openshiftConsole')
       };
 
     }));
-  });
+  })
+  .controller('ClusterDeleteCtrl', [
+    '$q',
+    '$scope',
+    "clusterData",
+    "$modalInstance",
+    "dialogData",
+
+    function ($q, $scope, clusterData, $modalInstance, dialogData) {
+
+      $scope.clusterName = dialogData.clusterName || "";
+      $scope.workerCount = dialogData.workerCount || 1;
+
+      $scope.deleteCluster = function deleteCluster() {
+        var defer = $q.defer();
+        clusterData.sendDeleteCluster($scope.clusterName)
+          .then(function (response) {
+            $modalInstance.close(response);
+          }, function (error) {
+            $modalInstance.close(error);
+          });
+        return defer.promise;
+      };
+
+      $scope.cancelfn = function () {
+        $modalInstance.dismiss('cancel');
+      };
+
+      $scope.scaleCluster = function scaleCluster(count) {
+        var defer = $q.defer();
+        clusterData.sendScaleCluster($scope.clusterName, count)
+          .then(function (response) {
+            $modalInstance.close(response);
+          }, function (error) {
+            $modalInstance.close(error);
+          });
+        return defer.promise;
+      };
+    }
+  ])
+  .controller('ClusterNewCtrl', [
+    '$q',
+    '$scope',
+    "dialogData",
+    "clusterData",
+    "$modalInstance",
+    function ($q, $scope, dialogData, clusterData, $modalInstance) {
+      var NAME_RE = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
+      var NUMBER_RE = /^[0-9]*$/;
+      var fields = {
+        name: "",
+        workers: 1,
+      };
+      $scope.fields = fields;
+
+      function validate(name, workers) {
+        var defer = $q.defer();
+        var ex;
+        if (name !== undefined) {
+          if (!name) {
+            ex = new Error("The cluster name cannot be empty.");
+          }
+          else if (!NAME_RE.test(name)) {
+            ex = new Error("The member name contains invalid characters.");
+          }
+
+          if (ex) {
+            ex.target = "#cluster-new-name";
+            defer.reject(ex);
+          }
+        }
+        if (workers !== undefined) {
+          if (!workers) {
+            ex = new Error("The number of workers count cannot be empty.");
+          }
+          else if (!NUMBER_RE.test(workers)) {
+            ex = new Error("Please give a valid number of workers.");
+          }
+          else if (workers <= 0) {
+            ex = new Error("Please give a value greater than 0.");
+          }
+
+          if (ex) {
+            ex.target = "#cluster-new-workers";
+            defer.reject(ex);
+          }
+        }
+
+        if (!ex) {
+          defer.resolve();
+        }
+
+        return defer.promise;
+      }
+
+      $scope.cancelfn = function () {
+        $modalInstance.dismiss('cancel');
+      };
+
+      $scope.newCluster = function newCluster() {
+        var defer = $q.defer();
+        var name = $scope.fields.name.trim();
+        var workersInt = $scope.fields.workers;
+
+        validate(name, workersInt)
+          .then(function () {
+            clusterData.sendCreateCluster(name, workersInt).then(function (response) {
+              var successMsg = "New cluster " + name + " deployed.";
+              console.log(successMsg);
+              $modalInstance.close(response);
+            }, function (error) {
+              console.log(error);
+              $modalInstance.close(error);
+            });
+          }, function (error) {
+            console.log("Fields failed validation: " + error);
+            defer.reject(error);
+          });
+        return defer.promise;
+      };
+    }
+  ]);
