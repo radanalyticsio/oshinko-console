@@ -8,6 +8,6 @@ angular.module('openshiftConsole')
             $routeProvider.when('/project/:project/oshinko', {
                 templateUrl: 'views/clusters.html',
                 controller: 'ClustersCtrl'
-            })
+            });
         }
     ]);
