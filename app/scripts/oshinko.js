@@ -85,8 +85,9 @@ angular.module('openshiftConsole')
                 $scope.oshinkoClusterNames = Object.keys($scope.oshinkoClusters);
             };
             $scope.countWorkers = function(cluster) {
-                if (!cluster || !cluster.worker || !cluster.worker.pod)
-                    return 0;
+                if (!cluster || !cluster.worker || !cluster.worker.pod) {
+                  return 0;
+                }
                 var pods =  cluster.worker.pod;
                 var length = Object.keys(pods).length;
                 return length;
@@ -99,8 +100,8 @@ angular.module('openshiftConsole')
                 var status = "Starting...";
                 var podStatus;
                 var isPod = false;
-                if (!cluster || !cluster.worker || !cluster.worker.pod
-                    || !cluster.master || !cluster.master.pod) {
+                if (!cluster || !cluster.worker || !cluster.worker.pod ||
+                  !cluster.master || !cluster.master.pod) {
                     return "Error";
                 }
                 //TODO look at more states
@@ -120,10 +121,12 @@ angular.module('openshiftConsole')
                     }
                 });
                 //return pod status
-                if(isPod && podStatus)
-                    return podStatus;
-                else if (isPod)
-                    return "Running";
+                if(isPod && podStatus) {
+                  return podStatus;
+                }
+                else if (isPod) {
+                  return "Running";
+                }
 
                 //return starting...
                 return status;
@@ -133,7 +136,7 @@ angular.module('openshiftConsole')
                     return "";
                 }
                 var masterSvc = Object.keys(cluster.master.svc);
-                if (masterSvc.length == 0) {
+                if (masterSvc.length === 0) {
                     return "";
                 }
                 var svcName = masterSvc[0];
@@ -141,8 +144,9 @@ angular.module('openshiftConsole')
                 return "spark://" + svcName + ":" + port;
             };
             $scope.getCluster = function() {
-                if(!$scope.oshinkoClusters || !$scope.cluster)
-                    return;
+                if(!$scope.oshinkoClusters || !$scope.cluster) {
+                  return;
+                }
 
                 var cluster = $scope.oshinkoClusters[$scope.cluster];
                 return cluster;
@@ -196,18 +200,20 @@ angular.module('openshiftConsole')
         extensionRegistry.add('container-links', _.spread(function(container, pod) {
 
             var gotoContainerView = function($event) {
-                window.location.href = "/project/oshinko/oshinko";
+              $event.preventDefault();
+              $event.stopPropagation();
+              window.location.href = "/project/oshinko/oshinko";
             };
             var oshinkoPort = _.find((container.ports || []), function(port) {
                 return port.name && port.name.toLowerCase() === 'o-rest-port';
             });
 
             if(!oshinkoPort) {
-                return;
+              return;
             }
-            // if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
-            //   return;
-            // }
+            if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
+              return;
+            }
 
             return {
                 type: 'dom',
