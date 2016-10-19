@@ -141,12 +141,6 @@ angular.module('openshiftConsole')
       $scope.alerts = $scope.alerts || {};
       var label = $filter('label');
       $scope.cluster_id = $route.current.params.Id || '';
-      $scope.predicate = 'name';
-      $scope.reverse = false;
-      $scope.order = function (predicate) {
-        $scope.reverse = ($scope.predicate === predicate) ? !$scope.reverse : false;
-        $scope.predicate = predicate;
-      };
       $scope.breadcrumbs = [
         {
           title: $scope.projectName,
