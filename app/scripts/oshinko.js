@@ -354,10 +354,10 @@ angular.module('openshiftConsole')
     '$q',
     '$scope',
     "clusterData",
-    "$modalInstance",
+    "$uibModalInstance",
     "dialogData",
 
-    function ($q, $scope, clusterData, $modalInstance, dialogData) {
+    function ($q, $scope, clusterData, $uibModalInstance, dialogData) {
 
       $scope.clusterName = dialogData.clusterName || "";
       $scope.workerCount = dialogData.workerCount || 1;
@@ -366,24 +366,24 @@ angular.module('openshiftConsole')
         var defer = $q.defer();
         clusterData.sendDeleteCluster($scope.clusterName)
           .then(function (response) {
-            $modalInstance.close(response);
+            $uibModalInstance.close(response);
           }, function (error) {
-            $modalInstance.close(error);
+            $uibModalInstance.close(error);
           });
         return defer.promise;
       };
 
       $scope.cancelfn = function () {
-        $modalInstance.dismiss('cancel');
+        $uibModalInstance.dismiss('cancel');
       };
 
       $scope.scaleCluster = function scaleCluster(count) {
         var defer = $q.defer();
         clusterData.sendScaleCluster($scope.clusterName, count)
           .then(function (response) {
-            $modalInstance.close(response);
+            $uibModalInstance.close(response);
           }, function (error) {
-            $modalInstance.close(error);
+            $uibModalInstance.close(error);
           });
         return defer.promise;
       };
@@ -394,8 +394,8 @@ angular.module('openshiftConsole')
     '$scope',
     "dialogData",
     "clusterData",
-    "$modalInstance",
-    function ($q, $scope, dialogData, clusterData, $modalInstance) {
+    "$uibModalInstance",
+    function ($q, $scope, dialogData, clusterData, $uibModalInstance) {
       var NAME_RE = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
       var NUMBER_RE = /^[0-9]*$/;
       var fields = {
@@ -445,7 +445,7 @@ angular.module('openshiftConsole')
       }
 
       $scope.cancelfn = function () {
-        $modalInstance.dismiss('cancel');
+        $uibModalInstance.dismiss('cancel');
       };
 
       $scope.newCluster = function newCluster() {
@@ -458,10 +458,10 @@ angular.module('openshiftConsole')
             clusterData.sendCreateCluster(name, workersInt).then(function (response) {
               var successMsg = "New cluster " + name + " deployed.";
               console.log(successMsg);
-              $modalInstance.close(response);
+              $uibModalInstance.close(response);
             }, function (error) {
               console.log(error);
-              $modalInstance.close(error);
+              $uibModalInstance.close(error);
             });
           }, function (error) {
             console.log("Fields failed validation: " + error);
