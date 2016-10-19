@@ -9,4 +9,5 @@ angular.module('openshiftConsole')
         controller: 'ClustersCtrl'
       });
     }
-  ]);
+  ])
+  .constant("OSHINKO_CFG", _.get(window.OSHINKO_CONFIG, "oshinko", {}));
