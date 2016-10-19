@@ -71,15 +71,30 @@ angular.module('openshiftConsole')
   .factory('clusterData', [
     '$http',
     '$q',
-    "OSHINKO_CFG",
-    function ($http, $q, OSHINKO_CFG) {
-      console.log(OSHINKO_CFG.restPort);
-      var urlBase = OSHINKO_CFG.restPort;
+    "ProjectsService",
+    "DataService",
+    "$routeParams",
+    function ($http, $q, ProjectsService, DataService, $routeParams) {
+      var urlBase = "";
+      var project = $routeParams.project;
+      ProjectsService
+        .get(project)
+        .then(_.spread(function (project, context) {
+          DataService.list("routes", context, function(routes) {
+              var routesByName = routes.by("metadata.name");
+              angular.forEach(routesByName, function(route) {
+                if(route.spec.to.kind === "Service" && route.spec.to.name === "oshinko-rest") {
+                  urlBase = new URI("https://" + route.spec.host);
+                  console.log("Rest URL: " + urlBase);
+                }
+              });
+            });
+        }));
 
       function sendDeleteCluster(clusterName) {
         return $http({
           method: "DELETE",
-          url: urlBase + '/clusters/' + clusterName,
+          url: urlBase + 'clusters/' + clusterName,
           data: '',
           headers: {
             'Content-Type': 'application/json',
@@ -93,7 +108,7 @@ angular.module('openshiftConsole')
           "workerCount": workerCount,
           "name": clusterName
         };
-        return $http.post(urlBase + "/clusters", jsonData);
+        return $http.post(urlBase + "clusters", jsonData);
       }
 
       function sendScaleCluster(clusterName, workerCount) {
@@ -102,7 +117,7 @@ angular.module('openshiftConsole')
           "workerCount": workerCount,
           "name": clusterName
         };
-        return $http.put(urlBase + '/clusters/' + clusterName, jsonData);
+        return $http.put(urlBase + 'clusters/' + clusterName, jsonData);
       }
 
       return {
@@ -121,7 +136,7 @@ angular.module('openshiftConsole')
       $scope.projectName = $routeParams.project;
       $scope.serviceName = $routeParams.service;
       $scope.projects = {};
-      $scope.oshinkoClusters;
+      $scope.oshinkoClusters = {};
       $scope.oshinkoClusterNames = [];
       $scope.alerts = $scope.alerts || {};
       var label = $filter('label');
@@ -263,8 +278,9 @@ angular.module('openshiftConsole')
         return cluster;
       };
 
+      var project = $routeParams.project;
       ProjectsService
-        .get("oshinko")
+        .get(project)
         .then(_.spread(function (project, context) {
           $scope.project = project;
           $scope.projectContext = context;
