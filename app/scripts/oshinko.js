@@ -73,10 +73,12 @@ angular.module('openshiftConsole')
     '$q',
     "ProjectsService",
     "DataService",
-    function ($http, $q, ProjectsService, DataService) {
+    "$routeParams",
+    function ($http, $q, ProjectsService, DataService, $routeParams) {
       var urlBase = "";
+      var project = $routeParams.project;
       ProjectsService
-        .get("oshinko")
+        .get(project)
         .then(_.spread(function (project, context) {
           DataService.list("routes", context, function(routes) {
               var routesByName = routes.by("metadata.name");
@@ -276,8 +278,9 @@ angular.module('openshiftConsole')
         return cluster;
       };
 
+      var project = $routeParams.project;
       ProjectsService
-        .get("oshinko")
+        .get(project)
         .then(_.spread(function (project, context) {
           $scope.project = project;
           $scope.projectContext = context;
