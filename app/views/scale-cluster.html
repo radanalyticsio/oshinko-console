@@ -15,9 +15,10 @@
             <label for="numworkers" id="numworkers">Number of workers</label>
             <input name="numworkers" type="number" min="1" ng-model="workerCount" value="{{workerCount}}"/>
         </form>
+        <div class="form-error" ng-show="formError">{{ formError }}</div>
     </div>
     <div class="modal-footer">
-        <button id="cancelbutton" class="btn btn-default btn-cancel" translatable="yes">Cancel</button>
+        <button id="cancelbutton" class="btn btn-default btn-cancel" translatable="yes" ng-click="cancelfn()">Cancel</button>
         <button id="scalebutton" class="btn btn-primary" translatable="yes" ng-click="complete(scaleCluster(workerCount))">Scale</button>
     </div>
 </modal-dialog>

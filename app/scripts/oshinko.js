@@ -22,7 +22,7 @@ angular.module('openshiftConsole')
     }
 
     function newCluster() {
-      var modalInstance = $uibModal.open({
+      return $uibModal.open({
         animation: true,
         controller: 'ClusterNewCtrl',
         templateUrl: '/views/' + 'new-cluster.html',
@@ -31,13 +31,7 @@ angular.module('openshiftConsole')
             return {};
           }
         }
-      });
-
-      modalInstance.result.then(function () {
-        console.info("Modal completed");
-      }, function () {
-        console.info('Modal dismissed at: ' + new Date());
-      });
+      }).result;
     }
 
     function scaleCluster(cluster, workerCount) {
@@ -80,15 +74,15 @@ angular.module('openshiftConsole')
       ProjectsService
         .get(project)
         .then(_.spread(function (project, context) {
-          DataService.list("routes", context, function(routes) {
-              var routesByName = routes.by("metadata.name");
-              angular.forEach(routesByName, function(route) {
-                if(route.spec.to.kind === "Service" && route.spec.to.name === "oshinko-rest") {
-                  urlBase = new URI("https://" + route.spec.host);
-                  console.log("Rest URL: " + urlBase);
-                }
-              });
+          DataService.list("routes", context, function (routes) {
+            var routesByName = routes.by("metadata.name");
+            angular.forEach(routesByName, function (route) {
+              if (route.spec.to.kind === "Service" && route.spec.to.name === "oshinko-rest") {
+                urlBase = new URI("https://" + route.spec.host);
+                console.log("Rest URL: " + urlBase);
+              }
             });
+          });
         }));
 
       function sendDeleteCluster(clusterName) {
@@ -356,7 +350,6 @@ angular.module('openshiftConsole')
     "clusterData",
     "$uibModalInstance",
     "dialogData",
-
     function ($q, $scope, clusterData, $uibModalInstance, dialogData) {
 
       $scope.clusterName = dialogData.clusterName || "";
@@ -377,13 +370,51 @@ angular.module('openshiftConsole')
         $uibModalInstance.dismiss('cancel');
       };
 
+      var NUMBER_RE = /^[0-9]*$/;
+
+      function validate(workers) {
+        $scope.formError = "";
+        var defer = $q.defer();
+        var ex;
+        if (!workers) {
+          ex = new Error("The number of workers cannot be empty or less than 1.");
+        }
+        else if (!NUMBER_RE.test(workers)) {
+          ex = new Error("Please give a valid number of workers.");
+        }
+        else if (workers <= 0) {
+          ex = new Error("Please give a value greater than 0.");
+        }
+
+        if (ex) {
+          ex.target = "#numworkers";
+          defer.reject(ex);
+        }
+
+        if (!ex) {
+          defer.resolve();
+        }
+
+        return defer.promise;
+      }
+
+
       $scope.scaleCluster = function scaleCluster(count) {
         var defer = $q.defer();
-        clusterData.sendScaleCluster($scope.clusterName, count)
-          .then(function (response) {
-            $uibModalInstance.close(response);
+
+        validate(count)
+          .then(function () {
+            clusterData.sendScaleCluster($scope.clusterName, count).then(function (response) {
+              var successMsg = "Cluster " + name + " scaling initiated.";
+              console.info(successMsg);
+              $uibModalInstance.close(response);
+            }, function (error) {
+              console.log(error);
+              $uibModalInstance.close(error);
+            });
           }, function (error) {
-            $uibModalInstance.close(error);
+            $scope.formError = error.message;
+            defer.reject(error);
           });
         return defer.promise;
       };
@@ -405,6 +436,7 @@ angular.module('openshiftConsole')
       $scope.fields = fields;
 
       function validate(name, workers) {
+        $scope.formError = "";
         var defer = $q.defer();
         var ex;
         if (name !== undefined) {
@@ -412,7 +444,7 @@ angular.module('openshiftConsole')
             ex = new Error("The cluster name cannot be empty.");
           }
           else if (!NAME_RE.test(name)) {
-            ex = new Error("The member name contains invalid characters.");
+            ex = new Error("The cluster name contains invalid characters.");
           }
 
           if (ex) {
@@ -457,14 +489,14 @@ angular.module('openshiftConsole')
           .then(function () {
             clusterData.sendCreateCluster(name, workersInt).then(function (response) {
               var successMsg = "New cluster " + name + " deployed.";
-              console.log(successMsg);
+              console.info(successMsg);
               $uibModalInstance.close(response);
             }, function (error) {
               console.log(error);
               $uibModalInstance.close(error);
             });
           }, function (error) {
-            console.log("Fields failed validation: " + error);
+            $scope.formError = error.message;
             defer.reject(error);
           });
         return defer.promise;
