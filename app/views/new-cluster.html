@@ -30,6 +30,9 @@
                         ng-model="fields.workers">
                 </td>
             </tr>
+            <tr ng-show="formError">
+                <td class="form-error">{{ formError }}</td>
+            </tr>
         </table>
     </div>
     <div class="modal-footer">
