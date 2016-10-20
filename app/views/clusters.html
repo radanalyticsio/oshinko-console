@@ -21,24 +21,15 @@
             <table class="table table-bordered table-hover table-mobile" ng-if="oshinkoClusterNames.length > 0">
                 <thead>
                     <tr>
-                        <th>
-                            <a ng-click="order('name')">Name</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('status')">Status</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('master_address')">Master</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('worker_count')">Worker count</a>
-                        </th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Master</th>
+                        <th>Worker count</th>
                         <th></th>
                         <th></th>
                     </tr>
                 </thead>
-                <tbody  ng-repeat="(cluster, details) in oshinkoClusters | orderBy:predicate:reverse" ng-init="id = cluster" name="cluster-row-{{$index}}"
-                        data-id="{{ id }}">
+                <tbody  ng-repeat="cluster in oshinkoClusterNames" ng-init="id = cluster" name="cluster-row-{{ $index }}" data-id="{{ id }}">
                 <tr>
                     <td id="clustername-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ cluster }}</td>
                     <td ng-switch="getClusterStatus(oshinkoClusters[cluster])" ng-click="gotoCluster(cluster)">
