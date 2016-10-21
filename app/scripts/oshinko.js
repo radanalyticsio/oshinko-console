@@ -1,67 +1,6 @@
 'use strict';
 
 angular.module('openshiftConsole')
-  .factory('ClusterActions', function ($uibModal) {
-    function deleteCluster(clusterName) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        controller: 'ClusterDeleteCtrl',
-        templateUrl: '/views/' + 'delete-cluster.html',
-        resolve: {
-          dialogData: function () {
-            return {clusterName: clusterName};
-          }
-        }
-      });
-
-      modalInstance.result.then(function () {
-        console.info("Modal completed");
-      }, function () {
-        console.info('Modal dismissed at: ' + new Date());
-      });
-    }
-
-    function newCluster() {
-      return $uibModal.open({
-        animation: true,
-        controller: 'ClusterNewCtrl',
-        templateUrl: '/views/' + 'new-cluster.html',
-        resolve: {
-          dialogData: function () {
-            return {};
-          }
-        }
-      }).result;
-    }
-
-    function scaleCluster(cluster, workerCount) {
-      var modalInstance = $uibModal.open({
-        animation: true,
-        controller: 'ClusterDeleteCtrl',
-        templateUrl: '/views/' + 'scale-cluster.html',
-        resolve: {
-          dialogData: function () {
-            return {
-              clusterName: cluster,
-              workerCount: workerCount
-            };
-          }
-        }
-      });
-
-      modalInstance.result.then(function () {
-        console.info("Modal completed");
-      }, function () {
-        console.info('Modal dismissed at: ' + new Date());
-      });
-    }
-
-    return {
-      deleteCluster: deleteCluster,
-      newCluster: newCluster,
-      scaleCluster: scaleCluster,
-    };
-  })
   .factory('clusterData', [
     '$http',
     '$q',
@@ -123,8 +62,8 @@ angular.module('openshiftConsole')
   ])
   .controller('ClustersCtrl',
     function ($scope, $interval, $location, $route,
-              ClusterActions, DataService, ProjectsService, $routeParams,
-              $rootScope, $filter) {
+              DataService, ProjectsService, $routeParams,
+              $rootScope, $filter, AlertMessageService, $uibModal) {
       var watches = [];
       var services, pods;
       $scope.projectName = $routeParams.project;
@@ -144,7 +83,11 @@ angular.module('openshiftConsole')
           title: "Spark Clusters"
         }
       ];
-      angular.extend($scope, ClusterActions);
+
+      AlertMessageService.getAlerts().forEach(function (alert) {
+        $scope.alerts[alert.name] = alert.data;
+      });
+      AlertMessageService.clearAlerts();
 
       function oshinkoCluster(resource) {
         if (label(resource, "oshinko-cluster")) {
@@ -291,6 +234,83 @@ angular.module('openshiftConsole')
       $scope.$on('$destroy', function () {
         DataService.unwatchAll(watches);
       });
+
+      // Start cluster operations
+      $scope.deleteCluster = function deleteCluster(clusterName) {
+        var modalInstance = $uibModal.open({
+          animation: true,
+          controller: 'ClusterDeleteCtrl',
+          templateUrl: '/views/' + 'delete-cluster.html',
+          resolve: {
+            dialogData: function () {
+              return {clusterName: clusterName};
+            }
+          }
+        });
+
+        modalInstance.result.then(function () {
+          var alertName = clusterName + "-delete";
+          $scope.alerts[alertName] = {
+            type: "success",
+            message: clusterName + "has been marked for deletion"
+          };
+        }, function () {
+          console.info('Modal dismissed at: ' + new Date());
+        });
+      };
+
+      $scope.newCluster = function newCluster() {
+        var modalInstance = $uibModal.open({
+          animation: true,
+          controller: 'ClusterNewCtrl',
+          templateUrl: '/views/' + 'new-cluster.html',
+          resolve: {
+            dialogData: function () {
+              return {};
+            }
+          }
+        });
+
+        modalInstance.result.then(function (response) {
+          var clusterName = response.data.cluster.name;
+          var alertName = clusterName + "-create";
+          $scope.alerts[alertName] = {
+            type: "success",
+            message: clusterName + " has been created"
+          };
+        }, function () {
+          console.info('Modal dismissed at: ' + new Date());
+        });
+      };
+
+      $scope.scaleCluster = function scaleCluster(clusterName, workerCount) {
+        var modalInstance = $uibModal.open({
+          animation: true,
+          controller: 'ClusterDeleteCtrl',
+          templateUrl: '/views/' + 'scale-cluster.html',
+          resolve: {
+            dialogData: function () {
+              return {
+                clusterName: clusterName,
+                workerCount: workerCount
+              };
+            }
+          }
+        });
+
+        modalInstance.result.then(function (response) {
+          var numWorkers = response.config.data.workerCount;
+          var alertName = clusterName + "-scale";
+          var workers = numWorkers > 1 ? "workers" : "worker";
+          $scope.alerts[alertName] = {
+            type: "success",
+            message: clusterName + " has been scaled to " + numWorkers + " " + workers
+          };
+        }, function () {
+          console.info('Modal dismissed at: ' + new Date());
+        });
+      };
+      // end cluster operations
     }
   )
   .run(function ($routeParams, extensionRegistry) {
