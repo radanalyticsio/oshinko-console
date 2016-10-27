@@ -40,6 +40,18 @@ angular.module('openshiftConsole')
         });
       }
 
+      function scaleReplication(name, count) {
+        var deferred = $q.defer();
+        DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
+          var masterRCObject = result;
+          masterRCObject.spec.replicas = count;
+          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function(updated) {
+            deferred.resolve(updated);
+          });
+        });
+        return deferred.promise;
+      }
+
       function sendDeleteCluster(clusterName) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
@@ -68,12 +80,15 @@ angular.module('openshiftConsole')
       }
 
       function sendScaleCluster(clusterName, workerCount) {
-        var jsonData = {
-          "masterCount": 1,
-          "workerCount": workerCount,
-          "name": clusterName
-        };
-        return $http.put(urlBase + 'clusters/' + clusterName, jsonData);
+        var workerDeploymentName = clusterName + "-w";
+        var deferred = $q.defer();
+
+        $q.all([
+          scaleReplication(workerDeploymentName + "-1", workerCount)
+        ]).then(function(value) {
+          deferred.resolve(value);
+        });
+        return deferred.promise;
       }
 
       return {
@@ -322,7 +337,7 @@ angular.module('openshiftConsole')
         });
 
         modalInstance.result.then(function (response) {
-          var numWorkers = response.config.data.workerCount;
+          var numWorkers = response[0].spec.replicas;
           var alertName = clusterName + "-scale";
           var workers = numWorkers > 1 ? "workers" : "worker";
           $scope.alerts[alertName] = {
