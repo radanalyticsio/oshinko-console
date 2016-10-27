@@ -26,48 +26,36 @@ angular.module('openshiftConsole')
           });
         }));
 
+      function deleteObject(name, resourceType) {
+        return DataService.delete(resourceType, name, myContext, null);
+      }
+
+      function scaleDeleteReplication(name) {
+        DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
+          var masterRCObject = result;
+          masterRCObject.spec.replicas = 0;
+          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function (result) {
+            return DataService.delete('replicationcontrollers', name, myContext, null)
+          });
+        });
+      }
+
       function sendDeleteCluster(clusterName) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
         var totals = {success: [], errors: []};
         var deferred = $q.defer();
-        DataService.delete({resource: 'deploymentconfigs'}, masterDeploymentName, myContext, null).then(function (result) {
-          totals.success.push({name: masterDeploymentName, objType: "deploymentconfigs", op: "delete"})
+
+        $q.all([
+          deleteObject(masterDeploymentName, 'deploymentconfigs'),
+          deleteObject(workerDeploymentName, 'deploymentconfigs'),
+          scaleDeleteReplication(masterDeploymentName + "-1"),
+          scaleDeleteReplication(workerDeploymentName + "-1"),
+          deleteObject(clusterName, 'services'),
+          deleteObject(clusterName + "-ui", 'services'),
+        ]).then(function(value) {
+          deferred.resolve(value);
         });
-        DataService.delete({resource: 'deploymentconfigs'}, workerDeploymentName, myContext, null).then(function (result) {
-          totals.success.push({name: workerDeploymentName, objType: "deploymentconfigs", op: "delete"})
-        });
-        DataService.get('replicationcontrollers', masterDeploymentName + "-1", myContext, null).then(function (result) {
-          var masterRCObject = result;
-          masterRCObject.spec.replicas = 0;
-          DataService.update('replicationcontrollers', masterDeploymentName + "-1", masterRCObject, myContext).then(function (result) {
-            totals.success.push({name: masterDeploymentName + "-1", objType: "replicationcontrollers", op: "scale"})
-            DataService.delete('replicationcontrollers', masterDeploymentName + "-1", myContext, null).then(function (result) {
-              totals.success.push({name: masterDeploymentName + "-1", objType: "replicationcontrollers", op: "delete"})
-            });
-          });
-        });
-        DataService.get('replicationcontrollers', workerDeploymentName + "-1", myContext, null).then(function (result) {
-          var workerRCObject = result;
-          workerRCObject.spec.replicas = 0;
-          DataService.update('replicationcontrollers', workerDeploymentName + "-1", workerRCObject, myContext).then(function (result) {
-            totals.success.push({name: workerDeploymentName + "-1", objType: "replicationcontrollers", op: "scale"})
-            DataService.delete('replicationcontrollers', workerDeploymentName + "-1", myContext, null).then(function (result) {
-              totals.success.push({name: workerDeploymentName + "-1", objType: "replicationcontrollers", op: "delete"})
-            });
-          });
-        });
-        DataService.delete('services', clusterName, myContext, null).then(function (result) {
-          totals.success.push({name: clusterName, objType: "services", op: "delete"})
-        }, function (error) {
-          totals.errors.push({name: clusterName, objType: "services", op: "delete"})
-        });
-        DataService.delete('services', clusterName + "-ui", myContext, null).then(function (result) {
-          totals.success.push({name: clusterName + "-ui", objType: "services", op: "delete"})
-        }, function (error) {
-          totals.errors.push({name: clusterName + "-ui", objType: "services", op: "delete"})
-        });
-        deferred.resolve(totals);
         return deferred.promise;
       }
 
