@@ -34,8 +34,8 @@ angular.module('openshiftConsole')
         DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
           var masterRCObject = result;
           masterRCObject.spec.replicas = 0;
-          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function (result) {
-            return DataService.delete('replicationcontrollers', name, myContext, null)
+          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function () {
+            return DataService.delete('replicationcontrollers', name, myContext, null);
           });
         });
       }
@@ -43,7 +43,6 @@ angular.module('openshiftConsole')
       function sendDeleteCluster(clusterName) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
-        var totals = {success: [], errors: []};
         var deferred = $q.defer();
 
         $q.all([
