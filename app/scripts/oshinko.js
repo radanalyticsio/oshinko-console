@@ -10,9 +10,11 @@ angular.module('openshiftConsole')
     function ($http, $q, ProjectsService, DataService, $routeParams) {
       var urlBase = "";
       var project = $routeParams.project;
+      var myContext = null;
       ProjectsService
         .get(project)
         .then(_.spread(function (project, context) {
+          myContext = context;
           DataService.list("routes", context, function (routes) {
             var routesByName = routes.by("metadata.name");
             angular.forEach(routesByName, function (route) {
@@ -24,15 +26,36 @@ angular.module('openshiftConsole')
           });
         }));
 
-      function sendDeleteCluster(clusterName) {
-        return $http({
-          method: "DELETE",
-          url: urlBase + 'clusters/' + clusterName,
-          data: '',
-          headers: {
-            'Content-Type': 'application/json',
-          }
+      function deleteObject(name, resourceType) {
+        return DataService.delete(resourceType, name, myContext, null);
+      }
+
+      function scaleDeleteReplication(name) {
+        DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
+          var masterRCObject = result;
+          masterRCObject.spec.replicas = 0;
+          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function () {
+            return DataService.delete('replicationcontrollers', name, myContext, null);
+          });
         });
+      }
+
+      function sendDeleteCluster(clusterName) {
+        var masterDeploymentName = clusterName + "-m";
+        var workerDeploymentName = clusterName + "-w";
+        var deferred = $q.defer();
+
+        $q.all([
+          deleteObject(masterDeploymentName, 'deploymentconfigs'),
+          deleteObject(workerDeploymentName, 'deploymentconfigs'),
+          scaleDeleteReplication(masterDeploymentName + "-1"),
+          scaleDeleteReplication(workerDeploymentName + "-1"),
+          deleteObject(clusterName, 'services'),
+          deleteObject(clusterName + "-ui", 'services'),
+        ]).then(function(value) {
+          deferred.resolve(value);
+        });
+        return deferred.promise;
       }
 
       function sendCreateCluster(clusterName, workerCount) {
@@ -252,7 +275,7 @@ angular.module('openshiftConsole')
           var alertName = clusterName + "-delete";
           $scope.alerts[alertName] = {
             type: "success",
-            message: clusterName + "has been marked for deletion"
+            message: clusterName + " has been marked for deletion"
           };
         }, function () {
           console.info('Modal dismissed at: ' + new Date());
