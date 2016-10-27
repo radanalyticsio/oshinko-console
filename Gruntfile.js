@@ -209,7 +209,7 @@ module.exports = function (grunt) {
                 src: 'views/**/*.html',
                 dest: 'dist/scripts/templates.js',
                 options: {
-                    module: 'oshinkoOpenshiftConsoleTemplates',
+                    module: 'oshinkoConsoleTemplates',
                     standalone: true,
                     htmlmin: '<%= htmlmin.dist.options %>'
                 }

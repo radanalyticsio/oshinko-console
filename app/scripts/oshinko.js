@@ -1,6 +1,5 @@
 'use strict';
-angular.module('oshinkoOpenshiftConsole')
-//angular.module('openshiftConsole')
+angular.module('oshinkoConsole')
   .factory('clusterData', [
     '$http',
     '$q',
@@ -78,7 +77,6 @@ angular.module('oshinkoOpenshiftConsole')
         };
         return $http.post(urlBase + "clusters", jsonData);
       }
-
       function sendScaleCluster(clusterName, workerCount) {
         var workerDeploymentName = clusterName + "-w";
         var deferred = $q.defer();
@@ -98,7 +96,7 @@ angular.module('oshinkoOpenshiftConsole')
       };
     }
   ])
-  .controller('ClustersCtrl',
+  .controller('OshinkoClustersCtrl',
     function ($scope, $interval, $location, $route,
               DataService, ProjectsService, $routeParams,
               $rootScope, $filter, AlertMessageService, $uibModal) {
@@ -222,7 +220,6 @@ angular.module('oshinkoOpenshiftConsole')
         else if (isPod) {
           return "Running";
         }
-
         //return starting...
         return status;
       };
@@ -277,8 +274,8 @@ angular.module('oshinkoOpenshiftConsole')
       $scope.deleteCluster = function deleteCluster(clusterName) {
         var modalInstance = $uibModal.open({
           animation: true,
-          controller: 'ClusterDeleteCtrl',
-          templateUrl: 'views/' + 'delete-cluster.html',
+          controller: 'OshinkoClusterDeleteCtrl',
+          templateUrl: 'views/oshinko/' + 'delete-cluster.html',
           resolve: {
             dialogData: function () {
               return {clusterName: clusterName};
@@ -300,8 +297,8 @@ angular.module('oshinkoOpenshiftConsole')
       $scope.newCluster = function newCluster() {
         var modalInstance = $uibModal.open({
           animation: true,
-          controller: 'ClusterNewCtrl',
-          templateUrl: 'views/' + 'new-cluster.html',
+          controller: 'OshinkoClusterNewCtrl',
+          templateUrl: 'views/oshinko/' + 'new-cluster.html',
           resolve: {
             dialogData: function () {
               return {};
@@ -324,8 +321,8 @@ angular.module('oshinkoOpenshiftConsole')
       $scope.scaleCluster = function scaleCluster(clusterName, workerCount) {
         var modalInstance = $uibModal.open({
           animation: true,
-          controller: 'ClusterDeleteCtrl',
-          templateUrl: 'views/' + 'scale-cluster.html',
+          controller: 'OshinkoClusterDeleteCtrl',
+          templateUrl: 'views/oshinko/' + 'scale-cluster.html',
           resolve: {
             dialogData: function () {
               return {
@@ -351,7 +348,7 @@ angular.module('oshinkoOpenshiftConsole')
       // end cluster operations
     }
   )
-  .controller('ClusterDeleteCtrl', [
+  .controller('OshinkoClusterDeleteCtrl', [
     '$q',
     '$scope',
     "clusterData",
@@ -392,16 +389,13 @@ angular.module('oshinkoOpenshiftConsole')
         else if (workers <= 0) {
           ex = new Error("Please give a value greater than 0.");
         }
-
         if (ex) {
           ex.target = "#numworkers";
           defer.reject(ex);
         }
-
         if (!ex) {
           defer.resolve();
         }
-
         return defer.promise;
       }
 
@@ -427,7 +421,7 @@ angular.module('oshinkoOpenshiftConsole')
       };
     }
   ])
-  .controller('ClusterNewCtrl', [
+  .controller('OshinkoClusterNewCtrl', [
     '$q',
     '$scope',
     "dialogData",
@@ -453,7 +447,6 @@ angular.module('oshinkoOpenshiftConsole')
           else if (!NAME_RE.test(name)) {
             ex = new Error("The cluster name contains invalid characters.");
           }
-
           if (ex) {
             ex.target = "#cluster-new-name";
             defer.reject(ex);
@@ -469,17 +462,14 @@ angular.module('oshinkoOpenshiftConsole')
           else if (workers <= 0) {
             ex = new Error("Please give a value greater than 0.");
           }
-
           if (ex) {
             ex.target = "#cluster-new-workers";
             defer.reject(ex);
           }
         }
-
         if (!ex) {
           defer.resolve();
         }
-
         return defer.promise;
       }
 

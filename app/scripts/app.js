@@ -1,16 +1,13 @@
 'use strict';
-
-
 (function() {
-    var extName = 'oshinkoOpenshiftConsole';
-    angular.module(extName, ['openshiftConsole'])
-    //angular.module('openshiftConsole')
+    var extName = 'oshinkoConsole';
+    angular.module(extName, ['openshiftConsole', 'oshinkoConsoleTemplates'])
       .config([
         '$routeProvider',
         function ($routeProvider) {
           $routeProvider.when('/project/:project/oshinko', {
-            templateUrl: 'views/clusters.html',
-            controller: 'ClustersCtrl'
+            templateUrl: 'views/oshinko/clusters.html',
+            controller: 'OshinkoClustersCtrl'
           });
         }
       ])
@@ -24,8 +21,7 @@
             '<i class="fa fa-share" aria-hidden="true"></i>',
             '</div>',
             '<div flex>',
-            '<a ng-click="item.onClick($event)" ',
-            'ng-href="{{item.url}}">',
+            '<a ng-href="{{item.url}}">',
             'Oshinko Console',
             '</a>',
             '</div>',
@@ -38,31 +34,22 @@
         };
 
         extensionRegistry.add('container-links', _.spread(function (container, pod) {
-            console.log("extensionRegistry.add");
+            console.log("oshinko extensions");
             var oshinkoUrl = makeOshinkoUrl().toString();
-
-            var gotoContainerView = function ($event) {
-                $event.preventDefault();
-                $event.stopPropagation();
-                window.location.href = oshinkoUrl;
-            };
             var oshinkoPort = _.find((container.ports || []), function (port) {
                 return port.name && port.name.toLowerCase() === 'o-rest-port';
             });
 
             if (!oshinkoPort) {
-                console.log("extensionRegistry.add !oshinkoPort");
                 return;
             }
             if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
-                console.log("extensionRegistry.add !annotations");
                 return;
             }
 
             return {
                 type: 'dom',
                 node: template,
-                onClick: gotoContainerView,
                 url: oshinkoUrl
             };
 

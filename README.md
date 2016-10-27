@@ -12,6 +12,28 @@ Contributing
 4. Install bundler `gem install bundler`
 5. Run `sudo npm install` & `bower install`
 6. Build the code via `grunt build`
+7. Add the files to master-config.yaml in the below order
+```sh
+  ...
+    extensionScripts:
+    - /<path to>/oshinko-console/dist/scripts/templates.js
+    - /<path to>/oshinko-console/dist/scripts/scripts.js
+    extensionStylesheets:
+    - /<path to>/oshinko-console/dist/styles/oshinko.css
+  ...
+```
 
-
-
+#### Setup
+1. Start Cluster ```oc cluster up --host-config-dir=/home/oshinko ```
+2. copy dist/scripts/ & dist/styles/ files into /home/oshinko folder
+3. Stop Cluster ```oc cluster down ```
+4. Add the files to master-config.yaml in the below order & Start Cluster ```oc cluster up --host-config-dir=/home/oshinko --use-existing-config=true ```
+```sh
+  ...
+    extensionScripts:
+    - templates.js
+    - scripts.js
+    extensionStylesheets:
+    - oshinko.css
+  ...
+```
