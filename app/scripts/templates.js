@@ -1,2 +1,2 @@
-// register the openshiftConsoleTemplates module for dev mode
-angular.module('openshiftConsoleTemplates', []);
+// register the oshinkoConsoleTemplates module for dev mode
+angular.module('oshinkoConsoleTemplates',['openshiftConsoleTemplates']);
