@@ -21,6 +21,15 @@ module.exports = function (grunt) {
         // Project settings
         yeoman: appConfig,
 
+        concat: {
+            dev: {
+                src: [
+                    '<%= yeoman.app %>/scripts/{,*/}*.js',
+                    '!<%= yeoman.app %>/scripts/templates.js'
+                ],
+                dest: '<%= yeoman.dist %>/scripts/scripts.js'
+            }
+        },
 
         // Make sure code styles are up to par and there are no obvious mistakes
         jshint: {
@@ -301,6 +310,22 @@ module.exports = function (grunt) {
         'useminPrepare',
         'ngtemplates',
         'concat',
+        'ngAnnotate',
+        'copy:dist',
+        'less',
+        'cssmin',
+        'uglify',
+        'usemin',
+        'htmlmin'
+    ]);
+
+    grunt.registerTask('dev', [
+        'clean:dist',
+        'newer:jshint',
+        'htmlhint',
+        'useminPrepare',
+        'ngtemplates',
+        'concat:dev',
         'ngAnnotate',
         'copy:dist',
         'less',

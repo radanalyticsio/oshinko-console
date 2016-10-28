@@ -11,7 +11,7 @@ Contributing
 3. Install [ruby](https://www.ruby-lang.org/en/)
 4. Install bundler `gem install bundler`
 5. Run `sudo npm install` & `bower install`
-6. Build the code via `grunt build`
+6. Build the code via `grunt build` for minified files or with `grunt dev`
 7. Add the files to master-config.yaml in the below order
 ```sh
   ...
