@@ -15,6 +15,7 @@ angular.module('oshinkoConsole')
           myContext = context;
         }));
 
+      // Start delete-related functions
       function deleteObject(name, resourceType) {
         return DataService.delete(resourceType, name, myContext, null);
       }
@@ -59,6 +60,7 @@ angular.module('oshinkoConsole')
         return deferred.promise;
       }
 
+      // Start create-related functions
       function makeDeploymentConfig(input, imageSpec, ports) {
         var env = [];
         angular.forEach(input.deploymentConfig.envVars, function (value, key) {
@@ -76,6 +78,43 @@ angular.module('oshinkoConsole')
           terminationMessagePath: "/dev/termination-log",
           imagePullPolicy: "IfNotPresent"
         };
+
+        if (input.labels["oshinko-type"] === "master") {
+          container.livenessProbe = {
+            httpGet: {
+              path: "/",
+              port: 8080,
+              scheme: "HTTP"
+            },
+            timeoutSeconds: 1,
+            periodSeconds: 10,
+            successThreshold: 1,
+            failureThreshold: 3
+          };
+          container.readinessProbe = {
+            httpGet: {
+              path: "/",
+              port: 8080,
+              scheme: "HTTP"
+            },
+            timeoutSeconds: 1,
+            periodSeconds: 10,
+            successThreshold: 1,
+            failureThreshold: 3
+          };
+        } else {
+          container.livenessProbe = {
+            httpGet: {
+              path: "/",
+              port: 8081,
+              scheme: "HTTP"
+            },
+            timeoutSeconds: 1,
+            periodSeconds: 10,
+            successThreshold: 1,
+            failureThreshold: 3
+          };
+        }
 
         var replicas;
         if (input.scaling.autoscaling) {
@@ -265,6 +304,7 @@ angular.module('oshinkoConsole')
         return deferred.promise;
       }
 
+      // Start scale-related functions
       function sendScaleCluster(clusterName, workerCount) {
         var workerDeploymentName = clusterName + "-w";
         var deferred = $q.defer();
