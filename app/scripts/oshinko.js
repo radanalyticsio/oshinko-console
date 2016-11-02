@@ -7,22 +7,12 @@ angular.module('oshinkoConsole')
     "DataService",
     "$routeParams",
     function ($http, $q, ProjectsService, DataService, $routeParams) {
-      var urlBase = "";
       var project = $routeParams.project;
       var myContext = null;
       ProjectsService
         .get(project)
         .then(_.spread(function (project, context) {
           myContext = context;
-          DataService.list("routes", context, function (routes) {
-            var routesByName = routes.by("metadata.name");
-            angular.forEach(routesByName, function (route) {
-              if (route.spec.to.kind === "Service" && route.spec.to.name === "oshinko-rest") {
-                urlBase = new URI("https://" + route.spec.host);
-                console.log("Rest URL: " + urlBase);
-              }
-            });
-          });
         }));
 
       function deleteObject(name, resourceType) {
@@ -44,7 +34,7 @@ angular.module('oshinkoConsole')
         DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
           var masterRCObject = result;
           masterRCObject.spec.replicas = count;
-          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function(updated) {
+          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function (updated) {
             deferred.resolve(updated);
           });
         });
@@ -63,27 +53,225 @@ angular.module('oshinkoConsole')
           scaleDeleteReplication(workerDeploymentName + "-1"),
           deleteObject(clusterName, 'services'),
           deleteObject(clusterName + "-ui", 'services'),
-        ]).then(function(value) {
+        ]).then(function (value) {
           deferred.resolve(value);
         });
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterName, workerCount) {
-        var jsonData = {
-          "masterCount": 1,
-          "workerCount": workerCount,
-          "name": clusterName
+      function makeDeploymentConfig(input, imageSpec, ports) {
+        var env = [];
+        angular.forEach(input.deploymentConfig.envVars, function (value, key) {
+          env.push({name: key, value: value});
+        });
+        var templateLabels = angular.copy(input.labels);
+        templateLabels.deploymentconfig = input.name;
+
+        var container = {
+          image: imageSpec.toString(),
+          name: input.name,
+          ports: ports,
+          env: env,
+          resources: {},
+          terminationMessagePath: "/dev/termination-log",
+          imagePullPolicy: "IfNotPresent"
         };
-        return $http.post(urlBase + "clusters", jsonData);
+
+        var replicas;
+        if (input.scaling.autoscaling) {
+          replicas = input.scaling.minReplicas || 1;
+        } else {
+          replicas = input.scaling.replicas;
+        }
+
+        var deploymentConfig = {
+          apiVersion: "v1",
+          kind: "DeploymentConfig",
+          metadata: {
+            name: input.name,
+            labels: input.labels,
+            annotations: input.annotations
+          },
+          spec: {
+            replicas: replicas,
+            selector: {
+              "oshinko-cluster": input.labels["oshinko-cluster"]
+            },
+            triggers: [
+              {
+                type: "ConfigChange"
+              }
+            ],
+            template: {
+              metadata: {
+                labels: templateLabels
+              },
+              spec: {
+                containers: [container],
+                restartPolicy: "Always",
+                terminationGracePeriodSeconds: 30,
+                dnsPolicy: "ClusterFirst",
+                securityContext: {}
+              }
+            }
+          }
+        };
+        if (input.deploymentConfig.deployOnNewImage) {
+          deploymentConfig.spec.triggers.push(
+            {
+              type: "ImageChange",
+              imageChangeParams: {
+                automatic: true,
+                containerNames: [
+                  input.name
+                ],
+                from: {
+                  kind: imageSpec.kind,
+                  name: imageSpec.toString()
+                }
+              }
+            }
+          );
+        }
+        if (input.deploymentConfig.deployOnConfigChange) {
+          deploymentConfig.spec.triggers.push({type: "ConfigChange"});
+        }
+        return deploymentConfig;
       }
+
+      function sparkDC(image, clusterName, sparkType, workerCount, ports) {
+        var suffix = sparkType === "master" ? "-m" : "-w";
+        var input = {
+          deploymentConfig: {
+            envVars: {
+              OSHINKO_SPARK_CLUSTER: clusterName
+            }
+          },
+          name: clusterName + suffix,
+          labels: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": sparkType
+          },
+          scaling: {
+            autoscaling: false,
+            minReplicas: 1
+          }
+        };
+        if (sparkType === "worker") {
+          input.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + clusterName + ":" + 7077;
+          input.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + clusterName + "-ui:" + 8080;
+        }
+        input.scaling.replicas = workerCount ? workerCount : 1;
+        var dc = makeDeploymentConfig(input, image, ports);
+        return dc;
+      }
+
+      function makeService(input, serviceName, ports) {
+        if (!ports || !ports.length) {
+          return null;
+        }
+
+        var service = {
+          kind: "Service",
+          apiVersion: "v1",
+          metadata: {
+            name: serviceName,
+            labels: input.labels,
+            annotations: input.annotations
+          },
+          spec: {
+            selector: input.selectors,
+            ports: ports
+          }
+        };
+
+        return service;
+      }
+
+      function sparkService(serviceName, clusterName, serviceType, ports) {
+        var input = {
+          labels: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": serviceType
+          },
+          annotations: {},
+          name: serviceName + "-" + serviceType,
+          selectors: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": "master"
+          }
+        };
+        return makeService(input, serviceName, ports);
+      }
+
+      function createDeploymentConfig(dcObject) {
+        return DataService.create("deploymentconfigs", null, dcObject, myContext, null);
+      }
+
+      function createService(srvObject) {
+        return DataService.create("services", null, srvObject, myContext, null);
+      }
+
+      function sendCreateCluster(clusterName, workerCount) {
+        var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
+        var workerPorts = [
+          {
+            "name": "spark-webui",
+            "containerPort": 8081,
+            "protocol": "TCP"
+          }
+        ];
+        var masterPorts = [
+          {
+            "name": "spark-webui",
+            "containerPort": 8080,
+            "protocol": "TCP"
+          },
+          {
+            "name": "spark-master",
+            "containerPort": 7077,
+            "protocol": "TCP"
+          }
+        ];
+        var masterServicePort = [
+          {
+            protocol: "TCP",
+            port: 7077,
+            targetPort: 7077
+          }
+        ];
+        var uiServicePort = [
+          {
+            protocol: "TCP",
+            port: 8080,
+            targetPort: 8080
+          }
+        ];
+        var sm = sparkDC(sparkImage, clusterName, "master", null, masterPorts);
+        var sw = sparkDC(sparkImage, clusterName, "worker", workerCount, workerPorts);
+        var smService = sparkService(clusterName, clusterName, "master", masterServicePort);
+        var suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
+
+        var deferred = $q.defer();
+
+        $q.all([
+          createDeploymentConfig(sm),
+          createDeploymentConfig(sw),
+          createService(smService),
+          createService(suiService)
+        ]).then(function (value) {
+          deferred.resolve(value);
+        });
+        return deferred.promise;
+      }
+
       function sendScaleCluster(clusterName, workerCount) {
         var workerDeploymentName = clusterName + "-w";
         var deferred = $q.defer();
 
         $q.all([
           scaleReplication(workerDeploymentName + "-1", workerCount)
-        ]).then(function(value) {
+        ]).then(function (value) {
           deferred.resolve(value);
         });
         return deferred.promise;
@@ -307,7 +495,7 @@ angular.module('oshinkoConsole')
         });
 
         modalInstance.result.then(function (response) {
-          var clusterName = response.data.cluster.name;
+          var clusterName = response[0].metadata.labels["oshinko-cluster"];
           var alertName = clusterName + "-create";
           $scope.alerts[alertName] = {
             type: "success",
