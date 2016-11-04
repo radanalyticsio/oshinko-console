@@ -20,22 +20,42 @@ angular.module('oshinkoConsole')
         return DataService.delete(resourceType, name, myContext, null);
       }
 
-      function scaleDeleteReplication(name) {
-        DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
-          var masterRCObject = result;
-          masterRCObject.spec.replicas = 0;
-          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function () {
-            return DataService.delete('replicationcontrollers', name, myContext, null);
+      function scaleDeleteReplication(clusterName, deploymentName) {
+        var mostRecentRC = null;
+        // we need to determine the most recent replication controller in the event that
+        // changes have been made to the deployment, we can not assume clustername-w-1
+        DataService.list('replicationcontrollers', myContext, function (result) {
+          var rcs = result.by("metadata.name");
+          angular.forEach(rcs, function (rc) {
+            if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
+              if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
+                mostRecentRC = rc;
+              }
+            }
+          });
+          mostRecentRC.spec.replicas = 0;
+          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, myContext).then(function () {
+            return DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null);
           });
         });
       }
 
-      function scaleReplication(name, count) {
+      function scaleReplication(clusterName, deploymentName, count) {
         var deferred = $q.defer();
-        DataService.get('replicationcontrollers', name, myContext, null).then(function (result) {
-          var masterRCObject = result;
-          masterRCObject.spec.replicas = count;
-          DataService.update('replicationcontrollers', name, masterRCObject, myContext).then(function (updated) {
+        var mostRecentRC = null;
+        // we need to determine the most recent replication controller in the event that
+        // changes have been made to the deployment, we can not assume clustername-w-1
+        DataService.list('replicationcontrollers', myContext, function (result) {
+          var rcs = result.by("metadata.creationTimestamp");
+          angular.forEach(rcs, function (rc) {
+            if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
+              if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
+                mostRecentRC = rc;
+              }
+            }
+          });
+          mostRecentRC.spec.replicas = count;
+          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, myContext).then(function (updated) {
             deferred.resolve(updated);
           });
         });
@@ -50,8 +70,8 @@ angular.module('oshinkoConsole')
         $q.all([
           deleteObject(masterDeploymentName, 'deploymentconfigs'),
           deleteObject(workerDeploymentName, 'deploymentconfigs'),
-          scaleDeleteReplication(masterDeploymentName + "-1"),
-          scaleDeleteReplication(workerDeploymentName + "-1"),
+          scaleDeleteReplication(clusterName, masterDeploymentName),
+          scaleDeleteReplication(clusterName, workerDeploymentName),
           deleteObject(clusterName, 'services'),
           deleteObject(clusterName + "-ui", 'services'),
         ]).then(function (value) {
@@ -310,7 +330,7 @@ angular.module('oshinkoConsole')
         var deferred = $q.defer();
 
         $q.all([
-          scaleReplication(workerDeploymentName + "-1", workerCount)
+          scaleReplication(clusterName, workerDeploymentName, workerCount)
         ]).then(function (value) {
           deferred.resolve(value);
         });
@@ -517,8 +537,6 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been marked for deletion"
           };
-        }, function () {
-          console.info('Modal dismissed at: ' + new Date());
         });
       };
 
@@ -541,8 +559,6 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been created"
           };
-        }, function () {
-          console.info('Modal dismissed at: ' + new Date());
         });
       };
 
@@ -569,8 +585,6 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been scaled to " + numWorkers + " " + workers
           };
-        }, function () {
-          console.info('Modal dismissed at: ' + new Date());
         });
       };
       // end cluster operations
@@ -634,11 +648,8 @@ angular.module('oshinkoConsole')
         validate(count)
           .then(function () {
             clusterData.sendScaleCluster($scope.clusterName, count).then(function (response) {
-              var successMsg = "Cluster " + name + " scaling initiated.";
-              console.info(successMsg);
               $uibModalInstance.close(response);
             }, function (error) {
-              console.log(error);
               $uibModalInstance.close(error);
             });
           }, function (error) {
@@ -713,11 +724,8 @@ angular.module('oshinkoConsole')
         validate(name, workersInt)
           .then(function () {
             clusterData.sendCreateCluster(name, workersInt).then(function (response) {
-              var successMsg = "New cluster " + name + " deployed.";
-              console.info(successMsg);
               $uibModalInstance.close(response);
             }, function (error) {
-              console.log(error);
               $uibModalInstance.close(error);
             });
           }, function (error) {
