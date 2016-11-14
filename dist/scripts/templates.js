@@ -131,7 +131,6 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
 
 
   $templateCache.put('views/oshinko/delete-cluster.html',
-    " <modal-dialog>\n" +
     "<div class=\"modal-header\">\n" +
     "<h4 class=\"modal-title\" translatable=\"yes\">Delete cluster</h4>\n" +
     "</div>\n" +
@@ -141,13 +140,11 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
     "<button id=\"deletebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(deleteCluster())\">Delete</button>\n" +
-    "</div>\n" +
-    "</modal-dialog>"
+    "</div>"
   );
 
 
   $templateCache.put('views/oshinko/new-cluster.html',
-    " <modal-dialog>\n" +
     "<div class=\"modal-header\">\n" +
     "<h4 class=\"modal-title\" translatable=\"yes\">Deploy cluster</h4>\n" +
     "</div>\n" +
@@ -177,13 +174,11 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
     "<button id=\"createbutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(newCluster())\">Deploy</button>\n" +
-    "</div>\n" +
-    "</modal-dialog>"
+    "</div>"
   );
 
 
   $templateCache.put('views/oshinko/scale-cluster.html',
-    " <modal-dialog>\n" +
     "<div class=\"modal-header\">\n" +
     "<h4 class=\"modal-title\" translatable=\"yes\">Scale cluster {{clusterName}}</h4>\n" +
     "</div>\n" +
@@ -197,8 +192,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
     "<button id=\"scalebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(scaleCluster(workerCount))\">Scale</button>\n" +
-    "</div>\n" +
-    "</modal-dialog>"
+    "</div>"
   );
 
 }]);
