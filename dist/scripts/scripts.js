@@ -28,26 +28,31 @@ url:e
 function f(a, b) {
 return d["delete"](b, a, s, null);
 }
-function g(a) {
-d.get("replicationcontrollers", a, s, null).then(function(b) {
-var c = b;
-c.spec.replicas = 0, d.update("replicationcontrollers", a, c, s).then(function() {
-return d["delete"]("replicationcontrollers", a, s, null);
+function g(a, b) {
+var c = null;
+d.list("replicationcontrollers", s, function(e) {
+var f = e.by("metadata.name");
+angular.forEach(f, function(d) {
+d.metadata.labels["oshinko-cluster"] === a && d.metadata.name.startsWith(b) && (!c || new Date(d.metadata.creationTimestamp) > new Date(c.metadata.creationTimestamp)) && (c = d);
+}), c.spec.replicas = 0, d.update("replicationcontrollers", c.metadata.name, c, s).then(function() {
+return d["delete"]("replicationcontrollers", c.metadata.name, s, null);
 });
 });
 }
-function h(a, c) {
-var e = b.defer();
-return d.get("replicationcontrollers", a, s, null).then(function(b) {
-var f = b;
-f.spec.replicas = c, d.update("replicationcontrollers", a, f, s).then(function(a) {
-e.resolve(a);
+function h(a, c, e) {
+var f = b.defer(), g = null;
+return d.list("replicationcontrollers", s, function(b) {
+var h = b.by("metadata.creationTimestamp");
+angular.forEach(h, function(b) {
+b.metadata.labels["oshinko-cluster"] === a && b.metadata.name.startsWith(c) && (!g || new Date(b.metadata.creationTimestamp) > new Date(g.metadata.creationTimestamp)) && (g = b);
+}), g.spec.replicas = e, d.update("replicationcontrollers", g.metadata.name, g, s).then(function(a) {
+f.resolve(a);
 });
-}), e.promise;
+}), f.promise;
 }
 function i(a) {
 var c = a + "-m", d = a + "-w", e = b.defer();
-return b.all([ f(c, "deploymentconfigs"), f(d, "deploymentconfigs"), g(c + "-1"), g(d + "-1"), f(a, "services"), f(a + "-ui", "services") ]).then(function(a) {
+return b.all([ f(c, "deploymentconfigs"), f(d, "deploymentconfigs"), g(a, c), g(a, d), f(a, "services"), f(a + "-ui", "services") ]).then(function(a) {
 e.resolve(a);
 }), e.promise;
 }
@@ -234,7 +239,7 @@ q.resolve(a);
 }
 function q(a, c) {
 var d = a + "-w", e = b.defer();
-return b.all([ h(d + "-1", c) ]).then(function(a) {
+return b.all([ h(a, d, c) ]).then(function(a) {
 e.resolve(a);
 }), e.promise;
 }
@@ -331,8 +336,6 @@ a.alerts[c] = {
 type:"success",
 message:b + " has been marked for deletion"
 };
-}, function() {
-console.info("Modal dismissed at: " + new Date());
 });
 }, a.newCluster = function() {
 var b = k.open({
@@ -351,8 +354,6 @@ a.alerts[d] = {
 type:"success",
 message:c + " has been created"
 };
-}, function() {
-console.info("Modal dismissed at: " + new Date());
 });
 }, a.scaleCluster = function(b, c) {
 var d = k.open({
@@ -374,8 +375,6 @@ a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
 };
-}, function() {
-console.info("Modal dismissed at: " + new Date());
 });
 };
 } ]).controller("OshinkoClusterDeleteCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", function(a, b, c, d, e) {
@@ -399,10 +398,9 @@ b.scaleCluster = function(e) {
 var g = a.defer();
 return f(e).then(function() {
 c.sendScaleCluster(b.clusterName, e).then(function(a) {
-var b = "Cluster " + name + " scaling initiated.";
-console.info(b), d.close(a);
+d.close(a);
 }, function(a) {
-console.log(a), d.close(a);
+d.close(a);
 });
 }, function(a) {
 b.formError = a.message, g.reject(a);
@@ -424,10 +422,9 @@ e.dismiss("cancel");
 var c = a.defer(), g = b.fields.name.trim(), h = b.fields.workers;
 return f(g, h).then(function() {
 d.sendCreateCluster(g, h).then(function(a) {
-var b = "New cluster " + g + " deployed.";
-console.info(b), e.close(a);
+e.close(a);
 }, function(a) {
-console.log(a), e.close(a);
+e.close(a);
 });
 }, function(a) {
 b.formError = a.message, c.reject(a);
