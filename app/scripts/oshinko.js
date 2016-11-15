@@ -29,6 +29,11 @@ angular.module('oshinkoConsole')
           angular.forEach(rcs, function (rc) {
             if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
               if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
+                // if we have a mostRecentRC, it's about to be replaced, so we
+                // can delete it as it's most definitely not the most recent one
+                if (mostRecentRC) {
+                  DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null).then(angular.noop);
+                }
                 mostRecentRC = rc;
               }
             }
