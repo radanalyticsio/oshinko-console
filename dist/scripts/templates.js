@@ -71,24 +71,33 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
 
   $templateCache.put('views/oshinko/clusters.html',
     "<project-header class=\"top-header\"></project-header>\n" +
-    "<project-page class=\"project-overview-page\">\n" +
-    "<div class=\"container-cards-pf dashboard-cards\">\n" +
-    "<div class=\"card-pf card-pf-double\" id=\"cluster-list\">\n" +
+    "<project-page class=\"spark-clusters\">\n" +
+    "\n" +
+    "<div class=\"middle-section\">\n" +
+    "<div class=\"middle-container\">\n" +
+    "<div class=\"middle-header header-light\">\n" +
+    "<div class=\"container-fluid\">\n" +
+    "<tasks></tasks>\n" +
     "<alerts alerts=\"alerts\"></alerts>\n" +
     "<breadcrumbs breadcrumbs=\"breadcrumbs\"></breadcrumbs>\n" +
-    "<div class=\"card-pf-heading\">\n" +
+    "<div class=\"page-header page-header-bleed-right page-header-bleed-left\">\n" +
     "<div class=\"pull-right\">\n" +
-    "<button class=\"btn btn-primary\" id=\"startbutton\" ng-click=\"newCluster()\" translatable=\"yes\">Deploy</button>\n" +
+    "<button class=\"btn btn-primary\" id=\"startbutton\" ng-click=\"newCluster()\">Deploy</button>\n" +
     "</div>\n" +
-    "<h2 class=\"card-pf-title\" translatable=\"yes\">Spark Clusters</h2>\n" +
+    "<h1>Spark Clusters</h1>\n" +
     "</div>\n" +
-    "<div class=\"card-pf-body\">\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "<div class=\"middle-content\" in-view-container>\n" +
+    "<div class=\"container-fluid\">\n" +
+    "<div class=\"row\">\n" +
+    "<div class=\"col-md-12 gutter-top\">\n" +
     "<div class=\"well blank-slate-pf spacious\" ng-if=\"!oshinkoClusters || oshinkoClusterNames.length <= 0\">\n" +
     "<div class=\"blank-slate-pf-icon\">\n" +
     "<i class=\"fa fa-hourglass-start\"></i>\n" +
     "</div>\n" +
     "<h3>No Spark Clusters present</h3>\n" +
-    "<p translatable=\"yes\">You can deploy a new spark cluster.</p>\n" +
+    "<p>You can deploy a new spark cluster.</p>\n" +
     "</div>\n" +
     "<table class=\"table table-bordered table-hover table-mobile\" ng-if=\"oshinkoClusterNames.length > 0\">\n" +
     "<thead>\n" +
@@ -130,6 +139,9 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</tr>\n" +
     "</tbody>\n" +
     "</table>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "</div>\n" +
     "</div>\n" +
     "</div>\n" +
     "</div>\n" +
