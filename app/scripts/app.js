@@ -22,7 +22,7 @@
             '</div>',
             '<div flex>',
             '<a ng-href="{{item.url}}">',
-            'Oshinko Console',
+            'Manage Spark Clusters',
             '</a>',
             '</div>',
             '</div>'
