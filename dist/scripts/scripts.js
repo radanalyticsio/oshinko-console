@@ -8,7 +8,7 @@ templateUrl:"views/oshinko/clusters.html",
 controller:"OshinkoClustersCtrl"
 });
 } ]).run([ "$routeParams", "extensionRegistry", function(a, b) {
-var c = [ "<div row ", 'ng-show="item.url" ', 'class="icon-row" ', 'title="Connect to container">', "<div>", '<i class="fa fa-share" aria-hidden="true"></i>', "</div>", "<div flex>", '<a ng-href="{{item.url}}">', "Oshinko Console", "</a>", "</div>", "</div>" ].join(""), d = function() {
+var c = [ "<div row ", 'ng-show="item.url" ', 'class="icon-row" ', 'title="Connect to container">', "<div>", '<i class="fa fa-share" aria-hidden="true"></i>', "</div>", "<div flex>", '<a ng-href="{{item.url}}">', "Manage Spark Clusters", "</a>", "</div>", "</div>" ].join(""), d = function() {
 var b = a.project;
 return new URI("project/" + b + "/oshinko");
 };
