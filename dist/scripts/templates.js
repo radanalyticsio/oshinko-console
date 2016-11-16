@@ -97,8 +97,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<th>Status</th>\n" +
     "<th>Master</th>\n" +
     "<th>Worker count</th>\n" +
-    "<th></th>\n" +
-    "<th></th>\n" +
+    "<th><span class=\"sr-only\">Actions</span></th>\n" +
     "</tr>\n" +
     "</thead>\n" +
     "<tbody ng-repeat=\"cluster in oshinkoClusterNames\" ng-init=\"id = cluster\" name=\"cluster-row-{{ $index }}\" data-id=\"{{ id }}\">\n" +
@@ -112,13 +111,21 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</td>\n" +
     "<td name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
     "<td name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td>\n" +
-    "<button name=\"scalebutton-{{cluster}}\" class=\"btn btn-default\" translatable=\"yes\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))\">Scale</button>\n" +
-    "</td>\n" +
-    "<td>\n" +
-    "<a name=\"deletebutton-{{ cluster }}\" class=\"delete-icon\">\n" +
-    "<i translatable=\"yes\" class=\"pficon-delete\" ng-click=\"deleteCluster(cluster)\"></i>\n" +
-    "</a>\n" +
+    "<td data-title=\"Actions\" class=\"text-xs-left text-right\">\n" +
+    "<span uib-dropdown>\n" +
+    "<button type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
+    "Actions\n" +
+    "<span class=\"caret\" aria-hidden=\"true\"></span>\n" +
+    "</button>\n" +
+    "<ul class=\"uib-dropdown-menu dropdown-menu-right\">\n" +
+    "<li>\n" +
+    "<a href=\"\" role=\"button\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))\">Scale Cluster</a>\n" +
+    "</li>\n" +
+    "<li>\n" +
+    "<a href=\"\" role=\"button\" ng-click=\"deleteCluster(cluster)\">Delete Cluster</a>\n" +
+    "</li>\n" +
+    "</ul>\n" +
+    "</span>\n" +
     "</td>\n" +
     "</tr>\n" +
     "</tbody>\n" +

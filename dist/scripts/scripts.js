@@ -32,8 +32,8 @@ function g(a, b) {
 var c = null;
 d.list("replicationcontrollers", s, function(e) {
 var f = e.by("metadata.name");
-angular.forEach(f, function(d) {
-d.metadata.labels["oshinko-cluster"] === a && d.metadata.name.startsWith(b) && (!c || new Date(d.metadata.creationTimestamp) > new Date(c.metadata.creationTimestamp)) && (c = d);
+angular.forEach(f, function(e) {
+e.metadata.labels["oshinko-cluster"] === a && e.metadata.name.startsWith(b) && (!c || new Date(e.metadata.creationTimestamp) > new Date(c.metadata.creationTimestamp)) && (c && d["delete"]("replicationcontrollers", c.metadata.name, s, null).then(angular.noop), c = e);
 }), c.spec.replicas = 0, d.update("replicationcontrollers", c.metadata.name, c, s).then(function() {
 return d["delete"]("replicationcontrollers", c.metadata.name, s, null);
 });
