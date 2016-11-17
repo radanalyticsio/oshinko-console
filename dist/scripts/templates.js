@@ -168,27 +168,21 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<h4 class=\"modal-title\" translatable=\"yes\">Deploy cluster</h4>\n" +
     "</div>\n" +
     "<div class=\"modal-body\" ng-keyup=\"submitForm($event, 'newCluster')\">\n" +
-    "<table class=\"form-table-ct\">\n" +
-    "<tr>\n" +
-    "<td class=\"top\">\n" +
-    "<label translatable=\"yes\" class=\"control-label\" for=\"cluster-new-name\">Name</label>\n" +
-    "</td>\n" +
-    "<td>\n" +
-    "<input id=\"cluster-new-name\" class=\"form-control\" type=\"text\" ng-model=\"fields.name\" autofocus>\n" +
-    "</td>\n" +
-    "</tr>\n" +
-    "<tr>\n" +
-    "<td class=\"top\">\n" +
-    "<label class=\"control-label\" for=\"cluster-new-workers\" translatable=\"yes\">Number of workers</label>\n" +
-    "</td>\n" +
-    "<td>\n" +
-    "<input id=\"cluster-new-workers\" class=\"form-control\" type=\"number\" ng-model=\"fields.workers\">\n" +
-    "</td>\n" +
-    "</tr>\n" +
-    "<tr ng-show=\"formError\">\n" +
-    "<td class=\"form-error\">{{ formError }}</td>\n" +
-    "</tr>\n" +
-    "</table>\n" +
+    "<form>\n" +
+    "<fieldset ng-disabled=\"disableInputs\">\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-new-name\">Name</label>\n" +
+    "<input id=\"cluster-new-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.name\" autofocus/>\n" +
+    "</div>\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
+    "<input id=\"cluster-new-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.workers\"/>\n" +
+    "</div>\n" +
+    "</fieldset>\n" +
+    "</form>\n" +
+    "<div ng-show=\"formError\">\n" +
+    "<span class=\"form-error\">{{ formError }}</span>\n" +
+    "</div>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
@@ -203,8 +197,12 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"modal-body\" ng-keyup=\"submitForm($event, 'scaleCluster', workerCount)\">\n" +
     "<form>\n" +
+    "<fieldset ng-disabled=\"disableInputs\">\n" +
+    "<div class=\"form-group\">\n" +
     "<label for=\"numworkers\" id=\"numworkers\">Number of workers</label>\n" +
-    "<input name=\"numworkers\" type=\"number\" min=\"1\" ng-model=\"workerCount\" value=\"{{workerCount}}\"/>\n" +
+    "<input class=\"form-control input-lg\" name=\"numworkers\" type=\"number\" min=\"1\" ng-model=\"workerCount\" value=\"{{workerCount}}\"/>\n" +
+    "</div>\n" +
+    "</fieldset>\n" +
     "</form>\n" +
     "<div class=\"form-error\" ng-show=\"formError\">{{ formError }}</div>\n" +
     "</div>\n" +
