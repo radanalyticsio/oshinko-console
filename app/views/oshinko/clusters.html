@@ -39,15 +39,15 @@
                 </thead>
                 <tbody ng-repeat="cluster in oshinkoClusterNames" ng-init="id = cluster" name="cluster-row-{{ $index }}" data-id="{{ id }}">
                   <tr>
-                    <td id="clustername-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ cluster }}</td>
-                    <td ng-switch="getClusterStatus(oshinkoClusters[cluster])" ng-click="gotoCluster(cluster)">
+                    <td data-title="Name" id="clustername-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ cluster }}</td>
+                    <td data-title="Status" ng-switch="getClusterStatus(oshinkoClusters[cluster])" ng-click="gotoCluster(cluster)">
                       <span ng-switch-when="Running" class="label label-success">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
                       <span ng-switch-when="Error" class="label label-danger">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
                       <span ng-switch-when="Scaling" class="label label-default">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
                       <span ng-switch-default class="label label-default">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
                     </td>
-                    <td name="masterurl-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>
-                    <td name="workercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countWorkers(oshinkoClusters[cluster]) }}</td>
+                    <td data-title="MasterURL" name="masterurl-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>
+                    <td data-title="Workers" name="workercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countWorkers(oshinkoClusters[cluster]) }}</td>
                     <td data-title="Actions" class="text-xs-left text-right">
                       <span uib-dropdown>
                         <button type="button" class="dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs" data-toggle="dropdown">
