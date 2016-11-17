@@ -71,7 +71,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
 
   $templateCache.put('views/oshinko/clusters.html',
     "<project-header class=\"top-header\"></project-header>\n" +
-    "<project-page class=\"spark-clusters\">\n" +
+    "<project-page>\n" +
     "\n" +
     "<div class=\"middle-section\">\n" +
     "<div class=\"middle-container\">\n" +
