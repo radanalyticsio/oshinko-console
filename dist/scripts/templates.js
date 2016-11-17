@@ -111,15 +111,15 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</thead>\n" +
     "<tbody ng-repeat=\"cluster in oshinkoClusterNames\" ng-init=\"id = cluster\" name=\"cluster-row-{{ $index }}\" data-id=\"{{ id }}\">\n" +
     "<tr>\n" +
-    "<td id=\"clustername-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</td>\n" +
-    "<td ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\" ng-click=\"gotoCluster(cluster)\">\n" +
+    "<td data-title=\"Name\" id=\"clustername-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</td>\n" +
+    "<td data-title=\"Status\" ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\" ng-click=\"gotoCluster(cluster)\">\n" +
     "<span ng-switch-when=\"Running\" class=\"label label-success\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "<span ng-switch-when=\"Error\" class=\"label label-danger\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "<span ng-switch-when=\"Scaling\" class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "<span ng-switch-default class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "</td>\n" +
-    "<td name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
     "<td data-title=\"Actions\" class=\"text-xs-left text-right\">\n" +
     "<span uib-dropdown>\n" +
     "<button type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
