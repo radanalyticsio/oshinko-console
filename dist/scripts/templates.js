@@ -113,10 +113,12 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<tr>\n" +
     "<td data-title=\"Name\" id=\"clustername-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</td>\n" +
     "<td data-title=\"Status\" ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\" ng-click=\"gotoCluster(cluster)\">\n" +
-    "<span ng-switch-when=\"Running\" class=\"label label-success\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-when=\"Error\" class=\"label label-danger\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-when=\"Scaling\" class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-default class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
+    "<span ng-switch-when=\"Running\" class=\"fa fa-refresh\" aria-hidden=\"true\" ng-class=\"{'fa-spin' : spinning, 'fa-fw': fixedWidth}\"></span>\n" +
+    "<span ng-switch-when=\"Error\" class=\"fa fa-times text-danger\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
+    "<span ng-switch-when=\"Scaling\" class=\"spinner spinner-xs spinner-inline\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
+    "<span ng-switch-when=\"Pending\" class=\"spinner spinner-xs spinner-inline\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
+    "<span ng-switch-default class=\"fa fa-question text-danger\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
+    "<span> {{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "</td>\n" +
     "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
     "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
