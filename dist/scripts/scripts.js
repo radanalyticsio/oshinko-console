@@ -200,7 +200,7 @@ annotations:{},
 name:a + "-" + c,
 selectors:{
 "oshinko-cluster":b,
-"oshinko-type":"master"
+"oshinko-type":c
 }
 };
 return l(e, a, d);
