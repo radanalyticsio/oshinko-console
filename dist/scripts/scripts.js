@@ -13,7 +13,6 @@ var b = a.project;
 return new URI("project/" + b + "/oshinko");
 };
 b.add("container-links", _.spread(function(a, b) {
-console.log("oshinko extensions");
 var e = d().toString(), f = _.find(a.ports || [], function(a) {
 return a.name && "o-rest-port" === a.name.toLowerCase();
 });
@@ -28,16 +27,22 @@ url:e
 function g(a, b) {
 return d["delete"](b, a, t, null);
 }
-function h(a, b) {
-var c = null;
-d.list("replicationcontrollers", t, function(e) {
-var f = e.by("metadata.name");
-angular.forEach(f, function(e) {
-e.metadata.labels["oshinko-cluster"] === a && e.metadata.name.startsWith(b) && (!c || new Date(e.metadata.creationTimestamp) > new Date(c.metadata.creationTimestamp)) && (c && d["delete"]("replicationcontrollers", c.metadata.name, t, null).then(angular.noop), c = e);
-}), c.spec.replicas = 0, d.update("replicationcontrollers", c.metadata.name, c, t).then(function() {
-return d["delete"]("replicationcontrollers", c.metadata.name, t, null);
+function h(a, c) {
+var e = b.defer(), f = null;
+return d.list("replicationcontrollers", t, function(b) {
+var g = b.by("metadata.name");
+angular.forEach(g, function(b) {
+b.metadata.labels["oshinko-cluster"] === a && b.metadata.name.startsWith(c) && (!f || new Date(b.metadata.creationTimestamp) > new Date(f.metadata.creationTimestamp)) && (f && d["delete"]("replicationcontrollers", f.metadata.name, t, null).then(angular.noop), f = b);
+}), f.spec.replicas = 0, d.update("replicationcontrollers", f.metadata.name, f, t).then(function() {
+d["delete"]("replicationcontrollers", f.metadata.name, t, null).then(function(a) {
+e.resolve(a);
+})["catch"](function(a) {
+e.reject(a);
 });
+})["catch"](function(a) {
+e.reject(a);
 });
+}), e.promise;
 }
 function i(a, c, f) {
 var g = b.defer();
@@ -50,7 +55,10 @@ g.resolve(a);
 function j(a) {
 var c = a + "-m", d = a + "-w", e = b.defer();
 return b.all([ h(a, c), h(a, d), g(c, "deploymentconfigs"), g(d, "deploymentconfigs"), g(a, "services"), g(a + "-ui", "services") ]).then(function(a) {
-e.resolve(a);
+var b = !1;
+angular.forEach(a, function(a) {
+200 !== a.code && (b = !0);
+}), b ? e.reject(a) :e.resolve(a);
 }), e.promise;
 }
 function k(a, b, c) {
@@ -232,6 +240,8 @@ targetPort:8080
 } ], i = l(d, a, "master", null, f), j = l(d, a, "worker", c, e), k = n(a, a, "master", g), m = n(a + "-ui", a, "webui", h), q = b.defer();
 return b.all([ o(i), o(j), p(k), p(m) ]).then(function(a) {
 q.resolve(a);
+})["catch"](function(a) {
+q.reject(a);
 }), q.promise;
 }
 function r(a, c) {
@@ -335,6 +345,14 @@ a.alerts[c] = {
 type:"success",
 message:b + " has been marked for deletion"
 };
+})["catch"](function(c) {
+if ("cancel" !== c) {
+var d = b + "-delete";
+a.alerts[d] = {
+type:"error",
+message:b + " has been marked for deletion, but there were errors"
+};
+}
 });
 }, a.newCluster = function() {
 var b = k.open({
@@ -353,6 +371,14 @@ a.alerts[d] = {
 type:"success",
 message:c + " has been created"
 };
+})["catch"](function(b) {
+if ("cancel" !== b) {
+var c = "error-create";
+a.alerts[c] = {
+type:"error",
+message:"Cluster create failed"
+};
+}
 });
 }, a.scaleCluster = function(b, c) {
 var d = k.open({
@@ -374,6 +400,14 @@ a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
 };
+})["catch"](function(b) {
+if ("cancel" !== b) {
+var c = "error-scale";
+a.alerts[c] = {
+type:"error",
+message:"Cluster scale failed"
+};
+}
 });
 };
 } ]).controller("OshinkoClusterDeleteCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", function(a, b, c, d, e) {
@@ -387,7 +421,7 @@ var e = a.defer();
 return c.sendDeleteCluster(b.clusterName).then(function(a) {
 d.close(a);
 }, function(a) {
-d.close(a);
+d.dismiss(a);
 }), e.promise;
 }, b.cancelfn = function() {
 d.dismiss("cancel");
@@ -423,7 +457,7 @@ return f(g, h).then(function() {
 d.sendCreateCluster(g, h).then(function(a) {
 e.close(a);
 }, function(a) {
-e.close(a);
+e.dismiss(a);
 });
 }, function(a) {
 b.formError = a.message, c.reject(a);

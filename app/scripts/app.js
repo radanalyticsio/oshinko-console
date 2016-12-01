@@ -34,7 +34,6 @@
         };
 
         extensionRegistry.add('container-links', _.spread(function (container, pod) {
-            console.log("oshinko extensions");
             var oshinkoUrl = makeOshinkoUrl().toString();
             var oshinkoPort = _.find((container.ports || []), function (port) {
                 return port.name && port.name.toLowerCase() === 'o-rest-port';
