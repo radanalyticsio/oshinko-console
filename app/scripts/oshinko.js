@@ -22,6 +22,7 @@ angular.module('oshinkoConsole')
       }
 
       function scaleDeleteReplication(clusterName, deploymentName) {
+        var deferred = $q.defer();
         var mostRecentRC = null;
         // we need to determine the most recent replication controller in the event that
         // changes have been made to the deployment, we can not assume clustername-w-1
@@ -41,9 +42,16 @@ angular.module('oshinkoConsole')
           });
           mostRecentRC.spec.replicas = 0;
           DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, myContext).then(function () {
-            return DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null);
+            DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null).then(function (result) {
+              deferred.resolve(result);
+            }).catch(function (err) {
+              deferred.reject(err);
+            });
+          }).catch(function (err) {
+            deferred.reject(err);
           });
         });
+        return deferred.promise;
       }
 
       function scaleReplication(clusterName, deploymentName, count) {
@@ -68,8 +76,18 @@ angular.module('oshinkoConsole')
           deleteObject(workerDeploymentName, 'deploymentconfigs'),
           deleteObject(clusterName, 'services'),
           deleteObject(clusterName + "-ui", 'services'),
-        ]).then(function (value) {
-          deferred.resolve(value);
+        ]).then(function (values) {
+          var err = false;
+          angular.forEach(values, function (value) {
+            if(value.code !== 200) {
+              err = true;
+            }
+          });
+          if (err) {
+            deferred.reject(values);
+          } else {
+            deferred.resolve(values);
+          }
         });
         return deferred.promise;
       }
@@ -312,8 +330,10 @@ angular.module('oshinkoConsole')
           createDeploymentConfig(sw),
           createService(smService),
           createService(suiService)
-        ]).then(function (value) {
-          deferred.resolve(value);
+        ]).then(function (values) {
+          deferred.resolve(values);
+        }).catch(function (err) {
+          deferred.reject(err);
         });
         return deferred.promise;
       }
@@ -327,8 +347,8 @@ angular.module('oshinkoConsole')
           scaleReplication(clusterName, workerDeploymentName, workerCount)
         ]).then(function (value) {
           deferred.resolve(value);
-        }).catch(function(value) {
-          deferred.reject(value);
+        }).catch(function (err) {
+          deferred.reject(err);
         });
         return deferred.promise;
       }
@@ -533,6 +553,14 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been marked for deletion"
           };
+        }).catch(function (reason) {
+          if (reason !== "cancel") {
+            var alertName = clusterName + "-delete";
+            $scope.alerts[alertName] = {
+              type: "error",
+              message: clusterName + " has been marked for deletion, but there were errors"
+            };
+          }
         });
       };
 
@@ -555,6 +583,14 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been created"
           };
+        }).catch(function (reason) {
+          if (reason !== "cancel") {
+            var alertName = "error-create";
+            $scope.alerts[alertName] = {
+              type: "error",
+              message: "Cluster create failed"
+            };
+          }
         });
       };
 
@@ -581,6 +617,14 @@ angular.module('oshinkoConsole')
             type: "success",
             message: clusterName + " has been scaled to " + numWorkers + " " + workers
           };
+        }).catch(function (reason) {
+          if (reason !== "cancel") {
+            var alertName = "error-scale";
+            $scope.alerts[alertName] = {
+              type: "error",
+              message: "Cluster scale failed"
+            };
+          }
         });
       };
       // end cluster operations
@@ -603,7 +647,7 @@ angular.module('oshinkoConsole')
           .then(function (response) {
             $uibModalInstance.close(response);
           }, function (error) {
-            $uibModalInstance.close(error);
+            $uibModalInstance.dismiss(error);
           });
         return defer.promise;
       };
@@ -722,7 +766,7 @@ angular.module('oshinkoConsole')
             clusterData.sendCreateCluster(name, workersInt).then(function (response) {
               $uibModalInstance.close(response);
             }, function (error) {
-              $uibModalInstance.close(error);
+              $uibModalInstance.dismiss(error);
             });
           }, function (error) {
             $scope.formError = error.message;
