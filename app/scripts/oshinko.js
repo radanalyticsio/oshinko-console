@@ -5,8 +5,9 @@ angular.module('oshinkoConsole')
     '$q',
     "ProjectsService",
     "DataService",
+    "DeploymentsService",
     "$routeParams",
-    function ($http, $q, ProjectsService, DataService, $routeParams) {
+    function ($http, $q, ProjectsService, DataService, DeploymentsService, $routeParams) {
       var project = $routeParams.project;
       var myContext = null;
       ProjectsService
@@ -47,21 +48,9 @@ angular.module('oshinkoConsole')
 
       function scaleReplication(clusterName, deploymentName, count) {
         var deferred = $q.defer();
-        var mostRecentRC = null;
-        // we need to determine the most recent replication controller in the event that
-        // changes have been made to the deployment, we can not assume clustername-w-1
-        DataService.list('replicationcontrollers', myContext, function (result) {
-          var rcs = result.by("metadata.creationTimestamp");
-          angular.forEach(rcs, function (rc) {
-            if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
-              if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
-                mostRecentRC = rc;
-              }
-            }
-          });
-          mostRecentRC.spec.replicas = count;
-          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, myContext).then(function (updated) {
-            deferred.resolve(updated);
+        DataService.get('deploymentconfigs', deploymentName, myContext, null).then(function (dc) {
+          DeploymentsService.scale(dc, count).then(function (result) {
+            deferred.resolve(result);
           });
         });
         return deferred.promise;
@@ -73,10 +62,10 @@ angular.module('oshinkoConsole')
         var deferred = $q.defer();
 
         $q.all([
-          deleteObject(masterDeploymentName, 'deploymentconfigs'),
-          deleteObject(workerDeploymentName, 'deploymentconfigs'),
           scaleDeleteReplication(clusterName, masterDeploymentName),
           scaleDeleteReplication(clusterName, workerDeploymentName),
+          deleteObject(masterDeploymentName, 'deploymentconfigs'),
+          deleteObject(workerDeploymentName, 'deploymentconfigs'),
           deleteObject(clusterName, 'services'),
           deleteObject(clusterName + "-ui", 'services'),
         ]).then(function (value) {
@@ -338,6 +327,8 @@ angular.module('oshinkoConsole')
           scaleReplication(clusterName, workerDeploymentName, workerCount)
         ]).then(function (value) {
           deferred.resolve(value);
+        }).catch(function(value) {
+          deferred.reject(value);
         });
         return deferred.promise;
       }
