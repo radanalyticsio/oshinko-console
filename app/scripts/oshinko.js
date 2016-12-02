@@ -262,7 +262,7 @@ angular.module('oshinkoConsole')
           name: serviceName + "-" + serviceType,
           selectors: {
             "oshinko-cluster": clusterName,
-            "oshinko-type": serviceType
+            "oshinko-type": "master"
           }
         };
         return makeService(input, serviceName, ports);
