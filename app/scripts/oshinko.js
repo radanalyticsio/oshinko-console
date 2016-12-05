@@ -488,6 +488,7 @@ angular.module('oshinkoConsole')
         return status;
       };
       $scope.getSparkMasterUrl = function (cluster) {
+        var masterUrl = "";
         if (!cluster || !cluster.master || !cluster.master.svc) {
           return "";
         }
@@ -495,9 +496,13 @@ angular.module('oshinkoConsole')
         if (masterSvc.length === 0) {
           return "";
         }
-        var svcName = masterSvc[0];
-        var port = cluster.master.svc[svcName].spec.ports[0].port;
-        return "spark://" + svcName + ":" + port;
+        for (var i = 0; i <=masterSvc.length; i++) {
+          if (cluster.master.svc[masterSvc[i]].spec.ports[0].port === 7077) {
+            masterUrl = "spark://" + masterSvc[i] + ":" + 7077;
+            break;
+          }
+        }
+        return masterUrl;
       };
       $scope.getCluster = function () {
         if (!$scope.oshinkoClusters || !$scope.cluster) {
