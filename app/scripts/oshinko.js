@@ -79,7 +79,7 @@ angular.module('oshinkoConsole')
         ]).then(function (values) {
           var err = false;
           angular.forEach(values, function (value) {
-            if(value.code !== 200) {
+            if (value.code !== 200) {
               err = true;
             }
           });
@@ -93,7 +93,7 @@ angular.module('oshinkoConsole')
       }
 
       // Start create-related functions
-      function makeDeploymentConfig(input, imageSpec, ports) {
+      function makeDeploymentConfig(input, imageSpec, ports, specialConfig) {
         var env = [];
         angular.forEach(input.deploymentConfig.envVars, function (value, key) {
           env.push({name: key, value: value});
@@ -110,6 +110,26 @@ angular.module('oshinkoConsole')
           terminationMessagePath: "/dev/termination-log",
           imagePullPolicy: "IfNotPresent"
         };
+
+        var volumes = [];
+        if (specialConfig) {
+          volumes = [
+            {
+              name: specialConfig,
+              configMap: {
+                name: specialConfig,
+                defaultMode: 420
+              }
+            }
+          ];
+          container.volumeMounts = [
+            {
+              name: specialConfig,
+              readOnly: true,
+              mountPath: "/etc/oshinko-spark-configs"
+            }
+          ];
+        }
 
         if (input.labels["oshinko-type"] === "master") {
           container.livenessProbe = {
@@ -178,6 +198,7 @@ angular.module('oshinkoConsole')
                 labels: templateLabels
               },
               spec: {
+                volumes: volumes,
                 containers: [container],
                 restartPolicy: "Always",
                 terminationGracePeriodSeconds: 30,
@@ -210,7 +231,7 @@ angular.module('oshinkoConsole')
         return deploymentConfig;
       }
 
-      function sparkDC(image, clusterName, sparkType, workerCount, ports) {
+      function sparkDC(image, clusterName, sparkType, workerCount, ports, sparkConfig) {
         var suffix = sparkType === "master" ? "-m" : "-w";
         var input = {
           deploymentConfig: {
@@ -232,8 +253,11 @@ angular.module('oshinkoConsole')
           input.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + clusterName + ":" + 7077;
           input.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + clusterName + "-ui:" + 8080;
         }
+        if (sparkConfig) {
+          input.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs";
+        }
         input.scaling.replicas = workerCount ? workerCount : 1;
-        var dc = makeDeploymentConfig(input, image, ports);
+        var dc = makeDeploymentConfig(input, image, ports, sparkConfig);
         return dc;
       }
 
@@ -283,7 +307,7 @@ angular.module('oshinkoConsole')
         return DataService.create("services", null, srvObject, myContext, null);
       }
 
-      function sendCreateCluster(clusterName, workerCount) {
+      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName) {
         var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
         var workerPorts = [
           {
@@ -318,8 +342,8 @@ angular.module('oshinkoConsole')
             targetPort: 8080
           }
         ];
-        var sm = sparkDC(sparkImage, clusterName, "master", null, masterPorts);
-        var sw = sparkDC(sparkImage, clusterName, "worker", workerCount, workerPorts);
+        var sm = sparkDC(sparkImage, clusterName, "master", null, masterPorts, masterConfigName);
+        var sw = sparkDC(sparkImage, clusterName, "worker", workerCount, workerPorts, workerConfigName);
         var smService = sparkService(clusterName, clusterName, "master", masterServicePort);
         var suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
 
@@ -496,7 +520,7 @@ angular.module('oshinkoConsole')
         if (masterSvc.length === 0) {
           return "";
         }
-        for (var i = 0; i <=masterSvc.length; i++) {
+        for (var i = 0; i <= masterSvc.length; i++) {
           if (cluster.master.svc[masterSvc[i]].spec.ports[0].port === 7077) {
             masterUrl = "spark://" + masterSvc[i] + ":" + 7077;
             break;
@@ -717,6 +741,9 @@ angular.module('oshinkoConsole')
       var fields = {
         name: "",
         workers: 1,
+        configname: "",
+        masterconfigname: "",
+        workerconfigname: ""
       };
       $scope.fields = fields;
 
@@ -765,10 +792,13 @@ angular.module('oshinkoConsole')
         var defer = $q.defer();
         var name = $scope.fields.name.trim();
         var workersInt = $scope.fields.workers;
+        var configName = $scope.fields.configname;
+        var masterConfigName = $scope.fields.masterconfigname;
+        var workerConfigName = $scope.fields.workerconfigname;
 
         validate(name, workersInt)
           .then(function () {
-            clusterData.sendCreateCluster(name, workersInt).then(function (response) {
+            clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName).then(function (response) {
               $uibModalInstance.close(response);
             }, function (error) {
               $uibModalInstance.dismiss(error);

@@ -61,26 +61,36 @@ angular.forEach(a, function(a) {
 }), b ? e.reject(a) :e.resolve(a);
 }), e.promise;
 }
-function k(a, b, c) {
-var d = [];
+function k(a, b, c, d) {
+var e = [];
 angular.forEach(a.deploymentConfig.envVars, function(a, b) {
-d.push({
+e.push({
 name:b,
 value:a
 });
 });
-var e = angular.copy(a.labels);
-e.deploymentconfig = a.name;
-var f = {
+var f = angular.copy(a.labels);
+f.deploymentconfig = a.name;
+var g = {
 image:b.toString(),
 name:a.name,
 ports:c,
-env:d,
+env:e,
 resources:{},
 terminationMessagePath:"/dev/termination-log",
 imagePullPolicy:"IfNotPresent"
-};
-"master" === a.labels["oshinko-type"] ? (f.livenessProbe = {
+}, h = [];
+d && (h = [ {
+name:d,
+configMap:{
+name:d,
+defaultMode:420
+}
+} ], g.volumeMounts = [ {
+name:d,
+readOnly:!0,
+mountPath:"/etc/oshinko-spark-configs"
+} ]), "master" === a.labels["oshinko-type"] ? (g.livenessProbe = {
 httpGet:{
 path:"/",
 port:8080,
@@ -90,7 +100,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}, f.readinessProbe = {
+}, g.readinessProbe = {
 httpGet:{
 path:"/",
 port:8080,
@@ -100,7 +110,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}) :f.livenessProbe = {
+}) :g.livenessProbe = {
 httpGet:{
 path:"/",
 port:8081,
@@ -111,9 +121,9 @@ periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
 };
-var g;
-g = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
-var h = {
+var i;
+i = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
+var j = {
 apiVersion:"v1",
 kind:"DeploymentConfig",
 metadata:{
@@ -122,7 +132,7 @@ labels:a.labels,
 annotations:a.annotations
 },
 spec:{
-replicas:g,
+replicas:i,
 selector:{
 "oshinko-cluster":a.labels["oshinko-cluster"]
 },
@@ -131,10 +141,11 @@ type:"ConfigChange"
 } ],
 template:{
 metadata:{
-labels:e
+labels:f
 },
 spec:{
-containers:[ f ],
+volumes:h,
+containers:[ g ],
 restartPolicy:"Always",
 terminationGracePeriodSeconds:30,
 dnsPolicy:"ClusterFirst",
@@ -143,7 +154,7 @@ securityContext:{}
 }
 }
 };
-return a.deploymentConfig.deployOnNewImage && h.spec.triggers.push({
+return a.deploymentConfig.deployOnNewImage && j.spec.triggers.push({
 type:"ImageChange",
 imageChangeParams:{
 automatic:!0,
@@ -153,18 +164,18 @@ kind:b.kind,
 name:b.toString()
 }
 }
-}), a.deploymentConfig.deployOnConfigChange && h.spec.triggers.push({
+}), a.deploymentConfig.deployOnConfigChange && j.spec.triggers.push({
 type:"ConfigChange"
-}), h;
+}), j;
 }
-function l(a, b, c, d, e) {
-var f = "master" === c ? "-m" :"-w", g = {
+function l(a, b, c, d, e, f) {
+var g = "master" === c ? "-m" :"-w", h = {
 deploymentConfig:{
 envVars:{
 OSHINKO_SPARK_CLUSTER:b
 }
 },
-name:b + f,
+name:b + g,
 labels:{
 "oshinko-cluster":b,
 "oshinko-type":c
@@ -174,9 +185,9 @@ autoscaling:!1,
 minReplicas:1
 }
 };
-"worker" === c && (g.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", g.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g.scaling.replicas = d ? d :1;
-var h = k(g, a, e);
-return h;
+"worker" === c && (h.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", h.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), f && (h.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), h.scaling.replicas = d ? d :1;
+var i = k(h, a, e, f);
+return i;
 }
 function m(a, b, c) {
 if (!c || !c.length) return null;
@@ -216,12 +227,12 @@ return d.create("deploymentconfigs", null, a, t, null);
 function p(a) {
 return d.create("services", null, a, t, null);
 }
-function q(a, c) {
-var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
+function q(a, c, d, e, f) {
+var g = "docker.io/radanalyticsio/openshift-spark:latest", h = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
-} ], f = [ {
+} ], i = [ {
 name:"spark-webui",
 containerPort:8080,
 protocol:"TCP"
@@ -229,20 +240,20 @@ protocol:"TCP"
 name:"spark-master",
 containerPort:7077,
 protocol:"TCP"
-} ], g = [ {
+} ], j = [ {
 protocol:"TCP",
 port:7077,
 targetPort:7077
-} ], h = [ {
+} ], k = [ {
 protocol:"TCP",
 port:8080,
 targetPort:8080
-} ], i = l(d, a, "master", null, f), j = l(d, a, "worker", c, e), k = n(a, a, "master", g), m = n(a + "-ui", a, "webui", h), q = b.defer();
-return b.all([ o(i), o(j), p(k), p(m) ]).then(function(a) {
-q.resolve(a);
+} ], m = l(g, a, "master", null, i, e), q = l(g, a, "worker", c, h, f), r = n(a, a, "master", j), s = n(a + "-ui", a, "webui", k), t = b.defer();
+return b.all([ o(m), o(q), p(r), p(s) ]).then(function(a) {
+t.resolve(a);
 })["catch"](function(a) {
-q.reject(a);
-}), q.promise;
+t.reject(a);
+}), t.promise;
 }
 function r(a, c) {
 var d = a + "-w", e = b.defer();
@@ -451,14 +462,17 @@ return void 0 !== c && (c ? g.test(c) || (e = new Error("The cluster name contai
 }
 var g = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/, h = /^[0-9]*$/, i = {
 name:"",
-workers:1
+workers:1,
+configname:"",
+masterconfigname:"",
+workerconfigname:""
 };
 b.fields = i, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = a.defer(), g = b.fields.name.trim(), h = b.fields.workers;
+var c = a.defer(), g = b.fields.name.trim(), h = b.fields.workers, i = b.fields.configname, j = b.fields.masterconfigname, k = b.fields.workerconfigname;
 return f(g, h).then(function() {
-d.sendCreateCluster(g, h).then(function(a) {
+d.sendCreateCluster(g, h, i, j, k).then(function(a) {
 e.close(a);
 }, function(a) {
 e.dismiss(a);
