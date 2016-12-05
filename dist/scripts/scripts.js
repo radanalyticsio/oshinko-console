@@ -304,11 +304,15 @@ if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
 if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
 }), d && b ? b :d ? "Running" :c) :"Error";
 }, a.getSparkMasterUrl = function(a) {
+var b = "";
 if (!a || !a.master || !a.master.svc) return "";
-var b = Object.keys(a.master.svc);
-if (0 === b.length) return "";
-var c = b[0], d = a.master.svc[c].spec.ports[0].port;
-return "spark://" + c + ":" + d;
+var c = Object.keys(a.master.svc);
+if (0 === c.length) return "";
+for (var d = 0; d <= c.length; d++) if (7077 === a.master.svc[c[d]].spec.ports[0].port) {
+b = "spark://" + c[d] + ":7077";
+break;
+}
+return b;
 }, a.getCluster = function() {
 if (a.oshinkoClusters && a.cluster) {
 var b = a.oshinkoClusters[a.cluster];
