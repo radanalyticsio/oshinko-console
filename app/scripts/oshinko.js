@@ -310,7 +310,7 @@ angular.module('oshinkoConsole')
       function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig) {
         var deferred = $q.defer();
         var finalConfig = {};
-        if (configName) {
+        if (configName && configName !== "") {
           DataService.get('configmaps', configName, myContext, null).then(function (cm) {
             if (cm.data["workercount"]) {
               finalConfig["workerCount"] = parseInt(cm.data["workercount"]);
@@ -343,6 +343,17 @@ angular.module('oshinkoConsole')
             }
             deferred.resolve(finalConfig);
           });
+        } else {
+          if (workerCount && workerCount !== 0) {
+              finalConfig["workerCount"] = workerCount;
+            }
+            if (sparkWorkerConfig && sparkWorkerConfig !== "") {
+              finalConfig["workerConfigName"] = sparkWorkerConfig;
+            }
+            if (sparkMasterConfig && sparkMasterConfig !== "") {
+              finalConfig["masterConfigName"] = sparkMasterConfig;
+            }
+          deferred.resolve(finalConfig);
         }
         return deferred.promise;
       }
