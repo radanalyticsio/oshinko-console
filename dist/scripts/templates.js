@@ -177,12 +177,12 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<input id=\"cluster-new-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.name\" autofocus/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
-    "<label for=\"cluster-new-name\">Configuration name</label>\n" +
-    "<input id=\"cluster-config-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.configname\" autofocus/>\n" +
-    "</div>\n" +
-    "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
     "<input id=\"cluster-new-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.workers\"/>\n" +
+    "</div>\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-new-name\">Configuration name</label>\n" +
+    "<input id=\"cluster-config-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.configname\" autofocus/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Master configuration name</label>\n" +
