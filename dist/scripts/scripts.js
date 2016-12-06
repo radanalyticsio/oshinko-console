@@ -229,11 +229,11 @@ return d.create("services", null, a, u, null);
 }
 function q(a, c, e, f) {
 var g = b.defer(), h = {};
-return a && d.get("configmaps", a, u, null).then(function(a) {
+return a && "" !== a ? d.get("configmaps", a, u, null).then(function(a) {
 a.data.workercount && (h.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (h.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (h.workerConfigName = a.data.sparkworkerconfig), c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h);
 })["catch"](function() {
 c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h);
-}), g.promise;
+}) :(c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h)), g.promise;
 }
 function r(a, c, d, e, f) {
 var g = "docker.io/radanalyticsio/openshift-spark:latest", h = [ {
