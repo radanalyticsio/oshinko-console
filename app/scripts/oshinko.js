@@ -855,7 +855,7 @@ angular.module('oshinkoConsole')
         var defer = $q.defer();
         var name = $scope.fields.name.trim();
         var advanced = $scope.advanced;
-        var workersInt = advanced ? $scope.fields.advworkers : $scope.fields.workers;
+        var workersInt = $scope.fields.workers;
         var configName = advanced ? $scope.fields.configname : null;
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
