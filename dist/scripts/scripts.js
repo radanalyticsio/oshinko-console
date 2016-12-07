@@ -483,7 +483,7 @@ b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = a.defer(), g = b.fields.name.trim(), h = b.advanced, i = h ? b.fields.advworkers :b.fields.workers, j = h ? b.fields.configname :null, k = h ? b.fields.masterconfigname :null, l = h ? b.fields.workerconfigname :null;
+var c = a.defer(), g = b.fields.name.trim(), h = b.advanced, i = b.fields.workers, j = h ? b.fields.configname :null, k = h ? b.fields.masterconfigname :null, l = h ? b.fields.workerconfigname :null;
 return f(g, i).then(function() {
 d.sendCreateCluster(g, i, j, k, l).then(function(a) {
 e.close(a);

@@ -186,7 +186,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div ng-show=\"advanced\">\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
-    "<input id=\"cluster-adv-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.advworkers\"/>\n" +
+    "<input id=\"cluster-adv-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.workers\"/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Configuration name</label>\n" +
