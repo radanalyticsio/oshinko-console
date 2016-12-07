@@ -464,13 +464,21 @@ d.close(a);
 b.formError = a.message, g.reject(a);
 }), g.promise;
 };
-} ]).controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", function(a, b, c, d, e) {
-function f(c, d) {
+} ]).controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
+function i(b, c, d) {
+var e, f = a.defer();
+return b || f.resolve(), g.get("configmaps", b, o, null).then(function() {
+f.resolve();
+})["catch"](function() {
+e = new Error("The " + d + " named '" + b + "' does not exist"), e.target = c, f.reject(e);
+}), f.promise;
+}
+function j(c, d) {
 b.formError = "";
 var e, f = a.defer();
-return void 0 !== c && (c ? g.test(c) || (e = new Error("The cluster name contains invalid characters.")) :e = new Error("The cluster name cannot be empty."), e && (e.target = "#cluster-new-name", f.reject(e))), void 0 !== d && (d ? h.test(d) ? d <= 0 && (e = new Error("Please give a value greater than 0.")) :e = new Error("Please give a valid number of workers.") :e = new Error("The number of workers count cannot be empty."), e && (e.target = "#cluster-new-workers", f.reject(e))), e || f.resolve(), f.promise;
+return void 0 !== c && (c ? k.test(c) || (e = new Error("The cluster name contains invalid characters.")) :e = new Error("The cluster name cannot be empty."), e && (e.target = "#cluster-new-name", f.reject(e))), void 0 !== d && (d ? l.test(d) ? d <= 0 && (e = new Error("Please give a value greater than 0.")) :e = new Error("Please give a valid number of workers.") :e = new Error("The number of workers count cannot be empty."), e && (e.target = "#cluster-new-workers", f.reject(e))), e || f.resolve(), f.promise;
 }
-var g = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/, h = /^[0-9]*$/, i = {
+var k = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/, l = /^[0-9]*$/, m = {
 name:"",
 workers:1,
 advworkers:1,
@@ -478,14 +486,18 @@ configname:"",
 masterconfigname:"",
 workerconfigname:""
 };
-b.fields = i, b.advanced = !1, b.toggleAdvanced = function() {
+b.fields = m, b.advanced = !1;
+var n = h.project, o = null;
+f.get(n).then(_.spread(function(a, b) {
+o = b;
+})), b.toggleAdvanced = function() {
 b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = a.defer(), g = b.fields.name.trim(), h = b.advanced, i = b.fields.workers, j = h ? b.fields.configname :null, k = h ? b.fields.masterconfigname :null, l = h ? b.fields.workerconfigname :null;
-return f(g, i).then(function() {
-d.sendCreateCluster(g, i, j, k, l).then(function(a) {
+var c = a.defer(), f = b.fields.name.trim(), g = b.advanced, h = b.fields.workers, k = g ? b.fields.configname :null, l = g ? b.fields.masterconfigname :null, m = g ? b.fields.workerconfigname :null;
+return a.all([ j(f, h), i(k, "cluster-config-name", "cluster configuration"), i(l, "cluster-masterconfig-name", "master spark configuration"), i(m, "cluster-workerconfig-name", "worker spark configuration") ]).then(function() {
+d.sendCreateCluster(f, h, k, l, m).then(function(a) {
 e.close(a);
 }, function(a) {
 e.dismiss(a);

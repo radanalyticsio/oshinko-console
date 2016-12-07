@@ -792,7 +792,10 @@ angular.module('oshinkoConsole')
     "dialogData",
     "clusterData",
     "$uibModalInstance",
-    function ($q, $scope, dialogData, clusterData, $uibModalInstance) {
+    "ProjectsService",
+    "DataService",
+    "$routeParams",
+    function ($q, $scope, dialogData, clusterData, $uibModalInstance, ProjectsService, DataService, $routeParams) {
       var NAME_RE = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
       var NUMBER_RE = /^[0-9]*$/;
       var fields = {
@@ -806,9 +809,33 @@ angular.module('oshinkoConsole')
       $scope.fields = fields;
       $scope.advanced = false;
 
+      var project = $routeParams.project;
+      var myContext = null;
+      ProjectsService
+        .get(project)
+        .then(_.spread(function (project, context) {
+          myContext = context;
+        }));
+
       $scope.toggleAdvanced = function () {
         $scope.advanced = $scope.advanced ? false : true;
       };
+
+      function validateConfigMap(name, errTarget, errName) {
+        var ex;
+        var defer = $q.defer();
+        if (!name) {
+          defer.resolve();
+        }
+        DataService.get('configmaps', name, myContext, null).then(function () {
+          defer.resolve();
+        }).catch(function() {
+          ex = new Error("The " + errName + " named '" + name + "' does not exist");
+          ex.target = errTarget;
+          defer.reject(ex);
+        });
+        return defer.promise;
+      }
 
       function validate(name, workers) {
         $scope.formError = "";
@@ -860,8 +887,12 @@ angular.module('oshinkoConsole')
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
 
-        validate(name, workersInt)
-          .then(function () {
+        $q.all([
+          validate(name, workersInt),
+          validateConfigMap(configName, "cluster-config-name", "cluster configuration"),
+          validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration"),
+          validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration")
+        ]).then(function () {
             clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName).then(function (response) {
               $uibModalInstance.close(response);
             }, function (error) {
@@ -871,6 +902,8 @@ angular.module('oshinkoConsole')
             $scope.formError = error.message;
             defer.reject(error);
           });
+
+
         return defer.promise;
       };
     }
