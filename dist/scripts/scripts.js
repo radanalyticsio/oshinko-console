@@ -229,11 +229,11 @@ return d.create("services", null, a, u, null);
 }
 function q(a, c, e, f) {
 var g = b.defer(), h = {};
-return a && "" !== a ? d.get("configmaps", a, u, null).then(function(a) {
-a.data.workercount && (h.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (h.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (h.workerConfigName = a.data.sparkworkerconfig), c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h);
+return a ? d.get("configmaps", a, u, null).then(function(a) {
+a.data.workercount && (h.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (h.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (h.workerConfigName = a.data.sparkworkerconfig), c && (h.workerCount = c), e && (h.workerConfigName = e), f && (h.masterConfigName = f), g.resolve(h);
 })["catch"](function() {
-c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h);
-}) :(c && 0 !== c && (h.workerCount = c), e && "" !== e && (h.workerConfigName = e), f && "" !== f && (h.masterConfigName = f), g.resolve(h)), g.promise;
+c && (h.workerCount = c), e && (h.workerConfigName = e), f && (h.masterConfigName = f), g.resolve(h);
+}) :(c && (h.workerCount = c), e && (h.workerConfigName = e), f && (h.masterConfigName = f), g.resolve(h)), g.promise;
 }
 function r(a, c, d, e, f) {
 var g = "docker.io/radanalyticsio/openshift-spark:latest", h = [ {
@@ -473,16 +473,19 @@ return void 0 !== c && (c ? g.test(c) || (e = new Error("The cluster name contai
 var g = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/, h = /^[0-9]*$/, i = {
 name:"",
 workers:1,
+advworkers:1,
 configname:"",
 masterconfigname:"",
 workerconfigname:""
 };
-b.fields = i, b.cancelfn = function() {
+b.fields = i, b.advanced = !1, b.toggleAdvanced = function() {
+b.advanced = !b.advanced;
+}, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = a.defer(), g = b.fields.name.trim(), h = b.fields.workers, i = b.fields.configname, j = b.fields.masterconfigname, k = b.fields.workerconfigname;
-return f(g, h).then(function() {
-d.sendCreateCluster(g, h, i, j, k).then(function(a) {
+var c = a.defer(), g = b.fields.name.trim(), h = b.advanced, i = h ? b.fields.advworkers :b.fields.workers, j = h ? b.fields.configname :null, k = h ? b.fields.masterconfigname :null, l = h ? b.fields.workerconfigname :null;
+return f(g, i).then(function() {
+d.sendCreateCluster(g, i, j, k, l).then(function(a) {
 e.close(a);
 }, function(a) {
 e.dismiss(a);
