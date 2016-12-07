@@ -176,9 +176,17 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<label for=\"cluster-new-name\">Name</label>\n" +
     "<input id=\"cluster-new-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.name\" autofocus/>\n" +
     "</div>\n" +
+    "<div ng-show=\"!advanced\">\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
     "<input id=\"cluster-new-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.workers\"/>\n" +
+    "</div>\n" +
+    "<div class=\"form-group\"><a href=\"#\" ng-click=\"toggleAdvanced()\">Advanced cluster configuration</a></div>\n" +
+    "</div>\n" +
+    "<div ng-show=\"advanced\">\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
+    "<input id=\"cluster-adv-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.advworkers\"/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Configuration name</label>\n" +
@@ -191,6 +199,8 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Worker configuration name</label>\n" +
     "<input id=\"cluster-workerconfig-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.workerconfigname\" autofocus/>\n" +
+    "</div>\n" +
+    "<div class=\"form-group\"><a href=\"#\" ng-click=\"toggleAdvanced()\">Basic cluster configuration</a></div>\n" +
     "</div>\n" +
     "</fieldset>\n" +
     "</form>\n" +

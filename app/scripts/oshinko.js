@@ -310,7 +310,7 @@ angular.module('oshinkoConsole')
       function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig) {
         var deferred = $q.defer();
         var finalConfig = {};
-        if (configName && configName !== "") {
+        if (configName) {
           DataService.get('configmaps', configName, myContext, null).then(function (cm) {
             if (cm.data["workercount"]) {
               finalConfig["workerCount"] = parseInt(cm.data["workercount"]);
@@ -321,36 +321,36 @@ angular.module('oshinkoConsole')
             if (cm.data["sparkworkerconfig"]) {
               finalConfig["workerConfigName"] = cm.data["sparkworkerconfig"];
             }
-            if (workerCount && workerCount !== 0) {
+            if (workerCount) {
               finalConfig["workerCount"] = workerCount;
             }
-            if (sparkWorkerConfig && sparkWorkerConfig !== "") {
+            if (sparkWorkerConfig) {
               finalConfig["workerConfigName"] = sparkWorkerConfig;
             }
-            if (sparkMasterConfig && sparkMasterConfig !== "") {
+            if (sparkMasterConfig) {
               finalConfig["masterConfigName"] = sparkMasterConfig;
             }
             deferred.resolve(finalConfig);
           }).catch(function () {
-            if (workerCount && workerCount !== 0) {
+            if (workerCount) {
               finalConfig["workerCount"] = workerCount;
             }
-            if (sparkWorkerConfig && sparkWorkerConfig !== "") {
+            if (sparkWorkerConfig) {
               finalConfig["workerConfigName"] = sparkWorkerConfig;
             }
-            if (sparkMasterConfig && sparkMasterConfig !== "") {
+            if (sparkMasterConfig) {
               finalConfig["masterConfigName"] = sparkMasterConfig;
             }
             deferred.resolve(finalConfig);
           });
         } else {
-          if (workerCount && workerCount !== 0) {
+          if (workerCount) {
               finalConfig["workerCount"] = workerCount;
             }
-            if (sparkWorkerConfig && sparkWorkerConfig !== "") {
+            if (sparkWorkerConfig) {
               finalConfig["workerConfigName"] = sparkWorkerConfig;
             }
-            if (sparkMasterConfig && sparkMasterConfig !== "") {
+            if (sparkMasterConfig) {
               finalConfig["masterConfigName"] = sparkMasterConfig;
             }
           deferred.resolve(finalConfig);
@@ -798,11 +798,17 @@ angular.module('oshinkoConsole')
       var fields = {
         name: "",
         workers: 1,
+        advworkers: 1,
         configname: "",
         masterconfigname: "",
         workerconfigname: ""
       };
       $scope.fields = fields;
+      $scope.advanced = false;
+
+      $scope.toggleAdvanced = function () {
+        $scope.advanced = $scope.advanced ? false : true;
+      };
 
       function validate(name, workers) {
         $scope.formError = "";
@@ -848,10 +854,11 @@ angular.module('oshinkoConsole')
       $scope.newCluster = function newCluster() {
         var defer = $q.defer();
         var name = $scope.fields.name.trim();
-        var workersInt = $scope.fields.workers;
-        var configName = $scope.fields.configname;
-        var masterConfigName = $scope.fields.masterconfigname;
-        var workerConfigName = $scope.fields.workerconfigname;
+        var advanced = $scope.advanced;
+        var workersInt = advanced ? $scope.fields.advworkers : $scope.fields.workers;
+        var configName = advanced ? $scope.fields.configname : null;
+        var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
+        var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
 
         validate(name, workersInt)
           .then(function () {
