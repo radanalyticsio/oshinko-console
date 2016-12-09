@@ -1,16 +1,21 @@
 #!/bin/bash
 
 
-while getopts :c:h opt; do
+while getopts c:fh opt; do
     case $opt in
         c)
             CONFIG_DIR=$OPTARG
             ;;
+        f)
+            FLUSH_IPTABLES="true"
+            ;;
         h)
-            echo "Usage: oshinko-setup.sh [-c <directory to use for origin config>]"
+            echo "Usage: oshinko-setup.sh [-c <directory to use for origin config>] [-f]"
             echo "Example: oshinko-setup.sh -c /home/myname/originconfig"
             echo "    results in the cluster configuration being stored in /home/myname/originconfig"
             echo "If -c is not set, the default config directory will be /etc/originconfig"
+            echo "If -f is used, 'sudo iptables -F' will be issued before oc cluster up"
+            echo "    It may help resolve a potential skydns issue"
             echo ""
             exit
             ;;
@@ -74,7 +79,13 @@ sudo cp $SRCDIR/oshinko-console/dist/styles/*.css $CONFIG_DIR/master
 sudo sed -i -e "s/extensionDevelopment: false/extensionDevelopment: true/" $CONFIG_DIR/master/master-config.yaml
 sudo sed -i -e "s/extensionScripts: null/extensionScripts:\n    - templates.js\n    - scripts.js/" $CONFIG_DIR/master/master-config.yaml
 sudo sed -i -e "s/extensionStylesheets: null/extensionStylesheets:\n    - oshinko.css/" $CONFIG_DIR/master/master-config.yaml
-sudo iptables -F
+if [ "$FLUSH_IPTABLES" == "true" ]
+then
+    echo "Flushing IP tables"
+    sudo iptables -F
+else
+    echo "Not flushing IP tables"
+fi
 sudo oc cluster up --host-config-dir=$CONFIG_DIR --use-existing-config
 
 ############
