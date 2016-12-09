@@ -87,5 +87,5 @@ oc new-project oshinko
 oc create sa oshinko                          # note, VV, first oshinko is the proj name :)
 oc policy add-role-to-user admin system:serviceaccount:developer:oshinko -n oshinko
 
-oc create -f https://raw.githubusercontent.com/crobby/oshinko-tools/master/server-only-template.yaml
+oc create -f ./server-only-template.yaml
 oc new-app --template=oshinko
