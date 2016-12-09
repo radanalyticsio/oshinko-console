@@ -11,48 +11,8 @@
           });
         }
       ])
-    .run(function ($routeParams, extensionRegistry) {
-        var template = [
-            '<div row ',
-            'ng-show="item.url" ',
-            'class="icon-row" ',
-            'title="Connect to container">',
-            '<div>',
-            '<i class="fa fa-share" aria-hidden="true"></i>',
-            '</div>',
-            '<div flex>',
-            '<a ng-href="{{item.url}}">',
-            'Manage Spark Clusters',
-            '</a>',
-            '</div>',
-            '</div>'
-        ].join('');
-
-        var makeOshinkoUrl = function () {
-            var namespace = $routeParams.project;
-            return new URI("project/" + namespace + "/oshinko");
-        };
-
-        extensionRegistry.add('container-links', _.spread(function (container, pod) {
-            var oshinkoUrl = makeOshinkoUrl().toString();
-            var oshinkoPort = _.find((container.ports || []), function (port) {
-                return port.name && port.name.toLowerCase() === 'o-rest-port';
-            });
-
-            if (!oshinkoPort) {
-                return;
-            }
-            if (pod.metadata.annotations["openshift.io/deployment-config.name"] !== "oshinko") {
-                return;
-            }
-
-            return {
-                type: 'dom',
-                node: template,
-                url: oshinkoUrl
-            };
-
-        }));
+    .run(function () {
+        window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.push({href: "/oshinko", label: "Spark Clusters", iconClass:"pficon  pficon-cluster"});
     });
     hawtioPluginLoader.addModule(extName);
 

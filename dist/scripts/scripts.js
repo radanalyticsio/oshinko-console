@@ -7,22 +7,13 @@ a.when("/project/:project/oshinko", {
 templateUrl:"views/oshinko/clusters.html",
 controller:"OshinkoClustersCtrl"
 });
-} ]).run([ "$routeParams", "extensionRegistry", function(a, b) {
-var c = [ "<div row ", 'ng-show="item.url" ', 'class="icon-row" ', 'title="Connect to container">', "<div>", '<i class="fa fa-share" aria-hidden="true"></i>', "</div>", "<div flex>", '<a ng-href="{{item.url}}">', "Manage Spark Clusters", "</a>", "</div>", "</div>" ].join(""), d = function() {
-var b = a.project;
-return new URI("project/" + b + "/oshinko");
-};
-b.add("container-links", _.spread(function(a, b) {
-var e = d().toString(), f = _.find(a.ports || [], function(a) {
-return a.name && "o-rest-port" === a.name.toLowerCase();
+} ]).run(function() {
+window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.push({
+href:"/oshinko",
+label:"Spark Clusters",
+iconClass:"pficon  pficon-cluster"
 });
-if (f && "oshinko" === b.metadata.annotations["openshift.io/deployment-config.name"]) return {
-type:"dom",
-node:c,
-url:e
-};
-}));
-} ]), hawtioPluginLoader.addModule(a);
+}), hawtioPluginLoader.addModule(a);
 }(), angular.module("oshinkoConsole").factory("clusterData", [ "$http", "$q", "ProjectsService", "DataService", "DeploymentsService", "$routeParams", function(a, b, c, d, e, f) {
 function g(a, b) {
 return d["delete"](b, a, u, null);
