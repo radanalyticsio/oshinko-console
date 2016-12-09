@@ -88,4 +88,3 @@ oc create sa oshinko                          # note, VV, first oshinko is the p
 oc policy add-role-to-user admin system:serviceaccount:developer:oshinko -n oshinko
 
 oc create -f ./server-only-template.yaml
-oc new-app --template=oshinko
