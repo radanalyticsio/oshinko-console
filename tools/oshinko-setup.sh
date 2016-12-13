@@ -96,6 +96,5 @@ oc new-project oshinko
 
 # set up the oshinko service account
 oc create sa oshinko                          # note, VV, first oshinko is the proj name :)
-oc policy add-role-to-user admin system:serviceaccount:developer:oshinko -n oshinko
+oc policy add-role-to-user edit system:serviceaccount:developer:oshinko -n oshinko
 
-oc create -f ./server-only-template.yaml
