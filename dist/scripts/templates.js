@@ -160,7 +160,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
-    "<button id=\"deletebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(deleteCluster())\">Delete</button>\n" +
+    "<button id=\"deletebutton\" class=\"btn btn-danger\" translatable=\"yes\" ng-click=\"complete(deleteCluster())\">Delete</button>\n" +
     "</div>"
   );
 

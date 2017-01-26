@@ -347,6 +347,7 @@ var c = k.open({
 animation:!0,
 controller:"OshinkoClusterDeleteCtrl",
 templateUrl:"views/oshinko/delete-cluster.html",
+backdrop:"static",
 resolve:{
 dialogData:function() {
 return {
