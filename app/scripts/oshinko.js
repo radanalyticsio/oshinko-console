@@ -626,6 +626,7 @@ angular.module('oshinkoConsole')
           animation: true,
           controller: 'OshinkoClusterDeleteCtrl',
           templateUrl: 'views/oshinko/' + 'delete-cluster.html',
+          backdrop: 'static',
           resolve: {
             dialogData: function () {
               return {clusterName: clusterName};
@@ -655,6 +656,7 @@ angular.module('oshinkoConsole')
           animation: true,
           controller: 'OshinkoClusterNewCtrl',
           templateUrl: 'views/oshinko/' + 'new-cluster.html',
+          backdrop: 'static',
           resolve: {
             dialogData: function () {
               return {};
@@ -685,6 +687,7 @@ angular.module('oshinkoConsole')
           animation: true,
           controller: 'OshinkoClusterDeleteCtrl',
           templateUrl: 'views/oshinko/' + 'scale-cluster.html',
+          backdrop: 'static',
           resolve: {
             dialogData: function () {
               return {
