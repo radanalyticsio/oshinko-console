@@ -3,7 +3,6 @@
  */
 
 'use strict';
-
 angular.module('oshinkoConsole')
   .controller('OshinkoClusterNewCtrl', [
     '$q',
@@ -98,7 +97,6 @@ angular.module('oshinkoConsole')
       };
 
       $scope.newCluster = function newCluster() {
-        var defer = $q.defer();
         var name = $scope.fields.name.trim();
         var advanced = $scope.advanced;
         var workersInt = $scope.fields.workers;
@@ -106,7 +104,7 @@ angular.module('oshinkoConsole')
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
 
-        $q.all([
+        return $q.all([
           validate(name, workersInt),
           validateConfigMap(configName, "cluster-config-name", "cluster configuration"),
           validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration"),
@@ -115,15 +113,11 @@ angular.module('oshinkoConsole')
             clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName).then(function (response) {
               $uibModalInstance.close(response);
             }, function (error) {
-              $uibModalInstance.dismiss(error);
+              $scope.formError = error.data.message;
             });
           }, function (error) {
             $scope.formError = error.message;
-            defer.reject(error);
           });
-
-
-        return defer.promise;
       };
     }
   ]);

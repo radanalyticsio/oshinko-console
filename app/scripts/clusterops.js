@@ -72,29 +72,15 @@ angular.module('openshiftConsole')
       function sendDeleteCluster(clusterName) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
-        var deferred = $q.defer();
 
-        $q.all([
+        return $q.all([
           scaleDeleteReplication(clusterName, masterDeploymentName),
           scaleDeleteReplication(clusterName, workerDeploymentName),
           deleteObject(masterDeploymentName, 'deploymentconfigs'),
           deleteObject(workerDeploymentName, 'deploymentconfigs'),
           deleteObject(clusterName, 'services'),
           deleteObject(clusterName + "-ui", 'services'),
-        ]).then(function (values) {
-          var err = false;
-          angular.forEach(values, function (value) {
-            if (value.code !== 200) {
-              err = true;
-            }
-          });
-          if (err) {
-            deferred.reject(values);
-          } else {
-            deferred.resolve(values);
-          }
-        });
-        return deferred.promise;
+        ]);
       }
 
       // Start create-related functions
@@ -427,16 +413,10 @@ angular.module('openshiftConsole')
       // Start scale-related functions
       function sendScaleCluster(clusterName, workerCount) {
         var workerDeploymentName = clusterName + "-w";
-        var deferred = $q.defer();
 
-        $q.all([
+        return $q.all([
           scaleReplication(clusterName, workerDeploymentName, workerCount)
-        ]).then(function (value) {
-          deferred.resolve(value);
-        }).catch(function (err) {
-          deferred.reject(err);
-        });
-        return deferred.promise;
+        ]);
       }
 
       return {

@@ -17,14 +17,22 @@ angular.module('openshiftConsole')
       $scope.workerCount = dialogData.workerCount || 1;
 
       $scope.deleteCluster = function deleteCluster() {
-        var defer = $q.defer();
         clusterData.sendDeleteCluster($scope.clusterName)
-          .then(function (response) {
-            $uibModalInstance.close(response);
+          .then(function (values) {
+            var err = false;
+            angular.forEach(values, function (value) {
+              if (value.code !== 200) {
+                err = true;
+              }
+            });
+            if (err) {
+              $uibModalInstance.dismiss(values);
+            } else {
+              $uibModalInstance.close(values);
+            }
           }, function (error) {
             $uibModalInstance.dismiss(error);
           });
-        return defer.promise;
       };
 
       $scope.cancelfn = function () {
@@ -58,20 +66,17 @@ angular.module('openshiftConsole')
 
 
       $scope.scaleCluster = function scaleCluster(count) {
-        var defer = $q.defer();
 
         validate(count)
           .then(function () {
             clusterData.sendScaleCluster($scope.clusterName, count).then(function (response) {
               $uibModalInstance.close(response);
             }, function (error) {
-              $uibModalInstance.close(error);
+              $scope.formError = error.data.message;
             });
           }, function (error) {
             $scope.formError = error.message;
-            defer.reject(error);
           });
-        return defer.promise;
       };
     }
   ]);

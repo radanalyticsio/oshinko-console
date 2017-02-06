@@ -201,13 +201,8 @@ g.resolve(a);
 }), g.promise;
 }
 function j(a) {
-var c = a + "-m", d = a + "-w", e = b.defer();
-return b.all([ h(a, c), h(a, d), g(c, "deploymentconfigs"), g(d, "deploymentconfigs"), g(a, "services"), g(a + "-ui", "services") ]).then(function(a) {
-var b = !1;
-angular.forEach(a, function(a) {
-200 !== a.code && (b = !0);
-}), b ? e.reject(a) :e.resolve(a);
-}), e.promise;
+var c = a + "-m", d = a + "-w";
+return b.all([ h(a, c), h(a, d), g(c, "deploymentconfigs"), g(d, "deploymentconfigs"), g(a, "services"), g(a + "-ui", "services") ]);
 }
 function k(a, b, c, d) {
 var e = [];
@@ -414,12 +409,8 @@ u.reject(a);
 }), u.promise;
 }
 function s(a, c) {
-var d = a + "-w", e = b.defer();
-return b.all([ i(a, d, c) ]).then(function(a) {
-e.resolve(a);
-})["catch"](function(a) {
-e.reject(a);
-}), e.promise;
+var d = a + "-w";
+return b.all([ i(a, d, c) ]);
 }
 var t = f.project, u = null;
 return c.get(t).then(_.spread(function(a, b) {
@@ -460,16 +451,16 @@ b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = a.defer(), f = b.fields.name.trim(), g = b.advanced, h = b.fields.workers, k = g ? b.fields.configname :null, l = g ? b.fields.masterconfigname :null, m = g ? b.fields.workerconfigname :null;
-return a.all([ j(f, h), i(k, "cluster-config-name", "cluster configuration"), i(l, "cluster-masterconfig-name", "master spark configuration"), i(m, "cluster-workerconfig-name", "worker spark configuration") ]).then(function() {
-d.sendCreateCluster(f, h, k, l, m).then(function(a) {
+var c = b.fields.name.trim(), f = b.advanced, g = b.fields.workers, h = f ? b.fields.configname :null, k = f ? b.fields.masterconfigname :null, l = f ? b.fields.workerconfigname :null;
+return a.all([ j(c, g), i(h, "cluster-config-name", "cluster configuration"), i(k, "cluster-masterconfig-name", "master spark configuration"), i(l, "cluster-workerconfig-name", "worker spark configuration") ]).then(function() {
+d.sendCreateCluster(c, g, h, k, l).then(function(a) {
 e.close(a);
 }, function(a) {
-e.dismiss(a);
+b.formError = a.data.message;
 });
 }, function(a) {
-b.formError = a.message, c.reject(a);
-}), c.promise;
+b.formError = a.message;
+});
 };
 } ]), angular.module("openshiftConsole").controller("OshinkoClusterDeleteCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", function(a, b, c, d, e) {
 function f(c) {
@@ -478,26 +469,27 @@ var d, e = a.defer();
 return c ? g.test(c) ? c <= 0 && (d = new Error("Please give a value greater than 0.")) :d = new Error("Please give a valid number of workers.") :d = new Error("The number of workers cannot be empty or less than 1."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
 }
 b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 1, b.deleteCluster = function() {
-var e = a.defer();
-return c.sendDeleteCluster(b.clusterName).then(function(a) {
-d.close(a);
+c.sendDeleteCluster(b.clusterName).then(function(a) {
+var b = !1;
+angular.forEach(a, function(a) {
+200 !== a.code && (b = !0);
+}), b ? d.dismiss(a) :d.close(a);
 }, function(a) {
 d.dismiss(a);
-}), e.promise;
+});
 }, b.cancelfn = function() {
 d.dismiss("cancel");
 };
 var g = /^[0-9]*$/;
-b.scaleCluster = function(e) {
-var g = a.defer();
-return f(e).then(function() {
-c.sendScaleCluster(b.clusterName, e).then(function(a) {
+b.scaleCluster = function(a) {
+f(a).then(function() {
+c.sendScaleCluster(b.clusterName, a).then(function(a) {
 d.close(a);
 }, function(a) {
-d.close(a);
+b.formError = a.data.message;
 });
 }, function(a) {
-b.formError = a.message, g.reject(a);
-}), g.promise;
+b.formError = a.message;
+});
 };
 } ]);
