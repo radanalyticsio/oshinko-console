@@ -104,7 +104,7 @@ angular.module('openshiftConsole')
         var podStatus;
         var isPod = false;
         if (!cluster || !cluster.worker || !cluster.worker.pod || !cluster.master || !cluster.master.pod) {
-          return "Error";
+          return "Pending";
         }
         //TODO look at more states
         _.each(cluster.worker.pod, function (worker) {

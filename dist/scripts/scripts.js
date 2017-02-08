@@ -56,7 +56,7 @@ return a && a.worker && a.worker.pod && a.master && a.master.pod ? (_.each(a.wor
 if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
 }), _.each(a.master.pod, function(a) {
 if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
-}), d && b ? b :d ? "Running" :c) :"Error";
+}), d && b ? b :d ? "Running" :c) :"Pending";
 }, a.getSparkMasterUrl = function(a) {
 var b = "";
 if (!a || !a.master || !a.master.svc) return "";
