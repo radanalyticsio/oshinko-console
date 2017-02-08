@@ -27,27 +27,19 @@ angular.module('oshinkoConsole')
       $scope.fields = fields;
       $scope.advanced = false;
 
-      var project = $routeParams.project;
-      var myContext = null;
-      ProjectsService
-        .get(project)
-        .then(_.spread(function (project, context) {
-          myContext = context;
-        }));
-
       $scope.toggleAdvanced = function () {
         $scope.advanced = $scope.advanced ? false : true;
       };
 
-      function validateConfigMap(name, errTarget, errName) {
+      function validateConfigMap(name, errTarget, errName, context) {
         var ex;
         var defer = $q.defer();
         if (!name) {
           defer.resolve();
         }
-        DataService.get('configmaps', name, myContext, null).then(function () {
+        DataService.get('configmaps', name, context, null).then(function () {
           defer.resolve();
-        }).catch(function() {
+        }).catch(function () {
           ex = new Error("The " + errName + " named '" + name + "' does not exist");
           ex.target = errTarget;
           defer.reject(ex);
@@ -104,20 +96,26 @@ angular.module('oshinkoConsole')
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
 
-        return $q.all([
-          validate(name, workersInt),
-          validateConfigMap(configName, "cluster-config-name", "cluster configuration"),
-          validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration"),
-          validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration")
-        ]).then(function () {
-            clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName).then(function (response) {
-              $uibModalInstance.close(response);
+        return ProjectsService
+          .get($routeParams.project)
+          .then(_.spread(function (project, context) {
+            $scope.project = project;
+            $scope.context = context;
+            return $q.all([
+              validate(name, workersInt),
+              validateConfigMap(configName, "cluster-config-name", "cluster configuration", $scope.context),
+              validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
+              validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
+            ]).then(function () {
+              clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName, $scope.context).then(function (response) {
+                $uibModalInstance.close(response);
+              }, function (error) {
+                $scope.formError = error.data.message;
+              });
             }, function (error) {
-              $scope.formError = error.data.message;
+              $scope.formError = error.message;
             });
-          }, function (error) {
-            $scope.formError = error.message;
-          });
+          }));
       };
     }
   ]);

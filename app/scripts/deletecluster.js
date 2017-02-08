@@ -11,28 +11,36 @@ angular.module('openshiftConsole')
     "clusterData",
     "$uibModalInstance",
     "dialogData",
-    function ($q, $scope, clusterData, $uibModalInstance, dialogData) {
+    "$routeParams",
+    "ProjectsService",
+    function ($q, $scope, clusterData, $uibModalInstance, dialogData, $routeParams, ProjectsService) {
 
       $scope.clusterName = dialogData.clusterName || "";
       $scope.workerCount = dialogData.workerCount || 1;
 
       $scope.deleteCluster = function deleteCluster() {
-        clusterData.sendDeleteCluster($scope.clusterName)
-          .then(function (values) {
-            var err = false;
-            angular.forEach(values, function (value) {
-              if (value.code !== 200) {
-                err = true;
-              }
-            });
-            if (err) {
-              $uibModalInstance.dismiss(values);
-            } else {
-              $uibModalInstance.close(values);
-            }
-          }, function (error) {
-            $uibModalInstance.dismiss(error);
-          });
+        ProjectsService
+          .get($routeParams.project)
+          .then(_.spread(function (project, context) {
+            $scope.project = project;
+            $scope.context = context;
+            clusterData.sendDeleteCluster($scope.clusterName, $scope.context)
+              .then(function (values) {
+                var err = false;
+                angular.forEach(values, function (value) {
+                  if (value.code !== 200) {
+                    err = true;
+                  }
+                });
+                if (err) {
+                  $uibModalInstance.dismiss(values);
+                } else {
+                  $uibModalInstance.close(values);
+                }
+              }, function (error) {
+                $uibModalInstance.dismiss(error);
+              });
+          }));
       };
 
       $scope.cancelfn = function () {
@@ -66,17 +74,23 @@ angular.module('openshiftConsole')
 
 
       $scope.scaleCluster = function scaleCluster(count) {
-
-        validate(count)
-          .then(function () {
-            clusterData.sendScaleCluster($scope.clusterName, count).then(function (response) {
-              $uibModalInstance.close(response);
-            }, function (error) {
-              $scope.formError = error.data.message;
-            });
-          }, function (error) {
-            $scope.formError = error.message;
-          });
+        ProjectsService
+          .get($routeParams.project)
+          .then(_.spread(function (project, context) {
+              $scope.project = project;
+              $scope.context = context;
+              validate(count)
+                .then(function () {
+                  clusterData.sendScaleCluster($scope.clusterName, count, $scope.context).then(function (response) {
+                    $uibModalInstance.close(response);
+                  }, function (error) {
+                    $scope.formError = error.data.message;
+                  });
+                }, function (error) {
+                  $scope.formError = error.message;
+                });
+            })
+          );
       };
     }
   ]);

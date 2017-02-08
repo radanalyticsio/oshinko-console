@@ -8,30 +8,21 @@ angular.module('openshiftConsole')
   .factory('clusterData', [
     '$http',
     '$q',
-    "ProjectsService",
     "DataService",
     "DeploymentsService",
-    "$routeParams",
-    function ($http, $q, ProjectsService, DataService, DeploymentsService, $routeParams) {
-      var project = $routeParams.project;
-      var myContext = null;
-      ProjectsService
-        .get(project)
-        .then(_.spread(function (project, context) {
-          myContext = context;
-        }));
+    function ($http, $q, DataService, DeploymentsService) {
 
       // Start delete-related functions
-      function deleteObject(name, resourceType) {
-        return DataService.delete(resourceType, name, myContext, null);
+      function deleteObject(name, resourceType, context) {
+        return DataService.delete(resourceType, name, context, null);
       }
 
-      function scaleDeleteReplication(clusterName, deploymentName) {
+      function scaleDeleteReplication(clusterName, deploymentName, context) {
         var deferred = $q.defer();
         var mostRecentRC = null;
         // we need to determine the most recent replication controller in the event that
         // changes have been made to the deployment, we can not assume clustername-w-1
-        DataService.list('replicationcontrollers', myContext, function (result) {
+        DataService.list('replicationcontrollers', context, function (result) {
           var rcs = result.by("metadata.name");
           angular.forEach(rcs, function (rc) {
             if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
@@ -39,15 +30,15 @@ angular.module('openshiftConsole')
                 // if we have a mostRecentRC, it's about to be replaced, so we
                 // can delete it as it's most definitely not the most recent one
                 if (mostRecentRC) {
-                  DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null).then(angular.noop);
+                  DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(angular.noop);
                 }
                 mostRecentRC = rc;
               }
             }
           });
           mostRecentRC.spec.replicas = 0;
-          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, myContext).then(function () {
-            DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, myContext, null).then(function (result) {
+          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, context).then(function () {
+            DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(function (result) {
               deferred.resolve(result);
             }).catch(function (err) {
               deferred.reject(err);
@@ -59,9 +50,9 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function scaleReplication(clusterName, deploymentName, count) {
+      function scaleReplication(clusterName, deploymentName, count, context) {
         var deferred = $q.defer();
-        DataService.get('deploymentconfigs', deploymentName, myContext, null).then(function (dc) {
+        DataService.get('deploymentconfigs', deploymentName, context, null).then(function (dc) {
           DeploymentsService.scale(dc, count).then(function (result) {
             deferred.resolve(result);
           });
@@ -69,17 +60,17 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendDeleteCluster(clusterName) {
+      function sendDeleteCluster(clusterName, context) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
 
         return $q.all([
-          scaleDeleteReplication(clusterName, masterDeploymentName),
-          scaleDeleteReplication(clusterName, workerDeploymentName),
-          deleteObject(masterDeploymentName, 'deploymentconfigs'),
-          deleteObject(workerDeploymentName, 'deploymentconfigs'),
-          deleteObject(clusterName, 'services'),
-          deleteObject(clusterName + "-ui", 'services'),
+          scaleDeleteReplication(clusterName, masterDeploymentName, context),
+          scaleDeleteReplication(clusterName, workerDeploymentName, context),
+          deleteObject(masterDeploymentName, 'deploymentconfigs', context),
+          deleteObject(workerDeploymentName, 'deploymentconfigs', context),
+          deleteObject(clusterName, 'services', context),
+          deleteObject(clusterName + "-ui", 'services', context),
         ]);
       }
 
@@ -290,19 +281,19 @@ angular.module('openshiftConsole')
         return makeService(input, serviceName, ports);
       }
 
-      function createDeploymentConfig(dcObject) {
-        return DataService.create("deploymentconfigs", null, dcObject, myContext, null);
+      function createDeploymentConfig(dcObject, context) {
+        return DataService.create("deploymentconfigs", null, dcObject, context, null);
       }
 
-      function createService(srvObject) {
-        return DataService.create("services", null, srvObject, myContext, null);
+      function createService(srvObject, context) {
+        return DataService.create("services", null, srvObject, context, null);
       }
 
-      function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig) {
+      function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig, context) {
         var deferred = $q.defer();
         var finalConfig = {};
         if (configName) {
-          DataService.get('configmaps', configName, myContext, null).then(function (cm) {
+          DataService.get('configmaps', configName, context, null).then(function (cm) {
             if (cm.data["workercount"]) {
               finalConfig["workerCount"] = parseInt(cm.data["workercount"]);
             }
@@ -349,7 +340,7 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName) {
+      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, context) {
         var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
         var workerPorts = [
           {
@@ -397,10 +388,10 @@ angular.module('openshiftConsole')
           suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
 
           $q.all([
-            createDeploymentConfig(sm),
-            createDeploymentConfig(sw),
-            createService(smService),
-            createService(suiService)
+            createDeploymentConfig(sm, context),
+            createDeploymentConfig(sw, context),
+            createService(smService, context),
+            createService(suiService, context)
           ]).then(function (values) {
             deferred.resolve(values);
           }).catch(function (err) {
@@ -411,11 +402,11 @@ angular.module('openshiftConsole')
       }
 
       // Start scale-related functions
-      function sendScaleCluster(clusterName, workerCount) {
+      function sendScaleCluster(clusterName, workerCount, context) {
         var workerDeploymentName = clusterName + "-w";
 
         return $q.all([
-          scaleReplication(clusterName, workerDeploymentName, workerCount)
+          scaleReplication(clusterName, workerDeploymentName, workerCount, context)
         ]);
       }
 
