@@ -307,8 +307,6 @@ kind:b.kind,
 name:b.toString()
 }
 }
-}), a.deploymentConfig.deployOnConfigChange && j.spec.triggers.push({
-type:"ConfigChange"
 }), j;
 }
 function j(a, b, c, d, e, f) {
@@ -322,6 +320,9 @@ name:b + g,
 labels:{
 "oshinko-cluster":b,
 "oshinko-type":c
+},
+annotations:{
+"created-by":"oshinko-console"
 },
 scaling:{
 autoscaling:!1,
@@ -408,9 +409,9 @@ v.reject(a);
 });
 }), v.promise;
 }
-function q(a, c, d) {
-var e = a + "-w";
-return b.all([ g(a, e, c, d) ]);
+function q(a, b, c) {
+var d = a + "-w";
+return g(a, d, b, c);
 }
 return {
 sendDeleteCluster:h,

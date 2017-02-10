@@ -207,9 +207,6 @@ angular.module('openshiftConsole')
             }
           );
         }
-        if (input.deploymentConfig.deployOnConfigChange) {
-          deploymentConfig.spec.triggers.push({type: "ConfigChange"});
-        }
         return deploymentConfig;
       }
 
@@ -226,6 +223,7 @@ angular.module('openshiftConsole')
             "oshinko-cluster": clusterName,
             "oshinko-type": sparkType
           },
+          annotations: {"created-by": "oshinko-console"},
           scaling: {
             autoscaling: false,
             minReplicas: 1
@@ -404,16 +402,13 @@ angular.module('openshiftConsole')
       // Start scale-related functions
       function sendScaleCluster(clusterName, workerCount, context) {
         var workerDeploymentName = clusterName + "-w";
-
-        return $q.all([
-          scaleReplication(clusterName, workerDeploymentName, workerCount, context)
-        ]);
+        return scaleReplication(clusterName, workerDeploymentName, workerCount, context);
       }
 
       return {
         sendDeleteCluster: sendDeleteCluster,
         sendCreateCluster: sendCreateCluster,
-        sendScaleCluster: sendScaleCluster,
+        sendScaleCluster: sendScaleCluster
       };
     }
   ]);
