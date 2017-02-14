@@ -156,7 +156,7 @@ workerCount:c
 }
 });
 d.result.then(function(c) {
-var d = c[0].spec.replicas, e = b + "-scale", f = d > 1 ? "workers" :"worker";
+var d = c.spec.replicas, e = b + "-scale", f = d > 1 ? "workers" :"worker";
 a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
