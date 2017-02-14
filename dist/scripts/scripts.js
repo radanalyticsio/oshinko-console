@@ -156,7 +156,7 @@ workerCount:c
 }
 });
 d.result.then(function(c) {
-var d = c[0].spec.replicas, e = b + "-scale", f = d > 1 ? "workers" :"worker";
+var d = c.spec.replicas, e = b + "-scale", f = d > 1 ? "workers" :"worker";
 a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
@@ -171,18 +171,25 @@ message:"Cluster scale failed"
 }
 });
 };
-} ]), angular.module("openshiftConsole").factory("clusterData", [ "$http", "$q", "DataService", "DeploymentsService", function(a, b, c, d) {
-function e(a, b, d) {
+} ]), angular.module("openshiftConsole").filter("depName", function() {
+var a = {
+replicationController:[ "openshift.io/deployment-config.name" ]
+};
+return function(b) {
+return a[b];
+};
+}).factory("clusterData", [ "$http", "$q", "DataService", "DeploymentsService", "$filter", function(a, b, c, d, e) {
+function f(a, b, d) {
 return c["delete"](b, a, d, null);
 }
-function f(a, d, e) {
+function g(a, d) {
 var f = b.defer(), g = null;
-return c.list("replicationcontrollers", e, function(b) {
-var h = b.by("metadata.name");
-angular.forEach(h, function(b) {
-b.metadata.labels["oshinko-cluster"] === a && b.metadata.name.startsWith(d) && (!g || new Date(b.metadata.creationTimestamp) > new Date(g.metadata.creationTimestamp)) && (g && c["delete"]("replicationcontrollers", g.metadata.name, e, null).then(angular.noop), g = b);
-}), g.spec.replicas = 0, c.update("replicationcontrollers", g.metadata.name, g, e).then(function() {
-c["delete"]("replicationcontrollers", g.metadata.name, e, null).then(function(a) {
+return c.list("replicationcontrollers", d, function(a) {
+var b = a.by("metadata.name");
+angular.forEach(b, function(a) {
+(!g || new Date(a.metadata.creationTimestamp) > new Date(g.metadata.creationTimestamp)) && (g && c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(angular.noop), g = a);
+}), g.spec.replicas = 0, c.update("replicationcontrollers", g.metadata.name, g, d).then(function() {
+c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(function(a) {
 f.resolve(a);
 })["catch"](function(a) {
 f.reject(a);
@@ -190,9 +197,15 @@ f.reject(a);
 })["catch"](function(a) {
 f.reject(a);
 });
+}, {
+http:{
+params:{
+labelSelector:e("depName")("replicationController") + "=" + a
+}
+}
 }), f.promise;
 }
-function g(a, e, f, g) {
+function h(a, e, f, g) {
 var h = b.defer();
 return c.get("deploymentconfigs", e, g, null).then(function(a) {
 d.scale(a, f).then(function(a) {
@@ -200,11 +213,11 @@ h.resolve(a);
 });
 }), h.promise;
 }
-function h(a, c) {
-var d = a + "-m", g = a + "-w";
-return b.all([ f(a, d, c), f(a, g, c), e(d, "deploymentconfigs", c), e(g, "deploymentconfigs", c), e(a, "services", c), e(a + "-ui", "services", c) ]);
+function i(a, c) {
+var d = a + "-m", e = a + "-w";
+return b.all([ g(d, c), g(e, c), f(d, "deploymentconfigs", c), f(e, "deploymentconfigs", c), f(a, "services", c), f(a + "-ui", "services", c) ]);
 }
-function i(a, b, c, d) {
+function j(a, b, c, d) {
 var e = [];
 angular.forEach(a.deploymentConfig.envVars, function(a, b) {
 e.push({
@@ -307,11 +320,9 @@ kind:b.kind,
 name:b.toString()
 }
 }
-}), a.deploymentConfig.deployOnConfigChange && j.spec.triggers.push({
-type:"ConfigChange"
 }), j;
 }
-function j(a, b, c, d, e, f) {
+function k(a, b, c, d, e, f) {
 var g = "master" === c ? "-m" :"-w", h = {
 deploymentConfig:{
 envVars:{
@@ -323,16 +334,19 @@ labels:{
 "oshinko-cluster":b,
 "oshinko-type":c
 },
+annotations:{
+"created-by":"oshinko-console"
+},
 scaling:{
 autoscaling:!1,
 minReplicas:1
 }
 };
 "worker" === c && (h.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", h.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), f && (h.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), h.scaling.replicas = d ? d :1;
-var j = i(h, a, e, f);
-return j;
+var i = j(h, a, e, f);
+return i;
 }
-function k(a, b, c) {
+function l(a, b, c) {
 if (!c || !c.length) return null;
 var d = {
 kind:"Service",
@@ -349,7 +363,7 @@ ports:c
 };
 return d;
 }
-function l(a, b, c, d) {
+function m(a, b, c, d) {
 var e = {
 labels:{
 "oshinko-cluster":b,
@@ -362,15 +376,15 @@ selectors:{
 "oshinko-type":"master"
 }
 };
-return k(e, a, d);
-}
-function m(a, b) {
-return c.create("deploymentconfigs", null, a, b, null);
+return l(e, a, d);
 }
 function n(a, b) {
+return c.create("deploymentconfigs", null, a, b, null);
+}
+function o(a, b) {
 return c.create("services", null, a, b, null);
 }
-function o(a, d, e, f, g) {
+function p(a, d, e, f, g) {
 var h = b.defer(), i = {};
 return a ? c.get("configmaps", a, g, null).then(function(a) {
 a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (i.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (i.workerConfigName = a.data.sparkworkerconfig), d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
@@ -378,12 +392,12 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function p(a, c, d, e, f, g) {
+function q(a, c, d, e, f, g) {
 var h = "docker.io/radanalyticsio/openshift-spark:latest", i = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
-} ], k = [ {
+} ], j = [ {
 name:"spark-webui",
 containerPort:8080,
 protocol:"TCP"
@@ -391,7 +405,7 @@ protocol:"TCP"
 name:"spark-master",
 containerPort:7077,
 protocol:"TCP"
-} ], p = [ {
+} ], l = [ {
 protocol:"TCP",
 port:7077,
 targetPort:7077
@@ -400,22 +414,22 @@ protocol:"TCP",
 port:8080,
 targetPort:8080
 } ], r = null, s = null, t = null, u = null, v = b.defer();
-return o(d, c, f, e).then(function(c) {
-r = j(h, a, "master", null, k, c.masterConfigName), s = j(h, a, "worker", c.workerCount, i, c.workerConfigName), t = l(a, a, "master", p), u = l(a + "-ui", a, "webui", q), b.all([ m(r, g), m(s, g), n(t, g), n(u, g) ]).then(function(a) {
+return p(d, c, f, e).then(function(c) {
+r = k(h, a, "master", null, j, c.masterConfigName), s = k(h, a, "worker", c.workerCount, i, c.workerConfigName), t = m(a, a, "master", l), u = m(a + "-ui", a, "webui", q), b.all([ n(r, g), n(s, g), o(t, g), o(u, g) ]).then(function(a) {
 v.resolve(a);
 })["catch"](function(a) {
 v.reject(a);
 });
 }), v.promise;
 }
-function q(a, c, d) {
-var e = a + "-w";
-return b.all([ g(a, e, c, d) ]);
+function r(a, b, c) {
+var d = a + "-w";
+return h(a, d, b, c);
 }
 return {
-sendDeleteCluster:h,
-sendCreateCluster:p,
-sendScaleCluster:q
+sendDeleteCluster:i,
+sendCreateCluster:q,
+sendScaleCluster:r
 };
 } ]), angular.module("oshinkoConsole").controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
 function i(b, c, d, e) {
@@ -468,7 +482,7 @@ g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
 var b = !1;
 angular.forEach(a, function(a) {
-200 !== a.code && (b = !0);
+(a.code >= 300 || a.code < 200) && (b = !0);
 }), b ? d.dismiss(a) :d.close(a);
 }, function(a) {
 d.dismiss(a);

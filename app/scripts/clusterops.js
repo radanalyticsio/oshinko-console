@@ -5,19 +5,28 @@
 'use strict';
 
 angular.module('openshiftConsole')
+  .filter('depName', function () {
+    var labelMap = {
+      'replicationController': ["openshift.io/deployment-config.name"]
+    };
+    return function (labelKey) {
+      return labelMap[labelKey];
+    };
+  })
   .factory('clusterData', [
     '$http',
     '$q',
     "DataService",
     "DeploymentsService",
-    function ($http, $q, DataService, DeploymentsService) {
+    "$filter",
+    function ($http, $q, DataService, DeploymentsService, $filter) {
 
       // Start delete-related functions
       function deleteObject(name, resourceType, context) {
         return DataService.delete(resourceType, name, context, null);
       }
 
-      function scaleDeleteReplication(clusterName, deploymentName, context) {
+      function scaleDeleteReplication(deploymentName, context) {
         var deferred = $q.defer();
         var mostRecentRC = null;
         // we need to determine the most recent replication controller in the event that
@@ -25,15 +34,13 @@ angular.module('openshiftConsole')
         DataService.list('replicationcontrollers', context, function (result) {
           var rcs = result.by("metadata.name");
           angular.forEach(rcs, function (rc) {
-            if (rc.metadata.labels["oshinko-cluster"] === clusterName && rc.metadata.name.startsWith(deploymentName)) {
-              if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
-                // if we have a mostRecentRC, it's about to be replaced, so we
-                // can delete it as it's most definitely not the most recent one
-                if (mostRecentRC) {
-                  DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(angular.noop);
-                }
-                mostRecentRC = rc;
+            if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
+              // if we have a mostRecentRC, it's about to be replaced, so we
+              // can delete it as it's most definitely not the most recent one
+              if (mostRecentRC) {
+                DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(angular.noop);
               }
+              mostRecentRC = rc;
             }
           });
           mostRecentRC.spec.replicas = 0;
@@ -46,6 +53,12 @@ angular.module('openshiftConsole')
           }).catch(function (err) {
             deferred.reject(err);
           });
+        }, {
+          http: {
+            params: {
+              labelSelector: $filter('depName')('replicationController') + '=' + deploymentName
+            }
+          }
         });
         return deferred.promise;
       }
@@ -65,8 +78,8 @@ angular.module('openshiftConsole')
         var workerDeploymentName = clusterName + "-w";
 
         return $q.all([
-          scaleDeleteReplication(clusterName, masterDeploymentName, context),
-          scaleDeleteReplication(clusterName, workerDeploymentName, context),
+          scaleDeleteReplication(masterDeploymentName, context),
+          scaleDeleteReplication(workerDeploymentName, context),
           deleteObject(masterDeploymentName, 'deploymentconfigs', context),
           deleteObject(workerDeploymentName, 'deploymentconfigs', context),
           deleteObject(clusterName, 'services', context),
@@ -207,9 +220,6 @@ angular.module('openshiftConsole')
             }
           );
         }
-        if (input.deploymentConfig.deployOnConfigChange) {
-          deploymentConfig.spec.triggers.push({type: "ConfigChange"});
-        }
         return deploymentConfig;
       }
 
@@ -226,6 +236,7 @@ angular.module('openshiftConsole')
             "oshinko-cluster": clusterName,
             "oshinko-type": sparkType
           },
+          annotations: {"created-by": "oshinko-console"},
           scaling: {
             autoscaling: false,
             minReplicas: 1
@@ -327,14 +338,14 @@ angular.module('openshiftConsole')
           });
         } else {
           if (workerCount) {
-              finalConfig["workerCount"] = workerCount;
-            }
-            if (sparkWorkerConfig) {
-              finalConfig["workerConfigName"] = sparkWorkerConfig;
-            }
-            if (sparkMasterConfig) {
-              finalConfig["masterConfigName"] = sparkMasterConfig;
-            }
+            finalConfig["workerCount"] = workerCount;
+          }
+          if (sparkWorkerConfig) {
+            finalConfig["workerConfigName"] = sparkWorkerConfig;
+          }
+          if (sparkMasterConfig) {
+            finalConfig["masterConfigName"] = sparkMasterConfig;
+          }
           deferred.resolve(finalConfig);
         }
         return deferred.promise;
@@ -404,16 +415,13 @@ angular.module('openshiftConsole')
       // Start scale-related functions
       function sendScaleCluster(clusterName, workerCount, context) {
         var workerDeploymentName = clusterName + "-w";
-
-        return $q.all([
-          scaleReplication(clusterName, workerDeploymentName, workerCount, context)
-        ]);
+        return scaleReplication(clusterName, workerDeploymentName, workerCount, context);
       }
 
       return {
         sendDeleteCluster: sendDeleteCluster,
         sendCreateCluster: sendCreateCluster,
-        sendScaleCluster: sendScaleCluster,
+        sendScaleCluster: sendScaleCluster
       };
     }
   ]);

@@ -263,7 +263,7 @@ angular.module('openshiftConsole')
         });
 
         modalInstance.result.then(function (response) {
-          var numWorkers = response[0].spec.replicas;
+          var numWorkers = response.spec.replicas;
           var alertName = clusterName + "-scale";
           var workers = numWorkers > 1 ? "workers" : "worker";
           $scope.alerts[alertName] = {
