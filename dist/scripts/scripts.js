@@ -482,7 +482,7 @@ g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
 var b = !1;
 angular.forEach(a, function(a) {
-200 !== a.code && (b = !0);
+(a.code >= 300 || a.code < 200) && (b = !0);
 }), b ? d.dismiss(a) :d.close(a);
 }, function(a) {
 d.dismiss(a);

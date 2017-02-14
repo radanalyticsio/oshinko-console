@@ -28,7 +28,7 @@ angular.module('openshiftConsole')
               .then(function (values) {
                 var err = false;
                 angular.forEach(values, function (value) {
-                  if (value.code !== 200) {
+                  if (value.code >= 300 || value.code < 200) {
                     err = true;
                   }
                 });
