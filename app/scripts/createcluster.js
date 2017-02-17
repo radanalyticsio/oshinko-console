@@ -4,15 +4,7 @@
 
 'use strict';
 angular.module('oshinkoConsole')
-  .controller('OshinkoClusterNewCtrl', [
-    '$q',
-    '$scope',
-    "dialogData",
-    "clusterData",
-    "$uibModalInstance",
-    "ProjectsService",
-    "DataService",
-    "$routeParams",
+  .controller('OshinkoClusterNewCtrl',
     function ($q, $scope, dialogData, clusterData, $uibModalInstance, ProjectsService, DataService, $routeParams) {
       var NAME_RE = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
       var NUMBER_RE = /^[0-9]*$/;
@@ -118,5 +110,5 @@ angular.module('oshinkoConsole')
           }));
       };
     }
-  ]);
+  );
 
