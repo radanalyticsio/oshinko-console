@@ -5,14 +5,7 @@
 'use strict';
 
 angular.module('openshiftConsole')
-  .controller('OshinkoClusterDeleteCtrl', [
-    '$q',
-    '$scope',
-    "clusterData",
-    "$uibModalInstance",
-    "dialogData",
-    "$routeParams",
-    "ProjectsService",
+  .controller('OshinkoClusterDeleteCtrl',
     function ($q, $scope, clusterData, $uibModalInstance, dialogData, $routeParams, ProjectsService) {
 
       $scope.clusterName = dialogData.clusterName || "";
@@ -93,4 +86,4 @@ angular.module('openshiftConsole')
           );
       };
     }
-  ]);
+  );

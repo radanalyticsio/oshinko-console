@@ -13,12 +13,7 @@ angular.module('openshiftConsole')
       return labelMap[labelKey];
     };
   })
-  .factory('clusterData', [
-    '$http',
-    '$q',
-    "DataService",
-    "DeploymentsService",
-    "$filter",
+  .factory('clusterData',
     function ($http, $q, DataService, DeploymentsService, $filter) {
 
       // Start delete-related functions
@@ -424,4 +419,4 @@ angular.module('openshiftConsole')
         sendScaleCluster: sendScaleCluster
       };
     }
-  ]);
+  );
