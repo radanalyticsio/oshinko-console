@@ -88,8 +88,6 @@ exports.config = {
   // --suite=smoke,full only the patterns matched by the specified suites will
   // run.
   suites: {
-    // smoke: 'spec/smoketests/*.js',
-    // rest_api: 'integration/rest_api/*.js' // This suite of tests should only require a running master api, it should not require a node
     e2e: 'integration/all-functionality.js'
   },
 
@@ -296,7 +294,7 @@ exports.config = {
     // If true, include stack traces in failures.
     includeStackTrace: true,
     // Default time to wait in ms before a test fails.
-    defaultTimeoutInterval: 30000
+    defaultTimeoutInterval: 60000
   },
 
   // Options to be passed to jasmine2.
@@ -307,7 +305,7 @@ exports.config = {
     // If true, print colors to the terminal.
     showColors: true,
     // Default time to wait in ms before a test fails.
-    defaultTimeoutInterval: 30000,
+    defaultTimeoutInterval: 60000,
     // Function called to print jasmine results.
     print: function() {},
     // If set, only execute specs whose names match the pattern, which is

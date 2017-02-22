@@ -37,3 +37,7 @@ Contributing
     - oshinko.css
   ...
 ```
+
+#### Running integration tests
+1.  Have an instance up and running with the extension installed (See Getting Started above)
+2.  grunt test-integration --baseUrl=<address of your console>  (https://<ip address>:8443 would be common)
