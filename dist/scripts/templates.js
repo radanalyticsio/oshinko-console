@@ -124,16 +124,16 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
     "<td data-title=\"Actions\" class=\"text-xs-left text-right\">\n" +
     "<span uib-dropdown>\n" +
-    "<button type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
+    "<button id=\"{{cluster}}-actions\" type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
     "Actions\n" +
     "<span class=\"caret\" aria-hidden=\"true\"></span>\n" +
     "</button>\n" +
     "<ul class=\"uib-dropdown-menu dropdown-menu-right\">\n" +
     "<li>\n" +
-    "<a href=\"\" role=\"button\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))\">Scale Cluster</a>\n" +
+    "<a href=\"\" id=\"{{cluster}}-scalebutton\" role=\"button\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))\">Scale Cluster</a>\n" +
     "</li>\n" +
     "<li>\n" +
-    "<a href=\"\" role=\"button\" ng-click=\"deleteCluster(cluster)\">Delete Cluster</a>\n" +
+    "<a href=\"\" id=\"{{cluster}}-deletebutton\" role=\"button\" ng-click=\"deleteCluster(cluster)\">Delete Cluster</a>\n" +
     "</li>\n" +
     "</ul>\n" +
     "</span>\n" +

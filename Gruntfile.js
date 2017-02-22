@@ -287,7 +287,7 @@ module.exports = function (grunt) {
         noColor: false, // If true, protractor will not use colors in its output.
         args: {
           // Arguments passed to the command
-          suite: grunt.option('suite') || 'full',
+          suite: grunt.option('suite') || 'e2e',
           baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/")
         }
       },
@@ -295,6 +295,7 @@ module.exports = function (grunt) {
         options: {
           configFile: "test/protractor.conf.js", // Target-specific config file
           args: {
+            suite: grunt.option('suite') || 'e2e',
             baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/"),
             browser: grunt.option('browser') || "firefox"
           } // Target-specific arguments

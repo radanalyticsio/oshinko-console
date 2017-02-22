@@ -52,16 +52,16 @@
                     <td data-title="Workers" name="workercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countWorkers(oshinkoClusters[cluster]) }}</td>
                     <td data-title="Actions" class="text-xs-left text-right">
                       <span uib-dropdown>
-                        <button type="button" class="dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs" data-toggle="dropdown">
+                        <button id="{{cluster}}-actions" type="button" class="dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs" data-toggle="dropdown">
                           Actions
                           <span class="caret" aria-hidden="true"></span>
                         </button>
                         <ul class="uib-dropdown-menu dropdown-menu-right">
                           <li>
-                            <a href="" role="button" ng-click="scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))">Scale Cluster</a>
+                            <a href="" id="{{cluster}}-scalebutton" role="button" ng-click="scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))">Scale Cluster</a>
                           </li>
                           <li>
-                            <a href="" role="button" ng-click="deleteCluster(cluster)">Delete Cluster</a>
+                            <a href="" id="{{cluster}}-deletebutton" role="button" ng-click="deleteCluster(cluster)">Delete Cluster</a>
                           </li>
                         </ul>
                       </span>
