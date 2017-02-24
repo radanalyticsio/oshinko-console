@@ -32,6 +32,10 @@
           <label for="cluster-new-name">Worker configuration name</label>
           <input id="cluster-workerconfig-name" class="form-control input-lg" type="text" ng-model="fields.workerconfigname" autofocus="true"/>
         </div>
+        <div class="form-group">
+          <label for="cluster-expose-ui">Expose Apache Spark web ui via a route</label>
+          <input id="cluster-expose-ui" class="form-control input-lg" type="checkbox" ng-model="fields.exposewebui"/>
+        </div>
         <div class="form-group"><a href="#" ng-click="toggleAdvanced()">Basic cluster configuration</a></div>
       </div>
     </fieldset>

@@ -380,7 +380,7 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, context) {
+      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, exposewebui, context) {
         var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
         var workerPorts = [
           {
@@ -427,13 +427,19 @@ angular.module('openshiftConsole')
           smService = sparkService(clusterName, clusterName, "master", masterServicePort);
           suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
 
-          $q.all([
+          var steps = [
             createDeploymentConfig(sm, context),
             createDeploymentConfig(sw, context),
             createService(smService, context),
-            createService(suiService, context),
-            createRoute(suiService, context)
-          ]).then(function (values) {
+            createService(suiService, context)
+          ];
+
+          // if expose webui was checked, we expose the apache spark webui via a route
+          if (exposewebui) {
+            steps.push(createRoute(suiService, context));
+          }
+
+          $q.all(steps).then(function (values) {
             deferred.resolve(values);
           }).catch(function (err) {
             deferred.reject(err);

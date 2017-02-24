@@ -419,12 +419,12 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function t(a, c, d, e, f, g) {
-var h = "docker.io/radanalyticsio/openshift-spark:latest", i = [ {
+function t(a, c, d, e, f, g, h) {
+var i = "docker.io/radanalyticsio/openshift-spark:latest", j = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
-} ], j = [ {
+} ], k = [ {
 name:"spark-webui",
 containerPort:8080,
 protocol:"TCP"
@@ -432,22 +432,24 @@ protocol:"TCP"
 name:"spark-master",
 containerPort:7077,
 protocol:"TCP"
-} ], k = [ {
+} ], l = [ {
 protocol:"TCP",
 port:7077,
 targetPort:7077
-} ], l = [ {
+} ], n = [ {
 protocol:"TCP",
 port:8080,
 targetPort:8080
-} ], n = null, t = null, u = null, v = null, w = b.defer();
+} ], t = null, u = null, v = null, w = null, x = b.defer();
 return s(d, c, f, e).then(function(c) {
-n = m(h, a, "master", null, j, c.masterConfigName), t = m(h, a, "worker", c.workerCount, i, c.workerConfigName), u = o(a, a, "master", k), v = o(a + "-ui", a, "webui", l), b.all([ p(n, g), p(t, g), q(u, g), q(v, g), r(v, g) ]).then(function(a) {
-w.resolve(a);
+t = m(i, a, "master", null, k, c.masterConfigName), u = m(i, a, "worker", c.workerCount, j, c.workerConfigName), v = o(a, a, "master", l), w = o(a + "-ui", a, "webui", n);
+var d = [ p(t, h), p(u, h), q(v, h), q(w, h) ];
+g && d.push(r(w, h)), b.all(d).then(function(a) {
+x.resolve(a);
 })["catch"](function(a) {
-w.reject(a);
+x.reject(a);
 });
-}), w.promise;
+}), x.promise;
 }
 function u(a, b, c) {
 var d = a + "-w";
@@ -478,17 +480,18 @@ workers:1,
 advworkers:1,
 configname:"",
 masterconfigname:"",
-workerconfigname:""
+workerconfigname:"",
+exposewebui:!0
 };
 b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
 b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = b.fields.name.trim(), g = b.advanced, k = b.fields.workers, l = g ? b.fields.configname :null, m = g ? b.fields.masterconfigname :null, n = g ? b.fields.workerconfigname :null;
+var c = b.fields.name.trim(), g = b.advanced, k = b.fields.workers, l = g ? b.fields.configname :null, m = g ? b.fields.masterconfigname :null, n = g ? b.fields.workerconfigname :null, o = !g || b.fields.exposewebui;
 return f.get(h.project).then(_.spread(function(f, g) {
 return b.project = f, b.context = g, a.all([ j(c, k), i(l, "cluster-config-name", "cluster configuration", b.context), i(m, "cluster-masterconfig-name", "master spark configuration", b.context), i(n, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
-d.sendCreateCluster(c, k, l, m, n, b.context).then(function(a) {
+d.sendCreateCluster(c, k, l, m, n, o, b.context).then(function(a) {
 e.close(a);
 }, function(a) {
 b.formError = a.data.message;
