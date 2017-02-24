@@ -14,7 +14,8 @@ angular.module('oshinkoConsole')
         advworkers: 1,
         configname: "",
         masterconfigname: "",
-        workerconfigname: ""
+        workerconfigname: "",
+        exposewebui: true
       };
       $scope.fields = fields;
       $scope.advanced = false;
@@ -87,6 +88,7 @@ angular.module('oshinkoConsole')
         var configName = advanced ? $scope.fields.configname : null;
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
+        var exposewebui = advanced ? $scope.fields.exposewebui : true;
 
         return ProjectsService
           .get($routeParams.project)
@@ -99,7 +101,7 @@ angular.module('oshinkoConsole')
               validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
               validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
             ]).then(function () {
-              clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName, $scope.context).then(function (response) {
+              clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName, exposewebui, $scope.context).then(function (response) {
                 $uibModalInstance.close(response);
               }, function (error) {
                 $scope.formError = error.data.message;

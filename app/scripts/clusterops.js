@@ -13,8 +13,16 @@ angular.module('openshiftConsole')
       return labelMap[labelKey];
     };
   })
+  .filter('clusterName', function () {
+    var labelMap = {
+      'route': ["oshinko-cluster"]
+    };
+    return function (labelKey) {
+      return labelMap[labelKey];
+    };
+  })
   .factory('clusterData',
-    function ($http, $q, DataService, DeploymentsService, $filter) {
+    function ($http, $q, DataService, DeploymentsService, ApplicationGenerator, $filter) {
 
       // Start delete-related functions
       function deleteObject(name, resourceType, context) {
@@ -68,6 +76,21 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
+      function deleteRoute(clusterName, context) {
+        return DataService.list('routes', context, function (result) {
+          var routes = result.by("metadata.name");
+          angular.forEach(routes, function(route) {
+            deleteObject(route.metadata.name, 'routes', context);
+          });
+        }, {
+          http: {
+            params: {
+              labelSelector: $filter('clusterName')('route') + '=' + clusterName
+            }
+          }
+        });
+      }
+
       function sendDeleteCluster(clusterName, context) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
@@ -78,7 +101,8 @@ angular.module('openshiftConsole')
           deleteObject(masterDeploymentName, 'deploymentconfigs', context),
           deleteObject(workerDeploymentName, 'deploymentconfigs', context),
           deleteObject(clusterName, 'services', context),
-          deleteObject(clusterName + "-ui", 'services', context),
+          deleteRoute(clusterName, context),
+          deleteObject(clusterName + "-ui", 'services', context)
         ]);
       }
 
@@ -295,6 +319,16 @@ angular.module('openshiftConsole')
         return DataService.create("services", null, srvObject, context, null);
       }
 
+      function createRoute(srvObject, context) {
+        var serviceName = srvObject.metadata.name;
+        var labels = srvObject.metadata.labels;
+        var routeOptions = {
+          name: serviceName + "-route"
+        };
+        var route = ApplicationGenerator.createRoute(routeOptions, serviceName, labels);
+        return DataService.create('routes', null, route, context);
+      }
+
       function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig, context) {
         var deferred = $q.defer();
         var finalConfig = {};
@@ -346,7 +380,7 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, context) {
+      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, exposewebui, context) {
         var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
         var workerPorts = [
           {
@@ -393,12 +427,19 @@ angular.module('openshiftConsole')
           smService = sparkService(clusterName, clusterName, "master", masterServicePort);
           suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
 
-          $q.all([
+          var steps = [
             createDeploymentConfig(sm, context),
             createDeploymentConfig(sw, context),
             createService(smService, context),
             createService(suiService, context)
-          ]).then(function (values) {
+          ];
+
+          // if expose webui was checked, we expose the apache spark webui via a route
+          if (exposewebui) {
+            steps.push(createRoute(suiService, context));
+          }
+
+          $q.all(steps).then(function (values) {
             deferred.resolve(values);
           }).catch(function (err) {
             deferred.reject(err);
