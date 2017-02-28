@@ -106,6 +106,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<th>Status</th>\n" +
     "<th>Master</th>\n" +
     "<th>Worker count</th>\n" +
+    "<th>Spark UI Link</th>\n" +
     "<th><span class=\"sr-only\">Actions</span></th>\n" +
     "</tr>\n" +
     "</thead>\n" +
@@ -122,6 +123,8 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</td>\n" +
     "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
     "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td ng-if=\"getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\"><a target=\"_blank\" href=\"{{ getSparkWebUi(oshinkoClusters[cluster]) }}\">Spark UI</a></td>\n" +
+    "<td ng-if=\"!getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">N/A</td>\n" +
     "<td data-title=\"Actions\" class=\"text-xs-left text-right\">\n" +
     "<span uib-dropdown>\n" +
     "<button id=\"{{cluster}}-actions\" type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
