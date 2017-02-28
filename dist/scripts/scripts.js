@@ -16,22 +16,24 @@ iconClass:"pficon  pficon-cluster"
 }), hawtioPluginLoader.addModule(a);
 }(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "AlertMessageService", "$uibModal", function(a, b, c, d, e, f, g, h, i, j, k) {
 function l(a) {
-return !!q(a, "oshinko-cluster");
+return !!r(a, "oshinko-cluster");
 }
-function m(a, b) {
-var c, d, e, f, g, h = {};
+function m(a, b, c) {
+var d, e, f, g, h, i = {};
 return _.each(a, function(a) {
-l(a) && (c = q(a, "oshinko-cluster"), e = _.get(a, "metadata.name", ""), d = q(a, "oshinko-type"), g = _.find(b, function(b) {
+l(a) && (d = r(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = r(a, "oshinko-type"), h = _.find(b, function(b) {
 var c = new LabelSelector(b.spec.selector);
 return c.matches(a);
-}), g && (f = _.get(g, "metadata.name", ""), _.set(h, [ c, d, "svc", f ], g)), _.set(h, [ c, d, "pod", e ], a));
+}), h && (g = _.get(h, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], h)), _.set(i, [ d, e, "pod", f ], a));
 }), _.each(b, function(a) {
-d = q(a, "oshinko-type"), "webui" === d && (c = q(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), _.set(h, [ c, d, "svc", f ], a));
-}), h;
+e = r(a, "oshinko-type"), "webui" === e && (d = r(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
+}), _.each(c, function(a) {
+d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
+}), i;
 }
-var n, o, p = [];
+var n, o, p, q = [];
 a.projectName = g.project, a.serviceName = g.service, a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.alerts = a.alerts || {};
-var q = i("label");
+var r = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
 link:"project/" + a.projectName
@@ -40,8 +42,8 @@ title:"Spark Clusters"
 } ], j.getAlerts().forEach(function(b) {
 a.alerts[b.name] = b.data;
 }), j.clearAlerts();
-var r = function() {
-o && n && (a.oshinkoClusters = m(o, n), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters));
+var s = function() {
+o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters));
 };
 a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
@@ -50,6 +52,14 @@ return c;
 }, a.getClusterName = function(a) {
 var b = Object.keys(a);
 return b[0];
+}, a.getSparkWebUi = function(a) {
+var b = "";
+try {
+b = "http://" + a.uiroute.spec.host;
+} catch (c) {
+b = null;
+}
+return b;
 }, a.getClusterStatus = function(a) {
 var b, c = "Starting...", d = !1;
 return a && a.worker && a.worker.pod && a.master && a.master.pod ? (_.each(a.worker.pod, function(a) {
@@ -67,23 +77,25 @@ b = "spark://" + c[d] + ":7077";
 break;
 }
 return b;
-}, a.getCluster = function() {
+}, a.getSparkUiRoute = function() {}, a.getCluster = function() {
 if (a.oshinkoClusters && a.cluster) {
 var b = a.oshinkoClusters[a.cluster];
 return b;
 }
 };
-var s = g.project;
-f.get(s).then(_.spread(function(b, c) {
-a.project = b, a.projectContext = c, p.push(e.watch("pods", c, function(b) {
-a.pods = o = b.by("metadata.name"), r();
-})), p.push(e.watch("services", c, function(b) {
-a.services = n = b.by("metadata.name"), r();
+var t = g.project;
+f.get(t).then(_.spread(function(b, c) {
+a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
+a.pods = o = b.by("metadata.name"), s();
+})), q.push(e.watch("services", c, function(b) {
+a.services = n = b.by("metadata.name"), s();
+})), q.push(e.watch("routes", c, function(b) {
+a.routes = p = b.by("metadata.name"), s();
 })), a.$on("$destroy", function() {
-e.unwatchAll(p);
+e.unwatchAll(q);
 });
 })), a.$on("$destroy", function() {
-e.unwatchAll(p);
+e.unwatchAll(q);
 }), a.deleteCluster = function(b) {
 var c = k.open({
 animation:!0,
