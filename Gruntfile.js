@@ -54,7 +54,9 @@ module.exports = function (grunt) {
           src: [
             '.tmp',
             '<%= yeoman.dist %>/{,*/}*',
-            '!<%= yeoman.dist %>/.git*'
+            '!<%= yeoman.dist %>/.git*',
+            'oshinko.zip',
+            'oshinko.tar'
           ]
         }]
       },
@@ -259,7 +261,42 @@ module.exports = function (grunt) {
         }]
       }
     },
-
+    compress: {
+      zip: {
+        options: {
+          archive: 'oshinko.zip',
+          mode: 'zip'
+        },
+        files: [{
+          expand: true,
+          cwd: './dist/scripts',
+          src: [ '**.js'],
+          dest: './oshinko-release'
+        },{
+          expand: true,
+          cwd: './dist/styles',
+          src: [ '**.css' ],
+          dest: './oshinko-release'
+        }]
+      },
+      tar: {
+        options: {
+          archive: 'oshinko.tar',
+          mode: 'tar'
+        },
+        files: [{
+          expand: true,
+          cwd: './dist/scripts',
+          src: [ '**.js'],
+          dest: './oshinko-release'
+        },{
+          expand: true,
+          cwd: './dist/styles',
+          src: [ '**.css' ],
+          dest: './oshinko-release'
+        }]
+      }
+    },
     // Run some tasks in parallel to speed up the build process
     concurrent: {
       server: [
@@ -325,6 +362,8 @@ module.exports = function (grunt) {
 
   grunt.loadNpmTasks('grunt-htmlhint');
 
+  grunt.loadNpmTasks('grunt-contrib-compress');
+
   grunt.loadNpmTasks('grunt-angular-templates');
 
   grunt.registerTask('build', [
@@ -340,7 +379,8 @@ module.exports = function (grunt) {
     'cssmin',
     'uglify',
     'usemin',
-    'htmlmin'
+    'htmlmin',
+    'compress',
   ]);
 
   grunt.registerTask('dev', [
