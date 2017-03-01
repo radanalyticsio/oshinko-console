@@ -12,6 +12,7 @@ module.exports = function (grunt) {
   // Configurable paths for the application
   var appConfig = {
     app: require('./bower.json').appPath || 'app',
+    version: require('./package.json').version || '1.0.0',
     dist: 'dist'
   };
   var contextRoot = grunt.option('contextRoot') || "";
@@ -55,8 +56,8 @@ module.exports = function (grunt) {
             '.tmp',
             '<%= yeoman.dist %>/{,*/}*',
             '!<%= yeoman.dist %>/.git*',
-            'oshinko.zip',
-            'oshinko.tar'
+            'oshinko_<%= yeoman.version %>.zip',
+            'oshinko_<%= yeoman.version %>.tar'
           ]
         }]
       },
@@ -264,7 +265,7 @@ module.exports = function (grunt) {
     compress: {
       zip: {
         options: {
-          archive: 'oshinko.zip',
+          archive: 'oshinko_<%= yeoman.version %>.zip',
           mode: 'zip'
         },
         files: [{
@@ -281,7 +282,7 @@ module.exports = function (grunt) {
       },
       tar: {
         options: {
-          archive: 'oshinko.tar',
+          archive: 'oshinko_<%= yeoman.version %>.tar',
           mode: 'tar'
         },
         files: [{
