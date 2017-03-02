@@ -231,7 +231,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<fieldset ng-disabled=\"disableInputs\">\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"numworkers\" id=\"numworkers\">Number of workers</label>\n" +
-    "<input class=\"form-control input-lg\" name=\"numworkers\" type=\"number\" min=\"1\" ng-model=\"workerCount\" value=\"{{workerCount}}\"/>\n" +
+    "<input class=\"form-control input-lg\" name=\"numworkers\" type=\"number\" min=\"0\" ng-model=\"workerCount\" value=\"{{workerCount}}\"/>\n" +
     "</div>\n" +
     "</fieldset>\n" +
     "</form>\n" +
