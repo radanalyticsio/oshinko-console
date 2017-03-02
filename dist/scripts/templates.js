@@ -121,7 +121,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<span ng-switch-default class=\"fa fa-question text-danger\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
     "<span> {{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "</td>\n" +
-    "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(cluster) }}</td>\n" +
     "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
     "<td ng-if=\"getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\"><a target=\"_blank\" href=\"{{ getSparkWebUi(oshinkoClusters[cluster]) }}\">Spark UI</a></td>\n" +
     "<td ng-if=\"!getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">N/A</td>\n" +

@@ -147,25 +147,9 @@ angular.module('openshiftConsole')
         //return starting...
         return status;
       };
-      $scope.getSparkMasterUrl = function (cluster) {
-        var masterUrl = "";
-        if (!cluster || !cluster.master || !cluster.master.svc) {
-          return "";
-        }
-        var masterSvc = Object.keys(cluster.master.svc);
-        if (masterSvc.length === 0) {
-          return "";
-        }
-        for (var i = 0; i <= masterSvc.length; i++) {
-          if (cluster.master.svc[masterSvc[i]].spec.ports[0].port === 7077) {
-            masterUrl = "spark://" + masterSvc[i] + ":" + 7077;
-            break;
-          }
-        }
+      $scope.getSparkMasterUrl = function (clusterName) {
+        var masterUrl = "spark://" + clusterName + ":7077";
         return masterUrl;
-      };
-      $scope.getSparkUiRoute = function () {
-
       };
       $scope.getCluster = function () {
         if (!$scope.oshinkoClusters || !$scope.cluster) {
