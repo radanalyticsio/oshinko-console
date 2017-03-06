@@ -1,0 +1,13 @@
+node_modules
+.tmp
+.bundle
+.idea
+bower_components
+phantomjsdriver.log
+.DS_Store
+test/test-results.xml
+npm-debug.log
+oshinko_*.zip
+oshinko_*.tar
+
+
