@@ -62,10 +62,10 @@ b = null;
 return b;
 }, a.getClusterStatus = function(a) {
 var b, c = "Starting...", d = !1;
-return a && a.worker && a.worker.pod && a.master && a.master.pod ? (_.each(a.worker.pod, function(a) {
-if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
+return a && a.master && a.master.pod ? (a.worker && a.worker.pod && _.each(a.worker.pod, function(a) {
+d = !0, "Running" !== a.status.phase && (b = a.status.phase);
 }), _.each(a.master.pod, function(a) {
-if (d = !0, "Running" !== a.status.phase) return void (b = a.status.phase);
+d = !0, "Running" !== a.status.phase && (b = a.status.phase);
 }), d && b ? b :d ? "Running" :c) :"Pending";
 }, a.getSparkMasterUrl = function(a) {
 var b = "spark://" + a + ":7077";
@@ -161,7 +161,7 @@ workerCount:c
 }
 });
 d.result.then(function(c) {
-var d = c.spec.replicas, e = b + "-scale", f = d > 1 ? "workers" :"worker";
+var d = c.spec.replicas || 0, e = b + "-scale", f = 1 !== d ? "workers" :"worker";
 a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
@@ -510,9 +510,9 @@ b.formError = a.message;
 function h(c) {
 b.formError = "";
 var d, e = a.defer();
-return c ? i.test(c) ? c <= 0 && (d = new Error("Please give a value greater than 0.")) :d = new Error("Please give a valid number of workers.") :d = new Error("The number of workers cannot be empty or less than 1."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
+return void 0 === c || null === c ? d = new Error("The number of workers cannot be empty or less than 0.") :i.test(c) ? c < 0 && (d = new Error("Please give a value greater than or equal to 0.")) :d = new Error("Please give a valid number of workers."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
 }
-b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 1, b.deleteCluster = function() {
+b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.deleteCluster = function() {
 g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
 var b = !1;

@@ -118,23 +118,24 @@ angular.module('openshiftConsole')
         var status = "Starting...";
         var podStatus;
         var isPod = false;
-        if (!cluster || !cluster.worker || !cluster.worker.pod || !cluster.master || !cluster.master.pod) {
+        // no longer checking workers since scaling to zero is possible
+        if (!cluster || !cluster.master || !cluster.master.pod) {
           return "Pending";
         }
         //TODO look at more states
-        _.each(cluster.worker.pod, function (worker) {
-          isPod = true;
-          if (worker.status.phase !== "Running") {
-            podStatus = worker.status.phase;
-            return;
-          }
-        });
+        if (cluster.worker && cluster.worker.pod) {
+          _.each(cluster.worker.pod, function (worker) {
+            isPod = true;
+            if (worker.status.phase !== "Running") {
+              podStatus = worker.status.phase;
+            }
+          });
+        }
 
         _.each(cluster.master.pod, function (master) {
           isPod = true;
           if (master.status.phase !== "Running") {
             podStatus = master.status.phase;
-            return;
           }
         });
         //return pod status
@@ -270,9 +271,9 @@ angular.module('openshiftConsole')
         });
 
         modalInstance.result.then(function (response) {
-          var numWorkers = response.spec.replicas;
+          var numWorkers = response.spec.replicas || 0;
           var alertName = clusterName + "-scale";
-          var workers = numWorkers > 1 ? "workers" : "worker";
+          var workers = numWorkers !== 1 ? "workers" : "worker";
           $scope.alerts[alertName] = {
             type: "success",
             message: clusterName + " has been scaled to " + numWorkers + " " + workers

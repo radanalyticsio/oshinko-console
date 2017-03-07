@@ -9,7 +9,7 @@ angular.module('openshiftConsole')
     function ($q, $scope, clusterData, $uibModalInstance, dialogData, $routeParams, ProjectsService) {
 
       $scope.clusterName = dialogData.clusterName || "";
-      $scope.workerCount = dialogData.workerCount || 1;
+      $scope.workerCount = dialogData.workerCount || 0;
 
       $scope.deleteCluster = function deleteCluster() {
         ProjectsService
@@ -46,14 +46,14 @@ angular.module('openshiftConsole')
         $scope.formError = "";
         var defer = $q.defer();
         var ex;
-        if (!workers) {
-          ex = new Error("The number of workers cannot be empty or less than 1.");
+        if (workers === undefined || workers === null) {
+          ex = new Error("The number of workers cannot be empty or less than 0.");
         }
         else if (!NUMBER_RE.test(workers)) {
           ex = new Error("Please give a valid number of workers.");
         }
-        else if (workers <= 0) {
-          ex = new Error("Please give a value greater than 0.");
+        else if (workers < 0) {
+          ex = new Error("Please give a value greater than or equal to 0.");
         }
         if (ex) {
           ex.target = "#numworkers";
