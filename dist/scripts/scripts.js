@@ -104,8 +104,8 @@ clusterName:b
 }
 });
 c.result.then(function() {
-var c = b + "-delete";
-a.alerts[c] = {
+var c = "cluster-delete";
+a.alerts = {}, a.alerts[c] = {
 type:"success",
 message:b + " has been marked for deletion"
 };
@@ -131,8 +131,8 @@ return {};
 }
 });
 b.result.then(function(b) {
-var c = b[0].metadata.labels["oshinko-cluster"], d = c + "-create";
-a.alerts[d] = {
+var c = b[0].metadata.labels["oshinko-cluster"], d = "cluster-create";
+a.alerts = {}, a.alerts[d] = {
 type:"success",
 message:c + " has been created"
 };
@@ -162,7 +162,7 @@ workerCount:c
 });
 d.result.then(function(c) {
 var d = c.spec.replicas || 0, e = b + "-scale", f = 1 !== d ? "workers" :"worker";
-a.alerts[e] = {
+a.alerts = {}, a.alerts[e] = {
 type:"success",
 message:b + " has been scaled to " + d + " " + f
 };
