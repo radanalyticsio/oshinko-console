@@ -207,7 +207,8 @@ angular.module('openshiftConsole')
         });
 
         modalInstance.result.then(function () {
-          var alertName = clusterName + "-delete";
+          var alertName = "cluster-delete";
+          $scope.alerts = {};
           $scope.alerts[alertName] = {
             type: "success",
             message: clusterName + " has been marked for deletion"
@@ -238,7 +239,8 @@ angular.module('openshiftConsole')
 
         modalInstance.result.then(function (response) {
           var clusterName = response[0].metadata.labels["oshinko-cluster"];
-          var alertName = clusterName + "-create";
+          var alertName = "cluster-create";
+          $scope.alerts = {};
           $scope.alerts[alertName] = {
             type: "success",
             message: clusterName + " has been created"
@@ -274,6 +276,7 @@ angular.module('openshiftConsole')
           var numWorkers = response.spec.replicas || 0;
           var alertName = clusterName + "-scale";
           var workers = numWorkers !== 1 ? "workers" : "worker";
+          $scope.alerts = {};
           $scope.alerts[alertName] = {
             type: "success",
             message: clusterName + " has been scaled to " + numWorkers + " " + workers
