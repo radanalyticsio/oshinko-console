@@ -53,7 +53,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "</div>\n" +
     "</div>\n" +
-    "<div class=\"middle-content\">\n" +
+    "<div class=\"middle-content\" persist-tab-state>\n" +
     "<div class=\"container-fluid\">\n" +
     "<div class=\"row\">\n" +
     "<div class=\"col-md-12\">\n" +
@@ -65,9 +65,6 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<uib-tab heading=\"Apps\" active=\"selectedTab.apps\">\n" +
     "<uib-tab-heading>Apps</uib-tab-heading>\n" +
     "<div>Placeholder for cluster -> app information</div>\n" +
-    "</uib-tab>\n" +
-    "<uib-tab ng-if=\"metricsAvailable\" heading=\"Metrics\" active=\"selectedTab.metrics\">\n" +
-    "\n" +
     "</uib-tab>\n" +
     "</uib-tabset>\n" +
     "</div>\n" +

@@ -35,7 +35,7 @@ d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
 }), i;
 }
 var n, o, p, q = [];
-a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {};
+a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {}, a.selectedTab = {};
 var r = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
@@ -47,7 +47,7 @@ link:"project/" + a.projectName + "/oshinko"
 title:a.currentCluster
 }), j.getAlerts().forEach(function(b) {
 a.alerts[b.name] = b.data;
-}), j.clearAlerts();
+}), j.clearAlerts(), g.tab && (a.selectedTab[g.tab] = !0);
 var s = function(b, c) {
 try {
 a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length;

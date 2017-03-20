@@ -19,6 +19,7 @@ angular.module('openshiftConsole')
       $scope.oshinkoClusterNames = [];
       $scope.cluster_details = null;
       $scope.alerts = $scope.alerts || {};
+      $scope.selectedTab = {};
       var label = $filter('label');
       $scope.cluster_id = $route.current.params.Id || '';
       $scope.breadcrumbs = [
@@ -39,6 +40,10 @@ angular.module('openshiftConsole')
         $scope.alerts[alert.name] = alert.data;
       });
       AlertMessageService.clearAlerts();
+
+      if($routeParams.tab) {
+        $scope.selectedTab[$routeParams.tab] = true; // ex: tab=Group for Groups, pluralized in the template
+      }
 
       function oshinkoCluster(resource) {
         if (label(resource, "oshinko-cluster")) {
