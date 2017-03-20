@@ -6,6 +6,9 @@ angular.module(a, [ "openshiftConsole", "oshinkoConsoleTemplates" ]).config([ "$
 a.when("/project/:project/oshinko", {
 templateUrl:"views/oshinko/clusters.html",
 controller:"OshinkoClustersCtrl"
+}), a.when("/project/:project/oshinko/:cluster", {
+templateUrl:"views/oshinko/cluster.html",
+controller:"OshinkoClustersCtrl"
 });
 } ]).run(function() {
 window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.push({
@@ -32,18 +35,27 @@ d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
 }), i;
 }
 var n, o, p, q = [];
-a.projectName = g.project, a.serviceName = g.service, a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.alerts = a.alerts || {};
+a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {};
 var r = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
 link:"project/" + a.projectName
 }, {
-title:"Spark Clusters"
-} ], j.getAlerts().forEach(function(b) {
+title:"Spark Clusters",
+link:"project/" + a.projectName + "/oshinko"
+} ], "" !== a.currentCluster && a.breadcrumbs.push({
+title:a.currentCluster
+}), j.getAlerts().forEach(function(b) {
 a.alerts[b.name] = b.data;
 }), j.clearAlerts();
-var s = function() {
-o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters));
+var s = function(b, c) {
+try {
+a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length;
+} catch (d) {
+a.cluster_details = null;
+}
+}, t = function() {
+o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? s(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
 };
 a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
@@ -75,15 +87,18 @@ if (a.oshinkoClusters && a.cluster) {
 var b = a.oshinkoClusters[a.cluster];
 return b;
 }
+}, a.gotoCluster = function(a) {
+var b = c.path() + "/" + encodeURIComponent(a);
+c.path(b);
 };
-var t = g.project;
-f.get(t).then(_.spread(function(b, c) {
+var u = g.project;
+f.get(u).then(_.spread(function(b, c) {
 a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
-a.pods = o = b.by("metadata.name"), s();
+a.pods = o = b.by("metadata.name"), t();
 })), q.push(e.watch("services", c, function(b) {
-a.services = n = b.by("metadata.name"), s();
+a.services = n = b.by("metadata.name"), t();
 })), q.push(e.watch("routes", c, function(b) {
-a.routes = p = b.by("metadata.name"), s();
+a.routes = p = b.by("metadata.name"), t();
 })), a.$on("$destroy", function() {
 e.unwatchAll(q);
 });

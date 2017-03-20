@@ -9,6 +9,10 @@
             templateUrl: 'views/oshinko/clusters.html',
             controller: 'OshinkoClustersCtrl'
           });
+          $routeProvider.when('/project/:project/oshinko/:cluster', {
+            templateUrl: 'views/oshinko/cluster.html',
+            controller: 'OshinkoClustersCtrl'
+          });
         }
       ])
     .run(function () {

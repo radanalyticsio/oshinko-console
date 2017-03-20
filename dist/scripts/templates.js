@@ -1,67 +1,78 @@
 angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($templateCache) {
   'use strict';
 
+  $templateCache.put('views/oshinko/_cluster-details.html',
+    "<div class=\"resource-details\">\n" +
+    "<div class=\"row\">\n" +
+    "<div class=\"col-lg-6\">\n" +
+    "<dl class=\"dl-horizontal left\">\n" +
+    "<dt>Number Of Masters:</dt>\n" +
+    "<dd>\n" +
+    "{{cluster_details.masterCount }}\n" +
+    "</dd>\n" +
+    "<dt>Number Of Workers:</dt>\n" +
+    "<dd>\n" +
+    "{{cluster_details.workerCount }}\n" +
+    "</dd>\n" +
+    "</dl>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "</div>"
+  );
+
+
   $templateCache.put('views/oshinko/cluster.html',
     "<project-header class=\"top-header\"></project-header>\n" +
-    "<project-page class=\"project-overview-page\">\n" +
-    "<div class=\"container-cards-pf dashboard-cards\">\n" +
+    "<project-page>\n" +
+    "\n" +
+    "<div class=\"middle-section\">\n" +
+    "<div class=\"middle-container\">\n" +
+    "<div class=\"middle-header header-light\">\n" +
+    "<div class=\"container-fluid\">\n" +
+    "<tasks></tasks>\n" +
+    "<alerts alerts=\"alerts\"></alerts>\n" +
     "<breadcrumbs breadcrumbs=\"breadcrumbs\"></breadcrumbs>\n" +
-    "<div class=\"card-pf card-pf-double\" id=\"cluster-list\">\n" +
-    "<div class=\"card-pf-heading\">\n" +
+    "<div class=\"page-header page-header-bleed-right page-header-bleed-left\">\n" +
     "<div class=\"pull-right\">\n" +
-    "<button class=\"btn btn-primary\" id=\"startbutton\" ng-click=\"newCluster()\" translatable=\"yes\">Deploy</button>\n" +
+    "<span uib-dropdown>\n" +
+    "<button id=\"{{cluster}}-actions\" type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
+    "Actions\n" +
+    "<span class=\"caret\" aria-hidden=\"true\"></span>\n" +
+    "</button>\n" +
+    "<ul class=\"uib-dropdown-menu dropdown-menu-right\">\n" +
+    "<li>\n" +
+    "<a href=\"\" id=\"{{cluster}}-scalebutton\" role=\"button\" ng-click=\"scaleCluster(cluster_details.name, countWorkers(cluster_details))\">Scale Cluster</a>\n" +
+    "</li>\n" +
+    "<li>\n" +
+    "<a href=\"\" id=\"{{cluster}}-deletebutton\" role=\"button\" ng-click=\"deleteCluster(cluster_details.name)\">Delete Cluster</a>\n" +
+    "</li>\n" +
+    "</ul>\n" +
+    "</span>\n" +
     "</div>\n" +
-    "<h2 class=\"card-pf-title\" translatable=\"yes\">Spark Clusters</h2>\n" +
+    "<h1>{{ cluster_details.name }}</h1>\n" +
     "</div>\n" +
-    "<div class=\"card-pf-body\">\n" +
-    "<div class=\"well blank-slate-pf spacious\" ng-if=\"!oshinkoClusters || oshinkoClusterNames.length <= 0\">\n" +
-    "<div class=\"blank-slate-pf-icon\">\n" +
-    "<i class=\"fa fa-hourglass-start\"></i>\n" +
     "</div>\n" +
-    "<h3>No Spark Clusters present</h3>\n" +
-    "<p translatable=\"yes\">You can deploy a new spark cluster.</p>\n" +
     "</div>\n" +
-    "<table class=\"table\" ng-if=\"oshinkoClusterNames.length > 0\">\n" +
-    "<thead>\n" +
-    "<tr>\n" +
-    "<th>\n" +
-    "<a ng-click=\"order('name')\">Name</a>\n" +
-    "</th>\n" +
-    "<th>\n" +
-    "<a ng-click=\"order('status')\">Status</a>\n" +
-    "</th>\n" +
-    "<th>\n" +
-    "<a ng-click=\"order('master_address')\">Master</a>\n" +
-    "</th>\n" +
-    "<th>\n" +
-    "<a ng-click=\"order('worker_count')\">Worker count</a>\n" +
-    "</th>\n" +
-    "<th></th>\n" +
-    "<th></th>\n" +
-    "</tr>\n" +
-    "</thead>\n" +
-    "<tbody ng-repeat=\"(cluster, details) in oshinkoClusters | orderBy:predicate:reverse\" ng-init=\"id = cluster\" name=\"cluster-row-{{$index}}\" data-id=\"{{ id }}\">\n" +
-    "<tr>\n" +
-    "<td id=\"clustername-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</td>\n" +
-    "<td ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\" ng-click=\"gotoCluster(cluster)\">\n" +
-    "<span ng-switch-when=\"Running\" class=\"label label-success\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-when=\"Error\" class=\"label label-danger\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-when=\"Scaling\" class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "<span ng-switch-default class=\"label label-default\">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
-    "</td>\n" +
-    "<td name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td>\n" +
-    "<button name=\"scalebutton-{{cluster}}\" class=\"btn btn-default\" translatable=\"yes\" ng-click=\"scaleCluster(cluster)\">Scale</button>\n" +
-    "</td>\n" +
-    "<td>\n" +
-    "<a name=\"deletebutton-{{ cluster }}\" class=\"delete-icon\">\n" +
-    "<i translatable=\"yes\" class=\"pficon-delete\" ng-click=\"deleteCluster(cluster)\"></i>\n" +
-    "</a>\n" +
-    "</td>\n" +
-    "</tr>\n" +
-    "</tbody>\n" +
-    "</table>\n" +
+    "<div class=\"middle-content\">\n" +
+    "<div class=\"container-fluid\">\n" +
+    "<div class=\"row\">\n" +
+    "<div class=\"col-md-12\">\n" +
+    "<uib-tabset>\n" +
+    "<uib-tab heading=\"Details\" active=\"selectedTab.details\">\n" +
+    "<uib-tab-heading>Details</uib-tab-heading>\n" +
+    "<ng-include src=\"'views/oshinko/_cluster-details.html'\"></ng-include>\n" +
+    "</uib-tab>\n" +
+    "<uib-tab heading=\"Apps\" active=\"selectedTab.apps\">\n" +
+    "<uib-tab-heading>Apps</uib-tab-heading>\n" +
+    "<div>Placeholder for cluster -> app information</div>\n" +
+    "</uib-tab>\n" +
+    "<uib-tab ng-if=\"metricsAvailable\" heading=\"Metrics\" active=\"selectedTab.metrics\">\n" +
+    "\n" +
+    "</uib-tab>\n" +
+    "</uib-tabset>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "</div>\n" +
     "</div>\n" +
     "</div>\n" +
     "</div>\n" +
