@@ -13,10 +13,13 @@ angular.module('openshiftConsole')
       var services, pods, routes;
       $scope.projectName = $routeParams.project;
       $scope.serviceName = $routeParams.service;
+      $scope.currentCluster = $routeParams.cluster || '';
       $scope.projects = {};
       $scope.oshinkoClusters = {};
       $scope.oshinkoClusterNames = [];
+      $scope.cluster_details = null;
       $scope.alerts = $scope.alerts || {};
+      $scope.selectedTab = {};
       var label = $filter('label');
       $scope.cluster_id = $route.current.params.Id || '';
       $scope.breadcrumbs = [
@@ -25,14 +28,22 @@ angular.module('openshiftConsole')
           link: "project/" + $scope.projectName
         },
         {
-          title: "Spark Clusters"
+          title: "Spark Clusters",
+          link: "project/" + $scope.projectName + "/oshinko"
         }
       ];
+      if ($scope.currentCluster !== '') {
+        $scope.breadcrumbs.push( {title: $scope.currentCluster});
+      }
 
       AlertMessageService.getAlerts().forEach(function (alert) {
         $scope.alerts[alert.name] = alert.data;
       });
       AlertMessageService.clearAlerts();
+
+      if($routeParams.tab) {
+        $scope.selectedTab[$routeParams.tab] = true; // ex: tab=Group for Groups, pluralized in the template
+      }
 
       function oshinkoCluster(resource) {
         if (label(resource, "oshinko-cluster")) {
@@ -86,12 +97,29 @@ angular.module('openshiftConsole')
         return clusters;
       }
 
+      var setClusterDetails = function (clusterName, allClusters) {
+        try {
+          $scope.cluster_details = allClusters[clusterName];
+          $scope.cluster_details['name'] = $scope.cluster_details.master.svc[Object.keys($scope.cluster_details.master.svc)[0]].metadata.labels['oshinko-cluster'];
+          $scope.cluster_details['workerCount'] = Object.keys($scope.cluster_details.worker.pod).length;
+          $scope.cluster_details['masterCount'] = Object.keys($scope.cluster_details.master.pod).length;
+        } catch (e) {
+          // most likely recently deleted
+          $scope.cluster_details = null;
+        }
+      };
+
       var groupClusters = function () {
         if (!pods || !services) {
           return;
         }
         $scope.oshinkoClusters = groupByClusters(pods, services, routes);
         $scope.oshinkoClusterNames = Object.keys($scope.oshinkoClusters);
+        if ($scope.currentCluster !== '' && $scope.oshinkoClusters[$scope.currentCluster]) {
+          setClusterDetails($scope.currentCluster, $scope.oshinkoClusters);
+        } else {
+          $scope.cluster_details = null;
+        }
       };
       $scope.countWorkers = function (cluster) {
         if (!cluster || !cluster.worker || !cluster.worker.pod) {
@@ -159,6 +187,11 @@ angular.module('openshiftConsole')
 
         var cluster = $scope.oshinkoClusters[$scope.cluster];
         return cluster;
+      };
+      
+      $scope.gotoCluster = function (clusterName) {
+        var newpath = $location.path() + '/' + encodeURIComponent(clusterName);
+        $location.path(newpath);
       };
 
       var project = $routeParams.project;

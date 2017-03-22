@@ -1,66 +1,56 @@
 <project-header class="top-header"></project-header>
-<project-page class="project-overview-page">
-    <div class="container-cards-pf dashboard-cards">
-        <breadcrumbs breadcrumbs="breadcrumbs"></breadcrumbs>
-        <div class="card-pf card-pf-double" id="cluster-list">
-            <div class="card-pf-heading">
-                <div class="pull-right">
-                    <button class="btn btn-primary" id="startbutton" ng-click="newCluster()"
-                            translatable="yes">Deploy</button>
-                </div>
-                <h2 class="card-pf-title" translatable="yes">Spark Clusters</h2>
+<project-page>
+  <!-- Middle section -->
+  <div class="middle-section">
+    <div class="middle-container">
+      <div class="middle-header header-light">
+        <div class="container-fluid">
+          <tasks></tasks>
+          <alerts alerts="alerts"></alerts>
+          <breadcrumbs breadcrumbs="breadcrumbs"></breadcrumbs>
+          <div class="page-header page-header-bleed-right page-header-bleed-left">
+            <div class="pull-right">
+              <span uib-dropdown>
+                <button id="{{cluster}}-actions" type="button" class="dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs"                       data-toggle="dropdown">
+                          Actions
+                  <span class="caret" aria-hidden="true"></span>
+                </button>
+                <ul class="uib-dropdown-menu dropdown-menu-right">
+                  <li>
+                    <a href="" id="{{cluster}}-scalebutton"
+                       role="button"
+                       ng-click="scaleCluster(cluster_details.name, countWorkers(cluster_details))">Scale Cluster</a>
+                  </li>
+                  <li>
+                    <a href="" id="{{cluster}}-deletebutton"
+                       role="button"
+                       ng-click="deleteCluster(cluster_details.name)">Delete Cluster</a>
+                  </li>
+                </ul>
+              </span>
             </div>
-            <div class="card-pf-body">
-                <div class="well blank-slate-pf spacious" ng-if="!oshinkoClusters || oshinkoClusterNames.length <= 0" >
-                    <div class="blank-slate-pf-icon">
-                        <i class="fa fa-hourglass-start"></i>
-                    </div>
-                    <h3>No Spark Clusters present</h3>
-                    <p translatable="yes">You can deploy a new spark cluster.</p>
-                </div>
-                <table class="table" ng-if="oshinkoClusterNames.length > 0">
-                    <thead>
-                    <tr>
-                        <th>
-                            <a ng-click="order('name')">Name</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('status')">Status</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('master_address')">Master</a>
-                        </th>
-                        <th>
-                            <a ng-click="order('worker_count')">Worker count</a>
-                        </th>
-                        <th></th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody  ng-repeat="(cluster, details) in oshinkoClusters | orderBy:predicate:reverse" ng-init="id = cluster" name="cluster-row-{{$index}}"
-                            data-id="{{ id }}">
-                    <tr>
-                        <td id="clustername-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ cluster }}</td>
-                        <td ng-switch="getClusterStatus(oshinkoClusters[cluster])" ng-click="gotoCluster(cluster)">
-                            <span ng-switch-when="Running" class="label label-success">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
-                            <span ng-switch-when="Error" class="label label-danger">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
-                            <span ng-switch-when="Scaling" class="label label-default">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
-                            <span ng-switch-default class="label label-default">{{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
-                        </td>
-                        <td name="masterurl-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ getSparkMasterUrl(oshinkoClusters[cluster]) }}</td>
-                        <td name="workercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countWorkers(oshinkoClusters[cluster]) }}</td>
-                        <td>
-                            <button name="scalebutton-{{cluster}}" class="btn btn-default" translatable="yes" ng-click="scaleCluster(cluster)">Scale</button>
-                        </td>
-                        <td>
-                            <a name="deletebutton-{{ cluster }}" class="delete-icon">
-                                <i translatable="yes" class=" pficon-delete" ng-click="deleteCluster(cluster)"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+            <h1>{{ cluster_details.name }}</h1>
+          </div>
         </div>
+      </div>
+        <div class="middle-content" persist-tab-state>
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-12">
+                <uib-tabset>
+                  <uib-tab heading="Details" active="selectedTab.details">
+                    <uib-tab-heading>Details</uib-tab-heading>
+                    <ng-include src="'views/oshinko/_cluster-details.html'"></ng-include>
+                  </uib-tab>
+                  <uib-tab heading="Apps" active="selectedTab.apps">
+                    <uib-tab-heading>Apps</uib-tab-heading>
+                    <div>Placeholder for cluster -> app information</div>
+                  </uib-tab>
+                </uib-tabset>
+              </div><!-- /col-* -->
+            </div>
+          </div>
+        </div><!-- /middle-content -->
     </div>
+  </div>
 </project-page>
