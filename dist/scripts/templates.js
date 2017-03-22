@@ -162,7 +162,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<span>Do you want to delete cluster: {{clusterName}}?</span>\n" +
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
-    "<button id=\"deletebutton\" class=\"btn btn-danger\" translatable=\"yes\" ng-click=\"complete(deleteCluster())\">Delete</button>\n" +
+    "<button id=\"deletebutton\" class=\"btn btn-danger\" translatable=\"yes\" ng-click=\"deleteCluster()\">Delete</button>\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
     "</div>"
   );
@@ -217,7 +217,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel1\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
-    "<button id=\"createbutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(newCluster())\">Deploy</button>\n" +
+    "<button id=\"createbutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"newCluster()\">Deploy</button>\n" +
     "</div>"
   );
 
@@ -239,7 +239,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
-    "<button id=\"scalebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"complete(scaleCluster(workerCount))\">Scale</button>\n" +
+    "<button id=\"scalebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"scaleCluster(workerCount)\">Scale</button>\n" +
     "</div>"
   );
 
