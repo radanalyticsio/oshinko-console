@@ -1,0 +1,82 @@
+sudo: required
+## use node_js
+language: node_js
+## home folder is /home/travis/build/radanalyticsio/oshinko-console
+services:
+- docker
+before_install:
+## add insecure-registry and restart docker
+- pwd
+- sudo cat /etc/default/docker
+- sudo service docker stop
+- sudo sed -i -e 's/sock/sock --insecure-registry 172.30.0.0\/16/' /etc/default/docker
+- sudo cat /etc/default/docker
+- sudo service docker start
+- sudo service docker status
+## chmod needs sudo, so all other commands are with sudo
+- sudo mkdir -p /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/origin
+## download oc 1.4.1 binary
+- sudo wget https://github.com/openshift/origin/releases/download/v1.4.1/openshift-origin-client-tools-v1.4.1-3f9807a-linux-64bit.tar.gz -P origin/
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo tar -xvzf /home/travis/build/radanalyticsio/oshinko-console/origin/openshift-origin-client-tools-v1.4.1-3f9807a-linux-64bit.tar.gz
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/openshift-origin-client-tools-v1.4.1+3f9807a-linux-64bit
+- sudo cp /home/travis/build/radanalyticsio/oshinko-console/openshift-origin-client-tools-v1.4.1+3f9807a-linux-64bit/oc /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/origin
+## below cmd is important to get oc working in ubuntu
+- sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:v1.4.1 -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
+- sudo /home/travis/build/radanalyticsio/oshinko-console/origin/oc cluster up --host-config-dir=/home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo /home/travis/build/radanalyticsio/oshinko-console/origin/oc cluster down
+## get the latest release code
+- sudo wget -q https://github.com/radanalyticsio/oshinko-console/releases/download/v0.0.2/oshinko_0.0.2.zip -P origin/
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo unzip origin/oshinko_0.0.2.zip -d origin/
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/origin
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/origin/oshinko-release
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/origin/oshinko-release
+- sudo cp origin/oshinko-release/templates.js origin/master
+- sudo cp origin/oshinko-release/scripts.js origin/master
+- sudo cp origin/oshinko-release/oshinko.css origin/master
+- sudo chmod -R 766 /home/travis/build/radanalyticsio/oshinko-console/origin/master
+- sudo ls -l /home/travis/build/radanalyticsio/oshinko-console/origin/master
+## add changes to master-config.yaml
+- "sudo sed -i -e 's/extensionDevelopment: false/extensionDevelopment: true/' /home/travis/build/radanalyticsio/oshinko-console/origin/master/master-config.yaml"
+- "sudo sed -i -e \"s/extensionScripts: null/extensionScripts:\\n  - templates.js\\n  - scripts.js/\" /home/travis/build/radanalyticsio/oshinko-console/origin/master/master-config.yaml"
+- "sudo sed -i -e \"s/extensionStylesheets: null/extensionStylesheets:\\n  - oshinko.css/\" /home/travis/build/radanalyticsio/oshinko-console/origin/master/master-config.yaml"
+- sudo cat /home/travis/build/radanalyticsio/oshinko-console/origin/master/master-config.yaml
+## oc cluster up
+- sudo /home/travis/build/radanalyticsio/oshinko-console/origin/oc cluster up --host-config-dir=/home/travis/build/radanalyticsio/oshinko-console/origin --use-existing-config=true
+## find IP:PORT of openshift
+- IPSTR=`sudo /home/travis/build/radanalyticsio/oshinko-console/origin/oc status |grep server`
+- echo $IPSTR
+- IP=${IPSTR##*/}
+- echo ${IP}
+install:
+- npm install grunt-cli -g
+## use 1.7.9 in travis, other versions might not work
+- npm install bower@1.7.9 -g
+- npm install
+- echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+- bower install
+- node test/upgrade-selenium.js
+- node_modules/protractor/bin/webdriver-manager update
+before_script:
+- "export DISPLAY=:99.0"
+- "sh -e /etc/init.d/xvfb start"
+- 'node_modules/protractor/bin/webdriver-manager update --standalone --firefox'
+- 'node_modules/protractor/bin/webdriver-manager start 2>&1 &'
+- sleep 3
+- 'npm install grunt-protractor-webdriver'
+- 'npm install grunt-protractor-runner'
+- 'npm install grunt-express-server'
+script:
+- echo ${IP}
+## integration tests need headless setup
+## - grunt test-integration --baseUrl=https://${IP}
+notifications:
+ email:
+   on_success: never
+   on_failure: never
+
