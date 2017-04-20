@@ -10,6 +10,7 @@ angular.module('openshiftConsole')
 
       $scope.clusterName = dialogData.clusterName || "";
       $scope.workerCount = dialogData.workerCount || 0;
+      $scope.masterCount = dialogData.masterCount || 0;
 
       $scope.deleteCluster = function deleteCluster() {
         ProjectsService
@@ -66,15 +67,15 @@ angular.module('openshiftConsole')
       }
 
 
-      $scope.scaleCluster = function scaleCluster(count) {
+      $scope.scaleCluster = function scaleCluster(workercount, mastercount) {
         ProjectsService
           .get($routeParams.project)
           .then(_.spread(function (project, context) {
               $scope.project = project;
               $scope.context = context;
-              validate(count)
+              validate(workercount)
                 .then(function () {
-                  clusterData.sendScaleCluster($scope.clusterName, count, $scope.context).then(function (response) {
+                  clusterData.sendScaleCluster($scope.clusterName, workercount, mastercount, $scope.context).then(function (response) {
                     $uibModalInstance.close(response);
                   }, function (error) {
                     $scope.formError = error.data.message;

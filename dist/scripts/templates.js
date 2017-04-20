@@ -113,7 +113,8 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<th>Name</th>\n" +
     "<th>Status</th>\n" +
     "<th>Master</th>\n" +
-    "<th>Worker count</th>\n" +
+    "<th>Masters</th>\n" +
+    "<th>Workers</th>\n" +
     "<th>Spark UI Link</th>\n" +
     "<th><span class=\"sr-only\">Actions</span></th>\n" +
     "</tr>\n" +
@@ -130,6 +131,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<span> {{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "</td>\n" +
     "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(cluster) }}</td>\n" +
+    "<td data-title=\"Masters\" name=\"mastercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countMasters(oshinkoClusters[cluster]) }}</td>\n" +
     "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
     "<td ng-if=\"getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\"><a target=\"_blank\" href=\"{{ getSparkWebUi(oshinkoClusters[cluster]) }}\">Spark UI</a></td>\n" +
     "<td ng-if=\"!getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">N/A</td>\n" +
@@ -141,7 +143,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</button>\n" +
     "<ul class=\"uib-dropdown-menu dropdown-menu-right\">\n" +
     "<li>\n" +
-    "<a href=\"\" id=\"{{cluster}}-scalebutton\" role=\"button\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))\">Scale Cluster</a>\n" +
+    "<a href=\"\" id=\"{{cluster}}-scalebutton\" role=\"button\" ng-click=\"scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]), countMasters(oshinkoClusters[cluster]))\">Scale Cluster</a>\n" +
     "</li>\n" +
     "<li>\n" +
     "<a href=\"\" id=\"{{cluster}}-deletebutton\" role=\"button\" ng-click=\"deleteCluster(cluster)\">Delete Cluster</a>\n" +
@@ -234,9 +236,13 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<div class=\"modal-header\">\n" +
     "<h4 class=\"modal-title\" translatable=\"yes\">Scale cluster {{clusterName}}</h4>\n" +
     "</div>\n" +
-    "<div class=\"modal-body\" ng-keyup=\"submitForm($event, 'scaleCluster', workerCount)\">\n" +
+    "<div class=\"modal-body\" ng-keyup=\"submitForm($event, 'scaleCluster', workerCount, masterCount)\">\n" +
     "<form>\n" +
     "<fieldset ng-disabled=\"disableInputs\">\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"nummasters\" id=\"nummasters\">Number of masters</label>\n" +
+    "<input class=\"form-control input-lg\" name=\"nummasters\" type=\"number\" min=\"0\" max=\"1\" ng-model=\"masterCount\" value=\"{{masterCount}}\"/>\n" +
+    "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"numworkers\" id=\"numworkers\">Number of workers</label>\n" +
     "<input class=\"form-control input-lg\" name=\"numworkers\" type=\"number\" min=\"0\" ng-model=\"workerCount\" value=\"{{workerCount}}\"/>\n" +
@@ -247,7 +253,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"modal-footer\">\n" +
     "<button id=\"cancelbutton\" class=\"btn btn-default btn-cancel\" translatable=\"yes\" ng-click=\"cancelfn()\">Cancel</button>\n" +
-    "<button id=\"scalebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"scaleCluster(workerCount)\">Scale</button>\n" +
+    "<button id=\"scalebutton\" class=\"btn btn-primary\" translatable=\"yes\" ng-click=\"scaleCluster(workerCount, masterCount)\">Scale</button>\n" +
     "</div>"
   );
 

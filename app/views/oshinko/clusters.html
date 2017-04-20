@@ -33,7 +33,8 @@
                   <th>Name</th>
                   <th>Status</th>
                   <th>Master</th>
-                  <th>Worker count</th>
+                  <th>Masters</th>
+                  <th>Workers</th>
                   <th>Spark UI Link</th>
                   <th><span class="sr-only">Actions</span></th>
                 </tr>
@@ -50,6 +51,7 @@
                       <span> {{ getClusterStatus(oshinkoClusters[cluster]) }}</span>
                     </td>
                     <td data-title="MasterURL" name="masterurl-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ getSparkMasterUrl(cluster) }}</td>
+                    <td data-title="Masters" name="mastercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countMasters(oshinkoClusters[cluster]) }}</td>
                     <td data-title="Workers" name="workercount-{{ cluster }}" ng-click="gotoCluster(cluster)">{{ countWorkers(oshinkoClusters[cluster]) }}</td>
                     <td ng-if="getSparkWebUi(oshinkoClusters[cluster])" data-title="WebUI" name="webui-{{ cluster }}" ng-click="gotoCluster(cluster)"><a target="_blank" href="{{ getSparkWebUi(oshinkoClusters[cluster]) }}">Spark UI</a></td>
                     <td ng-if="!getSparkWebUi(oshinkoClusters[cluster])" data-title="WebUI" name="webui-{{ cluster }}" ng-click="gotoCluster(cluster)">N/A</td>
@@ -61,7 +63,7 @@
                         </button>
                         <ul class="uib-dropdown-menu dropdown-menu-right">
                           <li>
-                            <a href="" id="{{cluster}}-scalebutton" role="button" ng-click="scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]))">Scale Cluster</a>
+                            <a href="" id="{{cluster}}-scalebutton" role="button" ng-click="scaleCluster(cluster, countWorkers(oshinkoClusters[cluster]), countMasters(oshinkoClusters[cluster]))">Scale Cluster</a>
                           </li>
                           <li>
                             <a href="" id="{{cluster}}-deletebutton" role="button" ng-click="deleteCluster(cluster)">Delete Cluster</a>

@@ -449,9 +449,15 @@ angular.module('openshiftConsole')
       }
 
       // Start scale-related functions
-      function sendScaleCluster(clusterName, workerCount, context) {
+      function sendScaleCluster(clusterName, workerCount, masterCount, context) {
         var workerDeploymentName = clusterName + "-w";
-        return scaleReplication(clusterName, workerDeploymentName, workerCount, context);
+        var masterDeploymentName = clusterName + "-m";
+        var steps = [
+          scaleReplication(clusterName, workerDeploymentName, workerCount, context),
+          scaleReplication(clusterName, masterDeploymentName, masterCount, context)
+        ];
+
+        return $q.all(steps);
       }
 
       return {
