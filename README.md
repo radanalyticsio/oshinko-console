@@ -14,6 +14,7 @@ Contributing
 6. Build the code via `grunt build` for minified files or with `grunt dev`
 7. Add the files to master-config.yaml in the below order
 ```sh
+assetConfig:
   ...
     extensionScripts:
     - /<path to>/oshinko-console/dist/scripts/templates.js
@@ -29,6 +30,7 @@ Contributing
 3. Stop Cluster ```oc cluster down ```
 4. Add the files to master-config.yaml in the below order & Start Cluster ```oc cluster up --host-config-dir=/home/oshinko --use-existing-config=true ```
 ```sh
+assetConfig:
   ...
     extensionScripts:
     - templates.js
