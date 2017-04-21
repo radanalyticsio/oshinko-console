@@ -61,6 +61,10 @@ a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
 var b = a.worker.pod, c = Object.keys(b).length;
 return c;
+}, a.countMasters = function(a) {
+if (!a || !a.master || !a.master.pod) return 0;
+var b = a.master.pod, c = Object.keys(b).length;
+return c;
 }, a.getClusterName = function(a) {
 var b = Object.keys(a);
 return b[0];
@@ -160,8 +164,8 @@ message:"Cluster create failed"
 };
 }
 });
-}, a.scaleCluster = function(b, c) {
-var d = k.open({
+}, a.scaleCluster = function(b, c, d) {
+var e = k.open({
 animation:!0,
 controller:"OshinkoClusterDeleteCtrl",
 templateUrl:"views/oshinko/scale-cluster.html",
@@ -170,16 +174,17 @@ resolve:{
 dialogData:function() {
 return {
 clusterName:b,
-workerCount:c
+workerCount:c,
+masterCount:d
 };
 }
 }
 });
-d.result.then(function(c) {
-var d = c.spec.replicas || 0, e = b + "-scale", f = 1 !== d ? "workers" :"worker";
-a.alerts = {}, a.alerts[e] = {
+e.result.then(function(c) {
+var d = c[0].spec.replicas || 0, e = c[1].spec.replicas || 0, f = b + "-scale", g = 1 !== e ? " masters" :" master", h = 1 !== d ? " workers" :" worker";
+a.alerts = {}, a.alerts[f] = {
 type:"success",
-message:b + " has been scaled to " + d + " " + f
+message:b + " has been scaled to " + d + h + " and " + e + g
 };
 })["catch"](function(b) {
 if ("cancel" !== b) {
@@ -471,9 +476,9 @@ x.reject(a);
 });
 }), x.promise;
 }
-function u(a, b, c) {
-var d = a + "-w";
-return i(a, d, b, c);
+function u(a, c, d, e) {
+var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
+return b.all(h);
 }
 return {
 sendDeleteCluster:k,
@@ -527,7 +532,7 @@ b.formError = "";
 var d, e = a.defer();
 return void 0 === c || null === c ? d = new Error("The number of workers cannot be empty or less than 0.") :i.test(c) ? c < 0 && (d = new Error("Please give a value greater than or equal to 0.")) :d = new Error("Please give a valid number of workers."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
 }
-b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.deleteCluster = function() {
+b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.masterCount = e.masterCount || 0, b.deleteCluster = function() {
 g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
 var b = !1;
@@ -542,10 +547,10 @@ d.dismiss(a);
 d.dismiss("cancel");
 };
 var i = /^[0-9]*$/;
-b.scaleCluster = function(a) {
-g.get(f.project).then(_.spread(function(e, f) {
-b.project = e, b.context = f, h(a).then(function() {
-c.sendScaleCluster(b.clusterName, a, b.context).then(function(a) {
+b.scaleCluster = function(a, e) {
+g.get(f.project).then(_.spread(function(f, g) {
+b.project = f, b.context = g, h(a).then(function() {
+c.sendScaleCluster(b.clusterName, a, e, b.context).then(function(a) {
 d.close(a);
 }, function(a) {
 b.formError = a.data.message;

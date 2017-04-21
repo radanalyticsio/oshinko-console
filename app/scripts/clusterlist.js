@@ -129,6 +129,14 @@ angular.module('openshiftConsole')
         var length = Object.keys(pods).length;
         return length;
       };
+      $scope.countMasters = function (cluster) {
+        if (!cluster || !cluster.master || !cluster.master.pod) {
+          return 0;
+        }
+        var pods = cluster.master.pod;
+        var length = Object.keys(pods).length;
+        return length;
+      };
       $scope.getClusterName = function (cluster) {
         var name = Object.keys(cluster);
         return name[0];
@@ -289,7 +297,7 @@ angular.module('openshiftConsole')
         });
       };
 
-      $scope.scaleCluster = function scaleCluster(clusterName, workerCount) {
+      $scope.scaleCluster = function scaleCluster(clusterName, workerCount, masterCount) {
         var modalInstance = $uibModal.open({
           animation: true,
           controller: 'OshinkoClusterDeleteCtrl',
@@ -299,20 +307,24 @@ angular.module('openshiftConsole')
             dialogData: function () {
               return {
                 clusterName: clusterName,
-                workerCount: workerCount
+                workerCount: workerCount,
+                masterCount: masterCount
               };
             }
           }
         });
 
         modalInstance.result.then(function (response) {
-          var numWorkers = response.spec.replicas || 0;
+          var numWorkers = response[0].spec.replicas || 0;
+          var numMasters = response[1].spec.replicas || 0;
           var alertName = clusterName + "-scale";
-          var workers = numWorkers !== 1 ? "workers" : "worker";
+          var masters = numMasters !== 1 ? " masters" : " master";
+          var workers = numWorkers !== 1 ? " workers" : " worker";
           $scope.alerts = {};
           $scope.alerts[alertName] = {
             type: "success",
-            message: clusterName + " has been scaled to " + numWorkers + " " + workers
+            message: clusterName + " has been scaled to " + numWorkers + workers +
+              " and " + numMasters + masters
           };
         }).catch(function (reason) {
           if (reason !== "cancel") {
