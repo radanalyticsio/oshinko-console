@@ -167,7 +167,7 @@ message:"Cluster create failed"
 }, a.scaleCluster = function(b, c, d) {
 var e = k.open({
 animation:!0,
-controller:"OshinkoClusterDeleteCtrl",
+controller:"OshinkoClusterScaleCtrl",
 templateUrl:"views/oshinko/scale-cluster.html",
 backdrop:"static",
 resolve:{
@@ -527,11 +527,6 @@ b.formError = a.message;
 }));
 };
 } ]), angular.module("openshiftConsole").controller("OshinkoClusterDeleteCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", "$routeParams", "ProjectsService", function(a, b, c, d, e, f, g) {
-function h(c) {
-b.formError = "";
-var d, e = a.defer();
-return void 0 === c || null === c ? d = new Error("The number of workers cannot be empty or less than 0.") :i.test(c) ? c < 0 && (d = new Error("Please give a value greater than or equal to 0.")) :d = new Error("Please give a valid number of workers."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
-}
 b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.masterCount = e.masterCount || 0, b.deleteCluster = function() {
 g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
@@ -544,6 +539,15 @@ d.dismiss(a);
 });
 }));
 }, b.cancelfn = function() {
+d.dismiss("cancel");
+};
+} ]), angular.module("openshiftConsole").controller("OshinkoClusterScaleCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", "$routeParams", "ProjectsService", function(a, b, c, d, e, f, g) {
+function h(c) {
+b.formError = "";
+var d, e = a.defer();
+return void 0 === c || null === c ? d = new Error("The number of workers cannot be empty or less than 0.") :i.test(c) ? c < 0 && (d = new Error("Please give a value greater than or equal to 0.")) :d = new Error("Please give a valid number of workers."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
+}
+b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.masterCount = e.masterCount || 0, b.cancelfn = function() {
 d.dismiss("cancel");
 };
 var i = /^[0-9]*$/;

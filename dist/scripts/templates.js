@@ -121,8 +121,8 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</thead>\n" +
     "<tbody ng-repeat=\"cluster in oshinkoClusterNames\" ng-init=\"id = cluster\" name=\"cluster-row-{{ $index }}\" data-id=\"{{ id }}\">\n" +
     "<tr>\n" +
-    "<td data-title=\"Name\" id=\"clustername-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</td>\n" +
-    "<td data-title=\"Status\" ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\" ng-click=\"gotoCluster(cluster)\">\n" +
+    "<td data-title=\"Name\" id=\"clustername-{{ cluster }}\"><a href=\"\" ng-click=\"gotoCluster(cluster)\">{{ cluster }}</a></td>\n" +
+    "<td data-title=\"Status\" ng-switch=\"getClusterStatus(oshinkoClusters[cluster])\">\n" +
     "<span ng-switch-when=\"Running\" class=\"fa fa-refresh\" aria-hidden=\"true\" ng-class=\"{'fa-spin' : spinning, 'fa-fw': fixedWidth}\"></span>\n" +
     "<span ng-switch-when=\"Error\" class=\"fa fa-times text-danger\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
     "<span ng-switch-when=\"Scaling\" class=\"spinner spinner-xs spinner-inline\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
@@ -130,11 +130,11 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<span ng-switch-default class=\"fa fa-question text-danger\" aria-hidden=\"true\" ng-class=\"{'fa-fw': fixedWidth}\"></span>\n" +
     "<span> {{ getClusterStatus(oshinkoClusters[cluster]) }}</span>\n" +
     "</td>\n" +
-    "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ getSparkMasterUrl(cluster) }}</td>\n" +
-    "<td data-title=\"Masters\" name=\"mastercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countMasters(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
-    "<td ng-if=\"getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\"><a target=\"_blank\" href=\"{{ getSparkWebUi(oshinkoClusters[cluster]) }}\">Spark UI</a></td>\n" +
-    "<td ng-if=\"!getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\" ng-click=\"gotoCluster(cluster)\">N/A</td>\n" +
+    "<td data-title=\"MasterURL\" name=\"masterurl-{{ cluster }}\">{{ getSparkMasterUrl(cluster) }}</td>\n" +
+    "<td data-title=\"Masters\" name=\"mastercount-{{ cluster }}\">{{ countMasters(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td data-title=\"Workers\" name=\"workercount-{{ cluster }}\">{{ countWorkers(oshinkoClusters[cluster]) }}</td>\n" +
+    "<td ng-if=\"getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\"><a target=\"_blank\" href=\"{{ getSparkWebUi(oshinkoClusters[cluster]) }}\">Spark UI</a></td>\n" +
+    "<td ng-if=\"!getSparkWebUi(oshinkoClusters[cluster])\" data-title=\"WebUI\" name=\"webui-{{ cluster }}\">N/A</td>\n" +
     "<td data-title=\"Actions\" class=\"text-xs-left text-right\">\n" +
     "<span uib-dropdown>\n" +
     "<button id=\"{{cluster}}-actions\" type=\"button\" class=\"dropdown-toggle btn btn-default actions-dropdown-btn hidden-xs\" data-toggle=\"dropdown\">\n" +
