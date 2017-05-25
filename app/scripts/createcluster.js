@@ -15,7 +15,8 @@ angular.module('oshinkoConsole')
         configname: "",
         masterconfigname: "",
         workerconfigname: "",
-        exposewebui: true
+        exposewebui: true,
+        sparkimage: "docker.io/radanalyticsio/openshift-spark:latest"
       };
       $scope.fields = fields;
       $scope.advanced = false;
@@ -89,6 +90,16 @@ angular.module('oshinkoConsole')
         var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
         var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
         var exposewebui = advanced ? $scope.fields.exposewebui : true;
+        var sparkImage = advanced && $scope.fields.sparkimage !== "" ? $scope.fields.sparkimage : "docker.io/radanalyticsio/openshift-spark:latest";
+        var clusterConfig = {
+          clusterName: name,
+          workerCount: workersInt,
+          configName: configName,
+          masterConfigName: masterConfigName,
+          workerConfigName: workerConfigName,
+          exposewebui: exposewebui,
+          sparkImage: sparkImage
+        };
 
         return ProjectsService
           .get($routeParams.project)
@@ -101,7 +112,7 @@ angular.module('oshinkoConsole')
               validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
               validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
             ]).then(function () {
-              clusterData.sendCreateCluster(name, workersInt, configName, masterConfigName, workerConfigName, exposewebui, $scope.context).then(function (response) {
+              clusterData.sendCreateCluster(clusterConfig, $scope.context).then(function (response) {
                 $uibModalInstance.close(response);
               }, function (error) {
                 $scope.formError = error.data.message;

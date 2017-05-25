@@ -380,8 +380,7 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterName, workerCount, configName, masterConfigName, workerConfigName, exposewebui, context) {
-        var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
+      function sendCreateCluster(clusterConfig, context) {
         var workerPorts = [
           {
             "name": "spark-webui",
@@ -421,11 +420,12 @@ angular.module('openshiftConsole')
         var smService = null;
         var suiService = null;
         var deferred = $q.defer();
-        getFinalConfigs(configName, workerCount, workerConfigName, masterConfigName).then(function (finalConfigs) {
-          sm = sparkDC(sparkImage, clusterName, "master", null, masterPorts, finalConfigs["masterConfigName"]);
-          sw = sparkDC(sparkImage, clusterName, "worker", finalConfigs["workerCount"], workerPorts, finalConfigs["workerConfigName"]);
-          smService = sparkService(clusterName, clusterName, "master", masterServicePort);
-          suiService = sparkService(clusterName + "-ui", clusterName, "webui", uiServicePort);
+        getFinalConfigs(clusterConfig.configName, clusterConfig.workerCount,
+          clusterConfig.workerConfigName, clusterConfig.masterConfigName).then(function (finalConfigs) {
+          sm = sparkDC(clusterConfig.sparkImage, clusterConfig.clusterName, "master", null, masterPorts, finalConfigs["masterConfigName"]);
+          sw = sparkDC(clusterConfig.sparkImage, clusterConfig.clusterName, "worker", finalConfigs["workerCount"], workerPorts, finalConfigs["workerConfigName"]);
+          smService = sparkService(clusterConfig.clusterName, clusterConfig.clusterName, "master", masterServicePort);
+          suiService = sparkService(clusterConfig.clusterName + "-ui", clusterConfig.clusterName, "webui", uiServicePort);
 
           var steps = [
             createDeploymentConfig(sm, context),
@@ -435,7 +435,7 @@ angular.module('openshiftConsole')
           ];
 
           // if expose webui was checked, we expose the apache spark webui via a route
-          if (exposewebui) {
+          if (clusterConfig.exposewebui) {
             steps.push(createRoute(suiService, context));
           }
 

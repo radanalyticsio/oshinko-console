@@ -444,12 +444,12 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function t(a, c, d, e, f, g, h) {
-var i = "docker.io/radanalyticsio/openshift-spark:latest", j = [ {
+function t(a, c) {
+var d = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
-} ], k = [ {
+} ], e = [ {
 name:"spark-webui",
 containerPort:8080,
 protocol:"TCP"
@@ -457,24 +457,24 @@ protocol:"TCP"
 name:"spark-master",
 containerPort:7077,
 protocol:"TCP"
-} ], l = [ {
+} ], f = [ {
 protocol:"TCP",
 port:7077,
 targetPort:7077
-} ], n = [ {
+} ], g = [ {
 protocol:"TCP",
 port:8080,
 targetPort:8080
-} ], t = null, u = null, v = null, w = null, x = b.defer();
-return s(d, c, f, e).then(function(c) {
-t = m(i, a, "master", null, k, c.masterConfigName), u = m(i, a, "worker", c.workerCount, j, c.workerConfigName), v = o(a, a, "master", l), w = o(a + "-ui", a, "webui", n);
-var d = [ p(t, h), p(u, h), q(v, h), q(w, h) ];
-g && d.push(r(w, h)), b.all(d).then(function(a) {
-x.resolve(a);
+} ], h = null, i = null, j = null, k = null, l = b.defer();
+return s(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(n) {
+h = m(a.sparkImage, a.clusterName, "master", null, e, n.masterConfigName), i = m(a.sparkImage, a.clusterName, "worker", n.workerCount, d, n.workerConfigName), j = o(a.clusterName, a.clusterName, "master", f), k = o(a.clusterName + "-ui", a.clusterName, "webui", g);
+var s = [ p(h, c), p(i, c), q(j, c), q(k, c) ];
+a.exposewebui && s.push(r(k, c)), b.all(s).then(function(a) {
+l.resolve(a);
 })["catch"](function(a) {
-x.reject(a);
+l.reject(a);
 });
-}), x.promise;
+}), l.promise;
 }
 function u(a, c, d, e) {
 var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
@@ -506,17 +506,26 @@ advworkers:1,
 configname:"",
 masterconfigname:"",
 workerconfigname:"",
-exposewebui:!0
+exposewebui:!0,
+sparkimage:"docker.io/radanalyticsio/openshift-spark:latest"
 };
 b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
 b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = b.fields.name.trim(), g = b.advanced, k = b.fields.workers, l = g ? b.fields.configname :null, m = g ? b.fields.masterconfigname :null, n = g ? b.fields.workerconfigname :null, o = !g || b.fields.exposewebui;
+var c = b.fields.name.trim(), g = b.advanced, k = b.fields.workers, l = g ? b.fields.configname :null, m = g ? b.fields.masterconfigname :null, n = g ? b.fields.workerconfigname :null, o = !g || b.fields.exposewebui, p = g && "" !== b.fields.sparkimage ? b.fields.sparkimage :"docker.io/radanalyticsio/openshift-spark:latest", q = {
+clusterName:c,
+workerCount:k,
+configName:l,
+masterConfigName:m,
+workerConfigName:n,
+exposewebui:o,
+sparkImage:p
+};
 return f.get(h.project).then(_.spread(function(f, g) {
 return b.project = f, b.context = g, a.all([ j(c, k), i(l, "cluster-config-name", "cluster configuration", b.context), i(m, "cluster-masterconfig-name", "master spark configuration", b.context), i(n, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
-d.sendCreateCluster(c, k, l, m, n, o, b.context).then(function(a) {
+d.sendCreateCluster(q, b.context).then(function(a) {
 e.close(a);
 }, function(a) {
 b.formError = a.data.message;
