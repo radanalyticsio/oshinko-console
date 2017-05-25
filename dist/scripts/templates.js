@@ -203,15 +203,19 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Configuration name</label>\n" +
-    "<input id=\"cluster-config-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.configname\" autofocus/>\n" +
+    "<input id=\"cluster-config-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.configname\"/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Master configuration name</label>\n" +
-    "<input id=\"cluster-masterconfig-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.masterconfigname\" autofocus/>\n" +
+    "<input id=\"cluster-masterconfig-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.masterconfigname\"/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-new-name\">Worker configuration name</label>\n" +
-    "<input id=\"cluster-workerconfig-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.workerconfigname\" autofocus/>\n" +
+    "<input id=\"cluster-workerconfig-name\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.workerconfigname\"/>\n" +
+    "</div>\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-sparkimage\">Apache Spark image (only radanalyticsio/openshift-spark is supported)</label>\n" +
+    "<input id=\"cluster-sparkimage\" class=\"form-control input-lg\" type=\"text\" ng-model=\"fields.sparkimage\"/>\n" +
     "</div>\n" +
     "<div class=\"form-group\">\n" +
     "<label for=\"cluster-expose-ui\">Expose Apache Spark web ui via a route</label>\n" +
