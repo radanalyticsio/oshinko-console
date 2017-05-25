@@ -300,7 +300,7 @@ angular.module('openshiftConsole')
       $scope.scaleCluster = function scaleCluster(clusterName, workerCount, masterCount) {
         var modalInstance = $uibModal.open({
           animation: true,
-          controller: 'OshinkoClusterDeleteCtrl',
+          controller: 'OshinkoClusterScaleCtrl',
           templateUrl: 'views/oshinko/' + 'scale-cluster.html',
           backdrop: 'static',
           resolve: {
