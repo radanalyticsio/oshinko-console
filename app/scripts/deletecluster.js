@@ -22,7 +22,8 @@ angular.module('openshiftConsole')
               .then(function (values) {
                 var err = false;
                 angular.forEach(values, function (value) {
-                  if (value.code >= 300 || value.code < 200) {
+                  // allow 404 error on delete since it doesn't exist
+                  if ((value.code >= 300 || value.code < 200) && value.code !== 404) {
                     err = true;
                   }
                 });
@@ -32,7 +33,12 @@ angular.module('openshiftConsole')
                   $uibModalInstance.close(values);
                 }
               }, function (error) {
-                $uibModalInstance.dismiss(error);
+                // allow 404 error on delete since it doesn't exist
+                if(error.status !== 404) {
+                  $uibModalInstance.dismiss(error);
+                } else {
+                  $uibModalInstance.close(error);
+                }
               });
           }));
       };
