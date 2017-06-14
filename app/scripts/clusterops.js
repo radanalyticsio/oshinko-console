@@ -100,6 +100,7 @@ angular.module('openshiftConsole')
           scaleDeleteReplication(workerDeploymentName, context),
           deleteObject(masterDeploymentName, 'deploymentconfigs', context),
           deleteObject(workerDeploymentName, 'deploymentconfigs', context),
+          deleteObject(clusterName + "-metrics", 'services', context),
           deleteObject(clusterName, 'services', context),
           deleteRoute(clusterName, context),
           deleteObject(clusterName + "-ui", 'services', context)
@@ -247,7 +248,8 @@ angular.module('openshiftConsole')
         var input = {
           deploymentConfig: {
             envVars: {
-              OSHINKO_SPARK_CLUSTER: clusterName
+              OSHINKO_SPARK_CLUSTER: clusterName,
+              SPARK_METRICS_ON: "true"
             }
           },
           name: clusterName + suffix,
@@ -306,6 +308,23 @@ angular.module('openshiftConsole')
           selectors: {
             "oshinko-cluster": clusterName,
             "oshinko-type": "master"
+          }
+        };
+        return makeService(input, serviceName, ports);
+      }
+
+      function metricsService(clusterName, ports) {
+        var serviceName = clusterName + "-metrics";
+        var input = {
+          labels: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": "oshinko-metrics"
+          },
+          annotations: {},
+          name: serviceName,
+          selectors: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": "master",
           }
         };
         return makeService(input, serviceName, ports);
@@ -386,6 +405,11 @@ angular.module('openshiftConsole')
             "name": "spark-webui",
             "containerPort": 8081,
             "protocol": "TCP"
+          },
+          {
+            "name": "spark-metrics",
+            "containerPort": 7777,
+            "protocol": "TCP"
           }
         ];
         var masterPorts = [
@@ -397,6 +421,11 @@ angular.module('openshiftConsole')
           {
             "name": "spark-master",
             "containerPort": 7077,
+            "protocol": "TCP"
+          },
+          {
+            "name": "spark-metrics",
+            "containerPort": 7777,
             "protocol": "TCP"
           }
         ];
@@ -414,11 +443,19 @@ angular.module('openshiftConsole')
             targetPort: 8080
           }
         ];
+        var jolokiaServicePort = [
+          {
+            protocol: "TCP",
+            port: 7777,
+            targetPort: 7777
+          }
+        ];
 
         var sm = null;
         var sw = null;
         var smService = null;
         var suiService = null;
+        var jolokiaService = null;
         var deferred = $q.defer();
         getFinalConfigs(clusterConfig.configName, clusterConfig.workerCount,
           clusterConfig.workerConfigName, clusterConfig.masterConfigName).then(function (finalConfigs) {
@@ -426,12 +463,14 @@ angular.module('openshiftConsole')
           sw = sparkDC(clusterConfig.sparkImage, clusterConfig.clusterName, "worker", finalConfigs["workerCount"], workerPorts, finalConfigs["workerConfigName"]);
           smService = sparkService(clusterConfig.clusterName, clusterConfig.clusterName, "master", masterServicePort);
           suiService = sparkService(clusterConfig.clusterName + "-ui", clusterConfig.clusterName, "webui", uiServicePort);
+          jolokiaService = metricsService(clusterConfig.clusterName, jolokiaServicePort);
 
           var steps = [
             createDeploymentConfig(sm, context),
             createDeploymentConfig(sw, context),
             createService(smService, context),
-            createService(suiService, context)
+            createService(suiService, context),
+            createService(jolokiaService, context)
           ];
 
           // if expose webui was checked, we expose the apache spark webui via a route
