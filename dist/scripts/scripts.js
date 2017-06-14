@@ -260,8 +260,8 @@ labelSelector:f("clusterName")("route") + "=" + a
 });
 }
 function k(a, c) {
-var d = a + "-m", e = a + "-w";
-return b.all([ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a + "-metrics", "services", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c) ]);
+var d = a + "-m", e = a + "-w", f = [ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c), g(a + "-metrics", "services", c) ];
+return b.all(f);
 }
 function l(a, b, c, d) {
 var e = [];
@@ -368,15 +368,14 @@ name:b.toString()
 }
 }), j;
 }
-function m(a, b, c, d, e, f) {
-var g = "master" === c ? "-m" :"-w", h = {
+function m(a, b, c, d, e, f, g) {
+var h = "master" === c ? "-m" :"-w", i = {
 deploymentConfig:{
 envVars:{
-OSHINKO_SPARK_CLUSTER:b,
-SPARK_METRICS_ON:"true"
+OSHINKO_SPARK_CLUSTER:b
 }
 },
-name:b + g,
+name:b + h,
 labels:{
 "oshinko-cluster":b,
 "oshinko-type":c
@@ -389,9 +388,9 @@ autoscaling:!1,
 minReplicas:1
 }
 };
-"worker" === c && (h.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", h.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), f && (h.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), h.scaling.replicas = d ? d :1;
-var i = l(h, a, e, f);
-return i;
+"worker" === c && (i.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", i.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g && (i.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), f && (i.deploymentConfig.envVars.SPARK_METRICS_ON = "true"), i.scaling.replicas = d ? d :1;
+var j = l(i, a, e, g);
+return j;
 }
 function n(a, b, c) {
 if (!c || !c.length) return null;
@@ -460,8 +459,8 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function u(a, c, d, e, f, g, h) {
-var i = "docker.io/radanalyticsio/openshift-spark:latest", j = [ {
+function u(a, c) {
+var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
@@ -469,7 +468,7 @@ protocol:"TCP"
 name:"spark-metrics",
 containerPort:7777,
 protocol:"TCP"
-} ], k = [ {
+} ], f = [ {
 name:"spark-webui",
 containerPort:8080,
 protocol:"TCP"
@@ -481,28 +480,28 @@ protocol:"TCP"
 name:"spark-metrics",
 containerPort:7777,
 protocol:"TCP"
-} ], l = [ {
+} ], g = [ {
 protocol:"TCP",
 port:7077,
 targetPort:7077
-} ], n = [ {
+} ], h = [ {
 protocol:"TCP",
 port:8080,
 targetPort:8080
-} ], u = [ {
+} ], i = [ {
 protocol:"TCP",
 port:7777,
 targetPort:7777
-} ], v = null, w = null, x = null, y = null, z = null, A = b.defer();
-return t(d, c, f, e).then(function(c) {
-v = m(i, a, "master", null, k, c.masterConfigName), w = m(i, a, "worker", c.workerCount, j, c.workerConfigName), x = o(a, a, "master", l), y = o(a + "-ui", a, "webui", n), z = p(a, u);
-var d = [ q(v, h), q(w, h), r(x, h), r(y, h), r(z, h) ];
-g && d.push(s(y, h)), b.all(d).then(function(a) {
-A.resolve(a);
+} ], j = a.enablemetrics, k = null, l = null, n = null, u = null, v = null, w = b.defer();
+return t(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(t) {
+k = m(d, a.clusterName, "master", null, f, j, t.masterConfigName), l = m(d, a.clusterName, "worker", t.workerCount, e, j, t.workerConfigName), n = o(a.clusterName, a.clusterName, "master", g), u = o(a.clusterName + "-ui", a.clusterName, "webui", h);
+var x = [ q(k, c), q(l, c), r(n, c), r(u, c) ];
+a.enablemetrics && (v = p(a.clusterName, i), x.push(r(v, c))), a.exposewebui && x.push(s(u, c)), b.all(x).then(function(a) {
+w.resolve(a);
 })["catch"](function(a) {
-A.reject(a);
+w.reject(a);
 });
-}), A.promise;
+}), w.promise;
 }
 function v(a, c, d, e) {
 var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
@@ -534,17 +533,26 @@ advworkers:1,
 configname:"",
 masterconfigname:"",
 workerconfigname:"",
-exposewebui:!0
+exposewebui:!0,
+enablemetrics:!0
 };
 b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
 b.advanced = !b.advanced;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
-var c = b.fields.name.trim(), g = b.advanced, k = b.fields.workers, l = g ? b.fields.configname :null, m = g ? b.fields.masterconfigname :null, n = g ? b.fields.workerconfigname :null, o = !g || b.fields.exposewebui;
-return f.get(h.project).then(_.spread(function(f, g) {
-return b.project = f, b.context = g, a.all([ j(c, k), i(l, "cluster-config-name", "cluster configuration", b.context), i(m, "cluster-masterconfig-name", "master spark configuration", b.context), i(n, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
-d.sendCreateCluster(c, k, l, m, n, o, b.context).then(function(a) {
+var c = b.advanced, g = {
+clusterName:b.fields.name.trim(),
+workerCount:b.fields.workers,
+configName:c ? b.fields.configname :null,
+masterConfigName:c ? b.fields.masterconfigname :null,
+workerConfigName:c ? b.fields.workerconfigname :null,
+exposewebui:!c || b.fields.exposewebui,
+enablemetrics:!c || b.fields.enablemetrics
+};
+return f.get(h.project).then(_.spread(function(c, f) {
+return b.project = c, b.context = f, a.all([ j(g.clusterName, g.workersInt), i(g.configName, "cluster-config-name", "cluster configuration", b.context), i(g.masterConfigName, "cluster-masterconfig-name", "master spark configuration", b.context), i(g.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
+d.sendCreateCluster(g, b.context).then(function(a) {
 e.close(a);
 }, function(a) {
 b.formError = a.data.message;
@@ -560,10 +568,10 @@ g.get(f.project).then(_.spread(function(a, e) {
 b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
 var b = !1;
 angular.forEach(a, function(a) {
-(a.code >= 300 || a.code < 200) && (b = !0);
+(a.code >= 300 || a.code < 200) && 404 !== a.code && (b = !0);
 }), b ? d.dismiss(a) :d.close(a);
 }, function(a) {
-d.dismiss(a);
+404 !== a.status ? d.dismiss(a) :d.close(a);
 });
 }));
 }, b.cancelfn = function() {
