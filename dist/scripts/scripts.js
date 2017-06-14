@@ -261,7 +261,7 @@ labelSelector:f("clusterName")("route") + "=" + a
 }
 function k(a, c) {
 var d = a + "-m", e = a + "-w";
-return b.all([ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c) ]);
+return b.all([ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a + "-metrics", "services", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c) ]);
 }
 function l(a, b, c, d) {
 var e = [];
@@ -372,7 +372,8 @@ function m(a, b, c, d, e, f) {
 var g = "master" === c ? "-m" :"-w", h = {
 deploymentConfig:{
 envVars:{
-OSHINKO_SPARK_CLUSTER:b
+OSHINKO_SPARK_CLUSTER:b,
+SPARK_METRICS_ON:"true"
 }
 },
 name:b + g,
@@ -425,18 +426,33 @@ selectors:{
 return n(e, a, d);
 }
 function p(a, b) {
-return c.create("deploymentconfigs", null, a, b, null);
+var c = a + "-metrics", d = {
+labels:{
+"oshinko-cluster":a,
+"oshinko-type":"oshinko-metrics"
+},
+annotations:{},
+name:c,
+selectors:{
+"oshinko-cluster":a,
+"oshinko-type":"master"
+}
+};
+return n(d, c, b);
 }
 function q(a, b) {
-return c.create("services", null, a, b, null);
+return c.create("deploymentconfigs", null, a, b, null);
 }
 function r(a, b) {
+return c.create("services", null, a, b, null);
+}
+function s(a, b) {
 var d = a.metadata.name, f = a.metadata.labels, g = {
 name:d + "-route"
 }, h = e.createRoute(g, d, f);
 return c.create("routes", null, h, b);
 }
-function s(a, d, e, f, g) {
+function t(a, d, e, f, g) {
 var h = b.defer(), i = {};
 return a ? c.get("configmaps", a, g, null).then(function(a) {
 a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (i.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (i.workerConfigName = a.data.sparkworkerconfig), d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
@@ -444,10 +460,14 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function t(a, c, d, e, f, g, h) {
+function u(a, c, d, e, f, g, h) {
 var i = "docker.io/radanalyticsio/openshift-spark:latest", j = [ {
 name:"spark-webui",
 containerPort:8081,
+protocol:"TCP"
+}, {
+name:"spark-metrics",
+containerPort:7777,
 protocol:"TCP"
 } ], k = [ {
 name:"spark-webui",
@@ -457,6 +477,10 @@ protocol:"TCP"
 name:"spark-master",
 containerPort:7077,
 protocol:"TCP"
+}, {
+name:"spark-metrics",
+containerPort:7777,
+protocol:"TCP"
 } ], l = [ {
 protocol:"TCP",
 port:7077,
@@ -465,25 +489,29 @@ targetPort:7077
 protocol:"TCP",
 port:8080,
 targetPort:8080
-} ], t = null, u = null, v = null, w = null, x = b.defer();
-return s(d, c, f, e).then(function(c) {
-t = m(i, a, "master", null, k, c.masterConfigName), u = m(i, a, "worker", c.workerCount, j, c.workerConfigName), v = o(a, a, "master", l), w = o(a + "-ui", a, "webui", n);
-var d = [ p(t, h), p(u, h), q(v, h), q(w, h) ];
-g && d.push(r(w, h)), b.all(d).then(function(a) {
-x.resolve(a);
+} ], u = [ {
+protocol:"TCP",
+port:7777,
+targetPort:7777
+} ], v = null, w = null, x = null, y = null, z = null, A = b.defer();
+return t(d, c, f, e).then(function(c) {
+v = m(i, a, "master", null, k, c.masterConfigName), w = m(i, a, "worker", c.workerCount, j, c.workerConfigName), x = o(a, a, "master", l), y = o(a + "-ui", a, "webui", n), z = p(a, u);
+var d = [ q(v, h), q(w, h), r(x, h), r(y, h), r(z, h) ];
+g && d.push(s(y, h)), b.all(d).then(function(a) {
+A.resolve(a);
 })["catch"](function(a) {
-x.reject(a);
+A.reject(a);
 });
-}), x.promise;
+}), A.promise;
 }
-function u(a, c, d, e) {
+function v(a, c, d, e) {
 var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
 return b.all(h);
 }
 return {
 sendDeleteCluster:k,
-sendCreateCluster:t,
-sendScaleCluster:u
+sendCreateCluster:u,
+sendScaleCluster:v
 };
 } ]), angular.module("oshinkoConsole").controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
 function i(b, c, d, e) {
