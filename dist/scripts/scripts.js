@@ -1,1122 +1,604 @@
-'use strict';
-(function() {
-    var extName = 'oshinkoConsole';
-    angular.module(extName, ['openshiftConsole', 'oshinkoConsoleTemplates'])
-      .config([
-        '$routeProvider',
-        function ($routeProvider) {
-          $routeProvider.when('/project/:project/oshinko', {
-            templateUrl: 'views/oshinko/clusters.html',
-            controller: 'OshinkoClustersCtrl'
-          });
-          $routeProvider.when('/project/:project/oshinko/:cluster', {
-            templateUrl: 'views/oshinko/cluster.html',
-            controller: 'OshinkoClustersCtrl'
-          });
-        }
-      ])
-    .run(function () {
-        window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.push({href: "/oshinko", label: "Spark Clusters", iconClass:"pficon  pficon-cluster"});
-    });
-    hawtioPluginLoader.addModule(extName);
-
-})();
-
-/**
- * Created by croberts on 2/2/17.
- */
-
-'use strict';
-
-angular.module('openshiftConsole')
-  .controller('OshinkoClustersCtrl',
-    function ($scope, $interval, $location, $route,
-              DataService, ProjectsService, $routeParams,
-              $rootScope, $filter, AlertMessageService, $uibModal) {
-      var watches = [];
-      var services, pods, routes;
-      $scope.projectName = $routeParams.project;
-      $scope.serviceName = $routeParams.service;
-      $scope.currentCluster = $routeParams.cluster || '';
-      $scope.projects = {};
-      $scope.oshinkoClusters = {};
-      $scope.oshinkoClusterNames = [];
-      $scope.cluster_details = null;
-      $scope.alerts = $scope.alerts || {};
-      $scope.selectedTab = {};
-      var label = $filter('label');
-      $scope.cluster_id = $route.current.params.Id || '';
-      $scope.breadcrumbs = [
-        {
-          title: $scope.projectName,
-          link: "project/" + $scope.projectName
-        },
-        {
-          title: "Spark Clusters",
-          link: "project/" + $scope.projectName + "/oshinko"
-        }
-      ];
-      if ($scope.currentCluster !== '') {
-        $scope.breadcrumbs.push( {title: $scope.currentCluster});
-      }
-
-      AlertMessageService.getAlerts().forEach(function (alert) {
-        $scope.alerts[alert.name] = alert.data;
-      });
-      AlertMessageService.clearAlerts();
-
-      if($routeParams.tab) {
-        $scope.selectedTab[$routeParams.tab] = true; // ex: tab=Group for Groups, pluralized in the template
-      }
-
-      function oshinkoCluster(resource) {
-        if (label(resource, "oshinko-cluster")) {
-          return true;
-        }
-        return false;
-      }
-
-      function groupByClusters(pods, services, routes) {
-        var clusters = {};
-        var clusterName;
-        var type;
-        var podName;
-        var svcName;
-        var svc;
-        _.each(pods, function (pod) {
-          if (!oshinkoCluster(pod)) {
-            return;
-          }
-          clusterName = label(pod, "oshinko-cluster");
-          podName = _.get(pod, 'metadata.name', '');
-          type = label(pod, "oshinko-type");
-          //find matching services
-          svc = _.find(services, function (service) {
-            var svcSelector = new LabelSelector(service.spec.selector);
-            return svcSelector.matches(pod);
-          });
-
-          if (svc) {
-            svcName = _.get(svc, 'metadata.name', '');
-            _.set(clusters, [clusterName, type, 'svc', svcName], svc);
-          }
-          _.set(clusters, [clusterName, type, 'pod', podName], pod);
-        });
-        //find webui services
-        _.each(services, function (service) {
-          type = label(service, "oshinko-type");
-          if (type === "webui") {
-            clusterName = label(service, "oshinko-cluster");
-            svcName = _.get(service, 'metadata.name', '');
-            _.set(clusters, [clusterName, type, 'svc', svcName], service);
-          }
-        });
-        _.each(routes, function (route) {
-            clusterName = label(route, "oshinko-cluster");
-          if (clusterName) {
-            _.set(clusters, [clusterName, 'uiroute'], route);
-          }
-
-        });
-        return clusters;
-      }
-
-      var setClusterDetails = function (clusterName, allClusters) {
-        try {
-          $scope.cluster_details = allClusters[clusterName];
-          $scope.cluster_details['name'] = $scope.cluster_details.master.svc[Object.keys($scope.cluster_details.master.svc)[0]].metadata.labels['oshinko-cluster'];
-          $scope.cluster_details['workerCount'] = Object.keys($scope.cluster_details.worker.pod).length;
-          $scope.cluster_details['masterCount'] = Object.keys($scope.cluster_details.master.pod).length;
-        } catch (e) {
-          // most likely recently deleted
-          $scope.cluster_details = null;
-        }
-      };
-
-      var groupClusters = function () {
-        if (!pods || !services) {
-          return;
-        }
-        $scope.oshinkoClusters = groupByClusters(pods, services, routes);
-        $scope.oshinkoClusterNames = Object.keys($scope.oshinkoClusters);
-        if ($scope.currentCluster !== '' && $scope.oshinkoClusters[$scope.currentCluster]) {
-          setClusterDetails($scope.currentCluster, $scope.oshinkoClusters);
-        } else {
-          $scope.cluster_details = null;
-        }
-      };
-      $scope.countWorkers = function (cluster) {
-        if (!cluster || !cluster.worker || !cluster.worker.pod) {
-          return 0;
-        }
-        var pods = cluster.worker.pod;
-        var length = Object.keys(pods).length;
-        return length;
-      };
-      $scope.countMasters = function (cluster) {
-        if (!cluster || !cluster.master || !cluster.master.pod) {
-          return 0;
-        }
-        var pods = cluster.master.pod;
-        var length = Object.keys(pods).length;
-        return length;
-      };
-      $scope.getClusterName = function (cluster) {
-        var name = Object.keys(cluster);
-        return name[0];
-      };
-      $scope.getSparkWebUi = function (cluster) {
-        var route = "";
-        try {
-          route = "http://" + cluster.uiroute.spec.host;
-        } catch (e) {
-          route = null;
-        }
-        return route;
-      };
-      $scope.getClusterStatus = function (cluster) {
-        var status = "Starting...";
-        var podStatus;
-        var isPod = false;
-        // no longer checking workers since scaling to zero is possible
-        if (!cluster || !cluster.master || !cluster.master.pod) {
-          return "Pending";
-        }
-        //TODO look at more states
-        if (cluster.worker && cluster.worker.pod) {
-          _.each(cluster.worker.pod, function (worker) {
-            isPod = true;
-            if (worker.status.phase !== "Running") {
-              podStatus = worker.status.phase;
-            }
-          });
-        }
-
-        _.each(cluster.master.pod, function (master) {
-          isPod = true;
-          if (master.status.phase !== "Running") {
-            podStatus = master.status.phase;
-          }
-        });
-        //return pod status
-        if (isPod && podStatus) {
-          return podStatus;
-        }
-        else if (isPod) {
-          return "Running";
-        }
-        //return starting...
-        return status;
-      };
-      $scope.getSparkMasterUrl = function (clusterName) {
-        var masterUrl = "spark://" + clusterName + ":7077";
-        return masterUrl;
-      };
-      $scope.getCluster = function () {
-        if (!$scope.oshinkoClusters || !$scope.cluster) {
-          return;
-        }
-
-        var cluster = $scope.oshinkoClusters[$scope.cluster];
-        return cluster;
-      };
-      
-      $scope.gotoCluster = function (clusterName) {
-        var newpath = $location.path() + '/' + encodeURIComponent(clusterName);
-        $location.path(newpath);
-      };
-
-      var project = $routeParams.project;
-      ProjectsService
-        .get(project)
-        .then(_.spread(function (project, context) {
-          $scope.project = project;
-          $scope.projectContext = context;
-          watches.push(DataService.watch("pods", context, function (podsData) {
-            $scope.pods = pods = podsData.by("metadata.name");
-            groupClusters();
-          }));
-
-          watches.push(DataService.watch("services", context, function (serviceData) {
-            $scope.services = services = serviceData.by("metadata.name");
-            groupClusters();
-          }));
-
-          watches.push(DataService.watch("routes", context, function (routeData) {
-            $scope.routes = routes = routeData.by("metadata.name");
-            groupClusters();
-          }));
-
-          $scope.$on('$destroy', function () {
-            DataService.unwatchAll(watches);
-          });
-
-        }));
-
-      $scope.$on('$destroy', function () {
-        DataService.unwatchAll(watches);
-      });
-
-      // Start cluster operations
-      $scope.deleteCluster = function deleteCluster(clusterName) {
-        var modalInstance = $uibModal.open({
-          animation: true,
-          controller: 'OshinkoClusterDeleteCtrl',
-          templateUrl: 'views/oshinko/' + 'delete-cluster.html',
-          backdrop: 'static',
-          resolve: {
-            dialogData: function () {
-              return {clusterName: clusterName};
-            }
-          }
-        });
-
-        modalInstance.result.then(function () {
-          var alertName = "cluster-delete";
-          $scope.alerts = {};
-          $scope.alerts[alertName] = {
-            type: "success",
-            message: clusterName + " has been marked for deletion"
-          };
-        }).catch(function (reason) {
-          if (reason !== "cancel") {
-            var alertName = clusterName + "-delete";
-            $scope.alerts[alertName] = {
-              type: "error",
-              message: clusterName + " has been marked for deletion, but there were errors"
-            };
-          }
-        });
-      };
-
-      $scope.newCluster = function newCluster() {
-        var modalInstance = $uibModal.open({
-          animation: true,
-          controller: 'OshinkoClusterNewCtrl',
-          templateUrl: 'views/oshinko/' + 'new-cluster.html',
-          backdrop: 'static',
-          resolve: {
-            dialogData: function () {
-              return {};
-            }
-          }
-        });
-
-        modalInstance.result.then(function (response) {
-          var clusterName = response[0].metadata.labels["oshinko-cluster"];
-          var alertName = "cluster-create";
-          $scope.alerts = {};
-          $scope.alerts[alertName] = {
-            type: "success",
-            message: clusterName + " has been created"
-          };
-        }).catch(function (reason) {
-          if (reason !== "cancel") {
-            var alertName = "error-create";
-            $scope.alerts[alertName] = {
-              type: "error",
-              message: "Cluster create failed"
-            };
-          }
-        });
-      };
-
-      $scope.scaleCluster = function scaleCluster(clusterName, workerCount, masterCount) {
-        var modalInstance = $uibModal.open({
-          animation: true,
-          controller: 'OshinkoClusterScaleCtrl',
-          templateUrl: 'views/oshinko/' + 'scale-cluster.html',
-          backdrop: 'static',
-          resolve: {
-            dialogData: function () {
-              return {
-                clusterName: clusterName,
-                workerCount: workerCount,
-                masterCount: masterCount
-              };
-            }
-          }
-        });
-
-        modalInstance.result.then(function (response) {
-          var numWorkers = response[0].spec.replicas || 0;
-          var numMasters = response[1].spec.replicas || 0;
-          var alertName = clusterName + "-scale";
-          var masters = numMasters !== 1 ? " masters" : " master";
-          var workers = numWorkers !== 1 ? " workers" : " worker";
-          $scope.alerts = {};
-          $scope.alerts[alertName] = {
-            type: "success",
-            message: clusterName + " has been scaled to " + numWorkers + workers +
-              " and " + numMasters + masters
-          };
-        }).catch(function (reason) {
-          if (reason !== "cancel") {
-            var alertName = "error-scale";
-            $scope.alerts[alertName] = {
-              type: "error",
-              message: "Cluster scale failed"
-            };
-          }
-        });
-      };
-      // end cluster operations
-    }
-  );
-/**
- * Created by croberts on 2/2/17.
- */
-
-'use strict';
-
-angular.module('openshiftConsole')
-  .filter('depName', function () {
-    var labelMap = {
-      'replicationController': ["openshift.io/deployment-config.name"]
-    };
-    return function (labelKey) {
-      return labelMap[labelKey];
-    };
-  })
-  .filter('clusterName', function () {
-    var labelMap = {
-      'route': ["oshinko-cluster"]
-    };
-    return function (labelKey) {
-      return labelMap[labelKey];
-    };
-  })
-  .factory('clusterData',
-    function ($http, $q, DataService, DeploymentsService, ApplicationGenerator, $filter) {
-
-      // Start delete-related functions
-      function deleteObject(name, resourceType, context) {
-        return DataService.delete(resourceType, name, context, null);
-      }
-
-      function scaleDeleteReplication(deploymentName, context) {
-        var deferred = $q.defer();
-        var mostRecentRC = null;
-        // we need to determine the most recent replication controller in the event that
-        // changes have been made to the deployment, we can not assume clustername-w-1
-        DataService.list('replicationcontrollers', context, function (result) {
-          var rcs = result.by("metadata.name");
-          angular.forEach(rcs, function (rc) {
-            if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
-              // if we have a mostRecentRC, it's about to be replaced, so we
-              // can delete it as it's most definitely not the most recent one
-              if (mostRecentRC) {
-                DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(angular.noop);
-              }
-              mostRecentRC = rc;
-            }
-          });
-          mostRecentRC.spec.replicas = 0;
-          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, context).then(function () {
-            DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(function (result) {
-              deferred.resolve(result);
-            }).catch(function (err) {
-              deferred.reject(err);
-            });
-          }).catch(function (err) {
-            deferred.reject(err);
-          });
-        }, {
-          http: {
-            params: {
-              labelSelector: $filter('depName')('replicationController') + '=' + deploymentName
-            }
-          }
-        });
-        return deferred.promise;
-      }
-
-      function scaleReplication(clusterName, deploymentName, count, context) {
-        var deferred = $q.defer();
-        DataService.get('deploymentconfigs', deploymentName, context, null).then(function (dc) {
-          DeploymentsService.scale(dc, count).then(function (result) {
-            deferred.resolve(result);
-          });
-        });
-        return deferred.promise;
-      }
-
-      function deleteRoute(clusterName, context) {
-        return DataService.list('routes', context, function (result) {
-          var routes = result.by("metadata.name");
-          angular.forEach(routes, function(route) {
-            deleteObject(route.metadata.name, 'routes', context);
-          });
-        }, {
-          http: {
-            params: {
-              labelSelector: $filter('clusterName')('route') + '=' + clusterName
-            }
-          }
-        });
-      }
-
-      function sendDeleteCluster(clusterName, context) {
-        var masterDeploymentName = clusterName + "-m";
-        var workerDeploymentName = clusterName + "-w";
-
-        var steps = [
-          scaleDeleteReplication(masterDeploymentName, context),
-          scaleDeleteReplication(workerDeploymentName, context),
-          deleteObject(masterDeploymentName, 'deploymentconfigs', context),
-          deleteObject(workerDeploymentName, 'deploymentconfigs', context),
-          deleteObject(clusterName, 'services', context),
-          deleteRoute(clusterName, context),
-          deleteObject(clusterName + "-ui", 'services', context),
-          deleteObject(clusterName + "-metrics", 'services', context)
-        ];
-
-        return $q.all(steps);
-      }
-
-      // Start create-related functions
-      function makeDeploymentConfig(input, imageSpec, ports, specialConfig) {
-        var env = [];
-        angular.forEach(input.deploymentConfig.envVars, function (value, key) {
-          env.push({name: key, value: value});
-        });
-        var templateLabels = angular.copy(input.labels);
-        templateLabels.deploymentconfig = input.name;
-
-        var container = {
-          image: imageSpec.toString(),
-          name: input.name,
-          ports: ports,
-          env: env,
-          resources: {},
-          terminationMessagePath: "/dev/termination-log",
-          imagePullPolicy: "IfNotPresent"
-        };
-
-        var volumes = [];
-        if (specialConfig) {
-          volumes = [
-            {
-              name: specialConfig,
-              configMap: {
-                name: specialConfig,
-                defaultMode: 420
-              }
-            }
-          ];
-          container.volumeMounts = [
-            {
-              name: specialConfig,
-              readOnly: true,
-              mountPath: "/etc/oshinko-spark-configs"
-            }
-          ];
-        }
-
-        if (input.labels["oshinko-type"] === "master") {
-          container.livenessProbe = {
-            httpGet: {
-              path: "/",
-              port: 8080,
-              scheme: "HTTP"
-            },
-            timeoutSeconds: 1,
-            periodSeconds: 10,
-            successThreshold: 1,
-            failureThreshold: 3
-          };
-          container.readinessProbe = {
-            httpGet: {
-              path: "/",
-              port: 8080,
-              scheme: "HTTP"
-            },
-            timeoutSeconds: 1,
-            periodSeconds: 10,
-            successThreshold: 1,
-            failureThreshold: 3
-          };
-        } else {
-          container.livenessProbe = {
-            httpGet: {
-              path: "/",
-              port: 8081,
-              scheme: "HTTP"
-            },
-            timeoutSeconds: 1,
-            periodSeconds: 10,
-            successThreshold: 1,
-            failureThreshold: 3
-          };
-        }
-
-        var replicas;
-        if (input.scaling.autoscaling) {
-          replicas = input.scaling.minReplicas || 1;
-        } else {
-          replicas = input.scaling.replicas;
-        }
-
-        var deploymentConfig = {
-          apiVersion: "v1",
-          kind: "DeploymentConfig",
-          metadata: {
-            name: input.name,
-            labels: input.labels,
-            annotations: input.annotations
-          },
-          spec: {
-            replicas: replicas,
-            selector: {
-              "oshinko-cluster": input.labels["oshinko-cluster"]
-            },
-            triggers: [
-              {
-                type: "ConfigChange"
-              }
-            ],
-            template: {
-              metadata: {
-                labels: templateLabels
-              },
-              spec: {
-                volumes: volumes,
-                containers: [container],
-                restartPolicy: "Always",
-                terminationGracePeriodSeconds: 30,
-                dnsPolicy: "ClusterFirst",
-                securityContext: {}
-              }
-            }
-          }
-        };
-        if (input.deploymentConfig.deployOnNewImage) {
-          deploymentConfig.spec.triggers.push(
-            {
-              type: "ImageChange",
-              imageChangeParams: {
-                automatic: true,
-                containerNames: [
-                  input.name
-                ],
-                from: {
-                  kind: imageSpec.kind,
-                  name: imageSpec.toString()
-                }
-              }
-            }
-          );
-        }
-        return deploymentConfig;
-      }
-
-      function sparkDC(image, clusterName, sparkType, workerCount, ports, metrics, sparkConfig) {
-        var suffix = sparkType === "master" ? "-m" : "-w";
-        var input = {
-          deploymentConfig: {
-            envVars: {
-              OSHINKO_SPARK_CLUSTER: clusterName
-            }
-          },
-          name: clusterName + suffix,
-          labels: {
-            "oshinko-cluster": clusterName,
-            "oshinko-type": sparkType
-          },
-          annotations: {"created-by": "oshinko-console"},
-          scaling: {
-            autoscaling: false,
-            minReplicas: 1
-          }
-        };
-        if (sparkType === "worker") {
-          input.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + clusterName + ":" + 7077;
-          input.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + clusterName + "-ui:" + 8080;
-        }
-        if (sparkConfig) {
-          input.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs";
-        }
-        if (metrics) {
-          input.deploymentConfig.envVars.SPARK_METRICS_ON = "true";
-        }
-        input.scaling.replicas = workerCount ? workerCount : 1;
-        var dc = makeDeploymentConfig(input, image, ports, sparkConfig);
-        return dc;
-      }
-
-      function makeService(input, serviceName, ports) {
-        if (!ports || !ports.length) {
-          return null;
-        }
-
-        var service = {
-          kind: "Service",
-          apiVersion: "v1",
-          metadata: {
-            name: serviceName,
-            labels: input.labels,
-            annotations: input.annotations
-          },
-          spec: {
-            selector: input.selectors,
-            ports: ports
-          }
-        };
-
-        return service;
-      }
-
-      function sparkService(serviceName, clusterName, serviceType, ports) {
-        var input = {
-          labels: {
-            "oshinko-cluster": clusterName,
-            "oshinko-type": serviceType
-          },
-          annotations: {},
-          name: serviceName + "-" + serviceType,
-          selectors: {
-            "oshinko-cluster": clusterName,
-            "oshinko-type": "master"
-          }
-        };
-        return makeService(input, serviceName, ports);
-      }
-
-      function metricsService(clusterName, ports) {
-        var serviceName = clusterName + "-metrics";
-        var input = {
-          labels: {
-            "oshinko-cluster": clusterName,
-            "oshinko-type": "oshinko-metrics"
-          },
-          annotations: {},
-          name: serviceName,
-          selectors: {
-            "oshinko-cluster": clusterName,
-            "oshinko-type": "master"
-          }
-        };
-        return makeService(input, serviceName, ports);
-      }
-
-      function createDeploymentConfig(dcObject, context) {
-        return DataService.create("deploymentconfigs", null, dcObject, context, null);
-      }
-
-      function createService(srvObject, context) {
-        return DataService.create("services", null, srvObject, context, null);
-      }
-
-      function createRoute(srvObject, context) {
-        var serviceName = srvObject.metadata.name;
-        var labels = srvObject.metadata.labels;
-        var routeOptions = {
-          name: serviceName + "-route"
-        };
-        var route = ApplicationGenerator.createRoute(routeOptions, serviceName, labels);
-        return DataService.create('routes', null, route, context);
-      }
-
-      function getFinalConfigs(configName, workerCount, sparkWorkerConfig, sparkMasterConfig, context) {
-        var deferred = $q.defer();
-        var finalConfig = {};
-        if (configName) {
-          DataService.get('configmaps', configName, context, null).then(function (cm) {
-            if (cm.data["workercount"]) {
-              finalConfig["workerCount"] = parseInt(cm.data["workercount"]);
-            }
-            if (cm.data["sparkmasterconfig"]) {
-              finalConfig["masterConfigName"] = cm.data["sparkmasterconfig"];
-            }
-            if (cm.data["sparkworkerconfig"]) {
-              finalConfig["workerConfigName"] = cm.data["sparkworkerconfig"];
-            }
-            if (workerCount) {
-              finalConfig["workerCount"] = workerCount;
-            }
-            if (sparkWorkerConfig) {
-              finalConfig["workerConfigName"] = sparkWorkerConfig;
-            }
-            if (sparkMasterConfig) {
-              finalConfig["masterConfigName"] = sparkMasterConfig;
-            }
-            deferred.resolve(finalConfig);
-          }).catch(function () {
-            if (workerCount) {
-              finalConfig["workerCount"] = workerCount;
-            }
-            if (sparkWorkerConfig) {
-              finalConfig["workerConfigName"] = sparkWorkerConfig;
-            }
-            if (sparkMasterConfig) {
-              finalConfig["masterConfigName"] = sparkMasterConfig;
-            }
-            deferred.resolve(finalConfig);
-          });
-        } else {
-          if (workerCount) {
-            finalConfig["workerCount"] = workerCount;
-          }
-          if (sparkWorkerConfig) {
-            finalConfig["workerConfigName"] = sparkWorkerConfig;
-          }
-          if (sparkMasterConfig) {
-            finalConfig["masterConfigName"] = sparkMasterConfig;
-          }
-          deferred.resolve(finalConfig);
-        }
-        return deferred.promise;
-      }
-
-      function sendCreateCluster(clusterConfigs, context) {
-        var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
-        var workerPorts = [
-          {
-            "name": "spark-webui",
-            "containerPort": 8081,
-            "protocol": "TCP"
-          },
-          {
-            "name": "spark-metrics",
-            "containerPort": 7777,
-            "protocol": "TCP"
-          }
-        ];
-        var masterPorts = [
-          {
-            "name": "spark-webui",
-            "containerPort": 8080,
-            "protocol": "TCP"
-          },
-          {
-            "name": "spark-master",
-            "containerPort": 7077,
-            "protocol": "TCP"
-          },
-          {
-            "name": "spark-metrics",
-            "containerPort": 7777,
-            "protocol": "TCP"
-          }
-        ];
-        var masterServicePort = [
-          {
-            protocol: "TCP",
-            port: 7077,
-            targetPort: 7077
-          }
-        ];
-        var uiServicePort = [
-          {
-            protocol: "TCP",
-            port: 8080,
-            targetPort: 8080
-          }
-        ];
-        var jolokiaServicePort = [
-          {
-            protocol: "TCP",
-            port: 7777,
-            targetPort: 7777
-          }
-        ];
-
-        var enableMetrics = clusterConfigs.enablemetrics;
-
-        var sm = null;
-        var sw = null;
-        var smService = null;
-        var suiService = null;
-        var jolokiaService = null;
-        var deferred = $q.defer();
-        getFinalConfigs(clusterConfigs.configName, clusterConfigs.workerCount, clusterConfigs.workerConfigName, clusterConfigs.masterConfigName).then(function (finalConfigs) {
-          sm = sparkDC(sparkImage, clusterConfigs.clusterName, "master", null, masterPorts, enableMetrics, finalConfigs["masterConfigName"]);
-          sw = sparkDC(sparkImage, clusterConfigs.clusterName, "worker", finalConfigs["workerCount"], workerPorts, enableMetrics, finalConfigs["workerConfigName"]);
-          smService = sparkService(clusterConfigs.clusterName, clusterConfigs.clusterName, "master", masterServicePort);
-          suiService = sparkService(clusterConfigs.clusterName + "-ui", clusterConfigs.clusterName, "webui", uiServicePort);
-
-          var steps = [
-            createDeploymentConfig(sm, context),
-            createDeploymentConfig(sw, context),
-            createService(smService, context),
-            createService(suiService, context)
-
-          ];
-
-          // Only create the metrics service if we're going to be using it
-          if (clusterConfigs.enablemetrics) {
-            jolokiaService = metricsService(clusterConfigs.clusterName, jolokiaServicePort);
-            steps.push(createService(jolokiaService, context));
-          }
-
-          // if expose webui was checked, we expose the apache spark webui via a route
-          if (clusterConfigs.exposewebui) {
-            steps.push(createRoute(suiService, context));
-          }
-
-          $q.all(steps).then(function (values) {
-            deferred.resolve(values);
-          }).catch(function (err) {
-            deferred.reject(err);
-          });
-        });
-        return deferred.promise;
-      }
-
-      // Start scale-related functions
-      function sendScaleCluster(clusterName, workerCount, masterCount, context) {
-        var workerDeploymentName = clusterName + "-w";
-        var masterDeploymentName = clusterName + "-m";
-        var steps = [
-          scaleReplication(clusterName, workerDeploymentName, workerCount, context),
-          scaleReplication(clusterName, masterDeploymentName, masterCount, context)
-        ];
-
-        return $q.all(steps);
-      }
-
-      return {
-        sendDeleteCluster: sendDeleteCluster,
-        sendCreateCluster: sendCreateCluster,
-        sendScaleCluster: sendScaleCluster
-      };
-    }
-  );
-/**
- * Created by croberts on 2/2/17.
- */
-
-'use strict';
-angular.module('oshinkoConsole')
-  .controller('OshinkoClusterNewCtrl',
-    function ($q, $scope, dialogData, clusterData, $uibModalInstance, ProjectsService, DataService, $routeParams) {
-      var NAME_RE = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
-      var NUMBER_RE = /^[0-9]*$/;
-      var fields = {
-        name: "",
-        workers: 1,
-        advworkers: 1,
-        configname: "",
-        masterconfigname: "",
-        workerconfigname: "",
-        enablemetrics: true,
-        exposewebui: true,
-        sparkimage: "docker.io/radanalyticsio/openshift-spark:latest"
-      };
-      $scope.fields = fields;
-      $scope.advanced = false;
-
-      $scope.toggleAdvanced = function () {
-        $scope.advanced = $scope.advanced ? false : true;
-      };
-
-      function validateConfigMap(name, errTarget, errName, context) {
-        var ex;
-        var defer = $q.defer();
-        if (!name) {
-          defer.resolve();
-        }
-        DataService.get('configmaps', name, context, null).then(function () {
-          defer.resolve();
-        }).catch(function () {
-          ex = new Error("The " + errName + " named '" + name + "' does not exist");
-          ex.target = errTarget;
-          defer.reject(ex);
-        });
-        return defer.promise;
-      }
-
-      function validate(name, workers) {
-        $scope.formError = "";
-        var defer = $q.defer();
-        var ex;
-        if (name !== undefined) {
-          if (!name) {
-            ex = new Error("The cluster name cannot be empty.");
-          }
-          else if (!NAME_RE.test(name)) {
-            ex = new Error("The cluster name contains invalid characters.");
-          }
-          if (ex) {
-            ex.target = "#cluster-new-name";
-            defer.reject(ex);
-          }
-        }
-        if (workers !== undefined) {
-          if (!workers) {
-            ex = new Error("The number of workers count cannot be empty.");
-          }
-          else if (!NUMBER_RE.test(workers)) {
-            ex = new Error("Please give a valid number of workers.");
-          }
-          else if (workers <= 0) {
-            ex = new Error("Please give a value greater than 0.");
-          }
-          if (ex) {
-            ex.target = "#cluster-new-workers";
-            defer.reject(ex);
-          }
-        }
-        if (!ex) {
-          defer.resolve();
-        }
-        return defer.promise;
-      }
-
-      $scope.cancelfn = function () {
-        $uibModalInstance.dismiss('cancel');
-      };
-
-      $scope.newCluster = function newCluster() {
-        var advanced = $scope.advanced;
-
-        var clusterConfigs = {
-          clusterName: $scope.fields.name.trim(),
-          workerCount: $scope.fields.workers,
-          configName: advanced ? $scope.fields.configname : null,
-          masterConfigName: advanced ? $scope.fields.masterconfigname : null,
-          workerConfigName: advanced ? $scope.fields.workerconfigname : null,
-          exposewebui: advanced ? $scope.fields.exposewebui : true,
-          enablemetrics: advanced ? $scope.fields.enablemetrics : true
-        };
-
-        return ProjectsService
-          .get($routeParams.project)
-          .then(_.spread(function (project, context) {
-            $scope.project = project;
-            $scope.context = context;
-            return $q.all([
-              validate(clusterConfigs.clusterName, clusterConfigs.workersInt),
-              validateConfigMap(clusterConfigs.configName, "cluster-config-name", "cluster configuration", $scope.context),
-              validateConfigMap(clusterConfigs.masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
-              validateConfigMap(clusterConfigs.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
-            ]).then(function () {
-              clusterData.sendCreateCluster(clusterConfigs, $scope.context).then(function (response) {
-                $uibModalInstance.close(response);
-              }, function (error) {
-                $scope.formError = error.data.message;
-              });
-            }, function (error) {
-              $scope.formError = error.message;
-            });
-          }));
-      };
-    }
-  );
-
-
-/**
- * Created by croberts on 2/2/17.
- */
-
-'use strict';
-
-angular.module('openshiftConsole')
-  .controller('OshinkoClusterDeleteCtrl',
-    function ($q, $scope, clusterData, $uibModalInstance, dialogData, $routeParams, ProjectsService) {
-
-      $scope.clusterName = dialogData.clusterName || "";
-      $scope.workerCount = dialogData.workerCount || 0;
-      $scope.masterCount = dialogData.masterCount || 0;
-
-      $scope.deleteCluster = function deleteCluster() {
-        ProjectsService
-          .get($routeParams.project)
-          .then(_.spread(function (project, context) {
-            $scope.project = project;
-            $scope.context = context;
-            clusterData.sendDeleteCluster($scope.clusterName, $scope.context)
-              .then(function (values) {
-                var err = false;
-                angular.forEach(values, function (value) {
-                  // allow 404 error on delete since it doesn't exist
-                  if ((value.code >= 300 || value.code < 200) && value.code !== 404) {
-                    err = true;
-                  }
-                });
-                if (err) {
-                  $uibModalInstance.dismiss(values);
-                } else {
-                  $uibModalInstance.close(values);
-                }
-              }, function (error) {
-                // allow 404 error on delete since it doesn't exist
-                if(error.status !== 404) {
-                  $uibModalInstance.dismiss(error);
-                } else {
-                  $uibModalInstance.close(error);
-                }
-              });
-          }));
-      };
-
-      $scope.cancelfn = function () {
-        $uibModalInstance.dismiss('cancel');
-      };
-    }
-  );
-
-/**
- * Created by croberts on 5/3/17.
- */
-
-'use strict';
-
-angular.module('openshiftConsole')
-  .controller('OshinkoClusterScaleCtrl',
-    function ($q, $scope, clusterData, $uibModalInstance, dialogData, $routeParams, ProjectsService) {
-
-      $scope.clusterName = dialogData.clusterName || "";
-      $scope.workerCount = dialogData.workerCount || 0;
-      $scope.masterCount = dialogData.masterCount || 0;
-
-      $scope.cancelfn = function () {
-        $uibModalInstance.dismiss('cancel');
-      };
-
-      var NUMBER_RE = /^[0-9]*$/;
-
-      function validate(workers) {
-        $scope.formError = "";
-        var defer = $q.defer();
-        var ex;
-        if (workers === undefined || workers === null) {
-          ex = new Error("The number of workers cannot be empty or less than 0.");
-        }
-        else if (!NUMBER_RE.test(workers)) {
-          ex = new Error("Please give a valid number of workers.");
-        }
-        else if (workers < 0) {
-          ex = new Error("Please give a value greater than or equal to 0.");
-        }
-        if (ex) {
-          ex.target = "#numworkers";
-          defer.reject(ex);
-        }
-        if (!ex) {
-          defer.resolve();
-        }
-        return defer.promise;
-      }
-
-      $scope.scaleCluster = function scaleCluster(workercount, mastercount) {
-        ProjectsService
-          .get($routeParams.project)
-          .then(_.spread(function (project, context) {
-              $scope.project = project;
-              $scope.context = context;
-              validate(workercount)
-                .then(function () {
-                  clusterData.sendScaleCluster($scope.clusterName, workercount, mastercount, $scope.context).then(function (response) {
-                    $uibModalInstance.close(response);
-                  }, function (error) {
-                    $scope.formError = error.data.message;
-                  });
-                }, function (error) {
-                  $scope.formError = error.message;
-                });
-            })
-          );
-      };
-    }
-  );
+"use strict";
+
+!function() {
+var a = "oshinkoConsole";
+angular.module(a, [ "openshiftConsole", "oshinkoConsoleTemplates" ]).config([ "$routeProvider", function(a) {
+a.when("/project/:project/oshinko", {
+templateUrl:"views/oshinko/clusters.html",
+controller:"OshinkoClustersCtrl"
+}), a.when("/project/:project/oshinko/:cluster", {
+templateUrl:"views/oshinko/cluster.html",
+controller:"OshinkoClustersCtrl"
+});
+} ]).run(function() {
+window.OPENSHIFT_CONSTANTS.PROJECT_NAVIGATION.push({
+href:"/oshinko",
+label:"Spark Clusters",
+iconClass:"pficon  pficon-cluster"
+});
+}), hawtioPluginLoader.addModule(a);
+}(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "AlertMessageService", "$uibModal", function(a, b, c, d, e, f, g, h, i, j, k) {
+function l(a) {
+return !!r(a, "oshinko-cluster");
+}
+function m(a, b, c) {
+var d, e, f, g, h, i = {};
+return _.each(a, function(a) {
+l(a) && (d = r(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = r(a, "oshinko-type"), h = _.find(b, function(b) {
+var c = new LabelSelector(b.spec.selector);
+return c.matches(a);
+}), h && (g = _.get(h, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], h)), _.set(i, [ d, e, "pod", f ], a));
+}), _.each(b, function(a) {
+e = r(a, "oshinko-type"), "webui" === e && (d = r(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
+}), _.each(c, function(a) {
+d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
+}), i;
+}
+var n, o, p, q = [];
+a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {}, a.selectedTab = {};
+var r = i("label");
+a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
+title:a.projectName,
+link:"project/" + a.projectName
+}, {
+title:"Spark Clusters",
+link:"project/" + a.projectName + "/oshinko"
+} ], "" !== a.currentCluster && a.breadcrumbs.push({
+title:a.currentCluster
+}), j.getAlerts().forEach(function(b) {
+a.alerts[b.name] = b.data;
+}), j.clearAlerts(), g.tab && (a.selectedTab[g.tab] = !0);
+var s = function(b, c) {
+try {
+a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length;
+} catch (d) {
+a.cluster_details = null;
+}
+}, t = function() {
+o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? s(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
+};
+a.countWorkers = function(a) {
+if (!a || !a.worker || !a.worker.pod) return 0;
+var b = a.worker.pod, c = Object.keys(b).length;
+return c;
+}, a.countMasters = function(a) {
+if (!a || !a.master || !a.master.pod) return 0;
+var b = a.master.pod, c = Object.keys(b).length;
+return c;
+}, a.getClusterName = function(a) {
+var b = Object.keys(a);
+return b[0];
+}, a.getSparkWebUi = function(a) {
+var b = "";
+try {
+b = "http://" + a.uiroute.spec.host;
+} catch (c) {
+b = null;
+}
+return b;
+}, a.getClusterStatus = function(a) {
+var b, c = "Starting...", d = !1;
+return a && a.master && a.master.pod ? (a.worker && a.worker.pod && _.each(a.worker.pod, function(a) {
+d = !0, "Running" !== a.status.phase && (b = a.status.phase);
+}), _.each(a.master.pod, function(a) {
+d = !0, "Running" !== a.status.phase && (b = a.status.phase);
+}), d && b ? b :d ? "Running" :c) :"Pending";
+}, a.getSparkMasterUrl = function(a) {
+var b = "spark://" + a + ":7077";
+return b;
+}, a.getCluster = function() {
+if (a.oshinkoClusters && a.cluster) {
+var b = a.oshinkoClusters[a.cluster];
+return b;
+}
+}, a.gotoCluster = function(a) {
+var b = c.path() + "/" + encodeURIComponent(a);
+c.path(b);
+};
+var u = g.project;
+f.get(u).then(_.spread(function(b, c) {
+a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
+a.pods = o = b.by("metadata.name"), t();
+})), q.push(e.watch("services", c, function(b) {
+a.services = n = b.by("metadata.name"), t();
+})), q.push(e.watch("routes", c, function(b) {
+a.routes = p = b.by("metadata.name"), t();
+})), a.$on("$destroy", function() {
+e.unwatchAll(q);
+});
+})), a.$on("$destroy", function() {
+e.unwatchAll(q);
+}), a.deleteCluster = function(b) {
+var c = k.open({
+animation:!0,
+controller:"OshinkoClusterDeleteCtrl",
+templateUrl:"views/oshinko/delete-cluster.html",
+backdrop:"static",
+resolve:{
+dialogData:function() {
+return {
+clusterName:b
+};
+}
+}
+});
+c.result.then(function() {
+var c = "cluster-delete";
+a.alerts = {}, a.alerts[c] = {
+type:"success",
+message:b + " has been marked for deletion"
+};
+})["catch"](function(c) {
+if ("cancel" !== c) {
+var d = b + "-delete";
+a.alerts[d] = {
+type:"error",
+message:b + " has been marked for deletion, but there were errors"
+};
+}
+});
+}, a.newCluster = function() {
+var b = k.open({
+animation:!0,
+controller:"OshinkoClusterNewCtrl",
+templateUrl:"views/oshinko/new-cluster.html",
+backdrop:"static",
+resolve:{
+dialogData:function() {
+return {};
+}
+}
+});
+b.result.then(function(b) {
+var c = b[0].metadata.labels["oshinko-cluster"], d = "cluster-create";
+a.alerts = {}, a.alerts[d] = {
+type:"success",
+message:c + " has been created"
+};
+})["catch"](function(b) {
+if ("cancel" !== b) {
+var c = "error-create";
+a.alerts[c] = {
+type:"error",
+message:"Cluster create failed"
+};
+}
+});
+}, a.scaleCluster = function(b, c, d) {
+var e = k.open({
+animation:!0,
+controller:"OshinkoClusterScaleCtrl",
+templateUrl:"views/oshinko/scale-cluster.html",
+backdrop:"static",
+resolve:{
+dialogData:function() {
+return {
+clusterName:b,
+workerCount:c,
+masterCount:d
+};
+}
+}
+});
+e.result.then(function(c) {
+var d = c[0].spec.replicas || 0, e = c[1].spec.replicas || 0, f = b + "-scale", g = 1 !== e ? " masters" :" master", h = 1 !== d ? " workers" :" worker";
+a.alerts = {}, a.alerts[f] = {
+type:"success",
+message:b + " has been scaled to " + d + h + " and " + e + g
+};
+})["catch"](function(b) {
+if ("cancel" !== b) {
+var c = "error-scale";
+a.alerts[c] = {
+type:"error",
+message:"Cluster scale failed"
+};
+}
+});
+};
+} ]), angular.module("openshiftConsole").filter("depName", function() {
+var a = {
+replicationController:[ "openshift.io/deployment-config.name" ]
+};
+return function(b) {
+return a[b];
+};
+}).filter("clusterName", function() {
+var a = {
+route:[ "oshinko-cluster" ]
+};
+return function(b) {
+return a[b];
+};
+}).factory("clusterData", [ "$http", "$q", "DataService", "DeploymentsService", "ApplicationGenerator", "$filter", function(a, b, c, d, e, f) {
+function g(a, b, d) {
+return c["delete"](b, a, d, null);
+}
+function h(a, d) {
+var e = b.defer(), g = null;
+return c.list("replicationcontrollers", d, function(a) {
+var b = a.by("metadata.name");
+angular.forEach(b, function(a) {
+(!g || new Date(a.metadata.creationTimestamp) > new Date(g.metadata.creationTimestamp)) && (g && c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(angular.noop), g = a);
+}), g.spec.replicas = 0, c.update("replicationcontrollers", g.metadata.name, g, d).then(function() {
+c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(function(a) {
+e.resolve(a);
+})["catch"](function(a) {
+e.reject(a);
+});
+})["catch"](function(a) {
+e.reject(a);
+});
+}, {
+http:{
+params:{
+labelSelector:f("depName")("replicationController") + "=" + a
+}
+}
+}), e.promise;
+}
+function i(a, e, f, g) {
+var h = b.defer();
+return c.get("deploymentconfigs", e, g, null).then(function(a) {
+d.scale(a, f).then(function(a) {
+h.resolve(a);
+});
+}), h.promise;
+}
+function j(a, b) {
+return c.list("routes", b, function(a) {
+var c = a.by("metadata.name");
+angular.forEach(c, function(a) {
+g(a.metadata.name, "routes", b);
+});
+}, {
+http:{
+params:{
+labelSelector:f("clusterName")("route") + "=" + a
+}
+}
+});
+}
+function k(a, c) {
+var d = a + "-m", e = a + "-w", f = [ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c), g(a + "-metrics", "services", c) ];
+return b.all(f);
+}
+function l(a, b, c, d) {
+var e = [];
+angular.forEach(a.deploymentConfig.envVars, function(a, b) {
+e.push({
+name:b,
+value:a
+});
+});
+var f = angular.copy(a.labels);
+f.deploymentconfig = a.name;
+var g = {
+image:b.toString(),
+name:a.name,
+ports:c,
+env:e,
+resources:{},
+terminationMessagePath:"/dev/termination-log",
+imagePullPolicy:"IfNotPresent"
+}, h = [];
+d && (h = [ {
+name:d,
+configMap:{
+name:d,
+defaultMode:420
+}
+} ], g.volumeMounts = [ {
+name:d,
+readOnly:!0,
+mountPath:"/etc/oshinko-spark-configs"
+} ]), "master" === a.labels["oshinko-type"] ? (g.livenessProbe = {
+httpGet:{
+path:"/",
+port:8080,
+scheme:"HTTP"
+},
+timeoutSeconds:1,
+periodSeconds:10,
+successThreshold:1,
+failureThreshold:3
+}, g.readinessProbe = {
+httpGet:{
+path:"/",
+port:8080,
+scheme:"HTTP"
+},
+timeoutSeconds:1,
+periodSeconds:10,
+successThreshold:1,
+failureThreshold:3
+}) :g.livenessProbe = {
+httpGet:{
+path:"/",
+port:8081,
+scheme:"HTTP"
+},
+timeoutSeconds:1,
+periodSeconds:10,
+successThreshold:1,
+failureThreshold:3
+};
+var i;
+i = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
+var j = {
+apiVersion:"v1",
+kind:"DeploymentConfig",
+metadata:{
+name:a.name,
+labels:a.labels,
+annotations:a.annotations
+},
+spec:{
+replicas:i,
+selector:{
+"oshinko-cluster":a.labels["oshinko-cluster"]
+},
+triggers:[ {
+type:"ConfigChange"
+} ],
+template:{
+metadata:{
+labels:f
+},
+spec:{
+volumes:h,
+containers:[ g ],
+restartPolicy:"Always",
+terminationGracePeriodSeconds:30,
+dnsPolicy:"ClusterFirst",
+securityContext:{}
+}
+}
+}
+};
+return a.deploymentConfig.deployOnNewImage && j.spec.triggers.push({
+type:"ImageChange",
+imageChangeParams:{
+automatic:!0,
+containerNames:[ a.name ],
+from:{
+kind:b.kind,
+name:b.toString()
+}
+}
+}), j;
+}
+function m(a, b, c, d, e, f, g) {
+var h = "master" === c ? "-m" :"-w", i = {
+deploymentConfig:{
+envVars:{
+OSHINKO_SPARK_CLUSTER:b
+}
+},
+name:b + h,
+labels:{
+"oshinko-cluster":b,
+"oshinko-type":c
+},
+annotations:{
+"created-by":"oshinko-console"
+},
+scaling:{
+autoscaling:!1,
+minReplicas:1
+}
+};
+"worker" === c && (i.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", i.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g && (i.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), f && (i.deploymentConfig.envVars.SPARK_METRICS_ON = "true"), i.scaling.replicas = d ? d :1;
+var j = l(i, a, e, g);
+return j;
+}
+function n(a, b, c) {
+if (!c || !c.length) return null;
+var d = {
+kind:"Service",
+apiVersion:"v1",
+metadata:{
+name:b,
+labels:a.labels,
+annotations:a.annotations
+},
+spec:{
+selector:a.selectors,
+ports:c
+}
+};
+return d;
+}
+function o(a, b, c, d) {
+var e = {
+labels:{
+"oshinko-cluster":b,
+"oshinko-type":c
+},
+annotations:{},
+name:a + "-" + c,
+selectors:{
+"oshinko-cluster":b,
+"oshinko-type":"master"
+}
+};
+return n(e, a, d);
+}
+function p(a, b) {
+var c = a + "-metrics", d = {
+labels:{
+"oshinko-cluster":a,
+"oshinko-type":"oshinko-metrics"
+},
+annotations:{},
+name:c,
+selectors:{
+"oshinko-cluster":a,
+"oshinko-type":"master"
+}
+};
+return n(d, c, b);
+}
+function q(a, b) {
+return c.create("deploymentconfigs", null, a, b, null);
+}
+function r(a, b) {
+return c.create("services", null, a, b, null);
+}
+function s(a, b) {
+var d = a.metadata.name, f = a.metadata.labels, g = {
+name:d + "-route"
+}, h = e.createRoute(g, d, f);
+return c.create("routes", null, h, b);
+}
+function t(a, d, e, f, g) {
+var h = b.defer(), i = {};
+return a ? c.get("configmaps", a, g, null).then(function(a) {
+a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (i.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (i.workerConfigName = a.data.sparkworkerconfig), d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
+})["catch"](function() {
+d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
+}) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
+}
+function u(a, c) {
+var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
+name:"spark-webui",
+containerPort:8081,
+protocol:"TCP"
+}, {
+name:"spark-metrics",
+containerPort:7777,
+protocol:"TCP"
+} ], f = [ {
+name:"spark-webui",
+containerPort:8080,
+protocol:"TCP"
+}, {
+name:"spark-master",
+containerPort:7077,
+protocol:"TCP"
+}, {
+name:"spark-metrics",
+containerPort:7777,
+protocol:"TCP"
+} ], g = [ {
+protocol:"TCP",
+port:7077,
+targetPort:7077
+} ], h = [ {
+protocol:"TCP",
+port:8080,
+targetPort:8080
+} ], i = [ {
+protocol:"TCP",
+port:7777,
+targetPort:7777
+} ], j = a.enablemetrics, k = null, l = null, n = null, u = null, v = null, w = b.defer();
+return t(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(t) {
+k = m(d, a.clusterName, "master", null, f, j, t.masterConfigName), l = m(d, a.clusterName, "worker", t.workerCount, e, j, t.workerConfigName), n = o(a.clusterName, a.clusterName, "master", g), u = o(a.clusterName + "-ui", a.clusterName, "webui", h);
+var x = [ q(k, c), q(l, c), r(n, c), r(u, c) ];
+a.enablemetrics && (v = p(a.clusterName, i), x.push(r(v, c))), a.exposewebui && x.push(s(u, c)), b.all(x).then(function(a) {
+w.resolve(a);
+})["catch"](function(a) {
+w.reject(a);
+});
+}), w.promise;
+}
+function v(a, c, d, e) {
+var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
+return b.all(h);
+}
+return {
+sendDeleteCluster:k,
+sendCreateCluster:u,
+sendScaleCluster:v
+};
+} ]), angular.module("oshinkoConsole").controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
+function i(b, c, d, e) {
+var f, h = a.defer();
+return b || h.resolve(), g.get("configmaps", b, e, null).then(function() {
+h.resolve();
+})["catch"](function() {
+f = new Error("The " + d + " named '" + b + "' does not exist"), f.target = c, h.reject(f);
+}), h.promise;
+}
+function j(c, d) {
+b.formError = "";
+var e, f = a.defer();
+return void 0 !== c && (c ? k.test(c) || (e = new Error("The cluster name contains invalid characters.")) :e = new Error("The cluster name cannot be empty."), e && (e.target = "#cluster-new-name", f.reject(e))), void 0 !== d && (d ? l.test(d) ? d <= 0 && (e = new Error("Please give a value greater than 0.")) :e = new Error("Please give a valid number of workers.") :e = new Error("The number of workers count cannot be empty."), e && (e.target = "#cluster-new-workers", f.reject(e))), e || f.resolve(), f.promise;
+}
+var k = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/, l = /^[0-9]*$/, m = {
+name:"",
+workers:1,
+advworkers:1,
+configname:"",
+masterconfigname:"",
+workerconfigname:"",
+enablemetrics:!0,
+exposewebui:!0,
+sparkimage:"docker.io/radanalyticsio/openshift-spark:latest"
+};
+b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
+b.advanced = !b.advanced;
+}, b.cancelfn = function() {
+e.dismiss("cancel");
+}, b.newCluster = function() {
+var c = b.advanced, g = {
+clusterName:b.fields.name.trim(),
+workerCount:b.fields.workers,
+configName:c ? b.fields.configname :null,
+masterConfigName:c ? b.fields.masterconfigname :null,
+workerConfigName:c ? b.fields.workerconfigname :null,
+exposewebui:!c || b.fields.exposewebui,
+enablemetrics:!c || b.fields.enablemetrics
+};
+return f.get(h.project).then(_.spread(function(c, f) {
+return b.project = c, b.context = f, a.all([ j(g.clusterName, g.workersInt), i(g.configName, "cluster-config-name", "cluster configuration", b.context), i(g.masterConfigName, "cluster-masterconfig-name", "master spark configuration", b.context), i(g.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
+d.sendCreateCluster(g, b.context).then(function(a) {
+e.close(a);
+}, function(a) {
+b.formError = a.data.message;
+});
+}, function(a) {
+b.formError = a.message;
+});
+}));
+};
+} ]), angular.module("openshiftConsole").controller("OshinkoClusterDeleteCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", "$routeParams", "ProjectsService", function(a, b, c, d, e, f, g) {
+b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.masterCount = e.masterCount || 0, b.deleteCluster = function() {
+g.get(f.project).then(_.spread(function(a, e) {
+b.project = a, b.context = e, c.sendDeleteCluster(b.clusterName, b.context).then(function(a) {
+var b = !1;
+angular.forEach(a, function(a) {
+(a.code >= 300 || a.code < 200) && 404 !== a.code && (b = !0);
+}), b ? d.dismiss(a) :d.close(a);
+}, function(a) {
+404 !== a.status ? d.dismiss(a) :d.close(a);
+});
+}));
+}, b.cancelfn = function() {
+d.dismiss("cancel");
+};
+} ]), angular.module("openshiftConsole").controller("OshinkoClusterScaleCtrl", [ "$q", "$scope", "clusterData", "$uibModalInstance", "dialogData", "$routeParams", "ProjectsService", function(a, b, c, d, e, f, g) {
+function h(c) {
+b.formError = "";
+var d, e = a.defer();
+return void 0 === c || null === c ? d = new Error("The number of workers cannot be empty or less than 0.") :i.test(c) ? c < 0 && (d = new Error("Please give a value greater than or equal to 0.")) :d = new Error("Please give a valid number of workers."), d && (d.target = "#numworkers", e.reject(d)), d || e.resolve(), e.promise;
+}
+b.clusterName = e.clusterName || "", b.workerCount = e.workerCount || 0, b.masterCount = e.masterCount || 0, b.cancelfn = function() {
+d.dismiss("cancel");
+};
+var i = /^[0-9]*$/;
+b.scaleCluster = function(a, e) {
+g.get(f.project).then(_.spread(function(f, g) {
+b.project = f, b.context = g, h(a).then(function() {
+c.sendScaleCluster(b.clusterName, a, e, b.context).then(function(a) {
+d.close(a);
+}, function(a) {
+b.formError = a.data.message;
+});
+}, function(a) {
+b.formError = a.message;
+});
+}));
+};
+} ]);
