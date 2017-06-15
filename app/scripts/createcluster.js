@@ -15,6 +15,7 @@ angular.module('oshinkoConsole')
         configname: "",
         masterconfigname: "",
         workerconfigname: "",
+        enablemetrics: true,
         exposewebui: true,
         sparkimage: "docker.io/radanalyticsio/openshift-spark:latest"
       };
@@ -83,22 +84,16 @@ angular.module('oshinkoConsole')
       };
 
       $scope.newCluster = function newCluster() {
-        var name = $scope.fields.name.trim();
         var advanced = $scope.advanced;
-        var workersInt = $scope.fields.workers;
-        var configName = advanced ? $scope.fields.configname : null;
-        var masterConfigName = advanced ? $scope.fields.masterconfigname : null;
-        var workerConfigName = advanced ? $scope.fields.workerconfigname : null;
-        var exposewebui = advanced ? $scope.fields.exposewebui : true;
-        var sparkImage = advanced && $scope.fields.sparkimage !== "" ? $scope.fields.sparkimage : "docker.io/radanalyticsio/openshift-spark:latest";
-        var clusterConfig = {
-          clusterName: name,
-          workerCount: workersInt,
-          configName: configName,
-          masterConfigName: masterConfigName,
-          workerConfigName: workerConfigName,
-          exposewebui: exposewebui,
-          sparkImage: sparkImage
+
+        var clusterConfigs = {
+          clusterName: $scope.fields.name.trim(),
+          workerCount: $scope.fields.workers,
+          configName: advanced ? $scope.fields.configname : null,
+          masterConfigName: advanced ? $scope.fields.masterconfigname : null,
+          workerConfigName: advanced ? $scope.fields.workerconfigname : null,
+          exposewebui: advanced ? $scope.fields.exposewebui : true,
+          enablemetrics: advanced ? $scope.fields.enablemetrics : true
         };
 
         return ProjectsService
@@ -107,12 +102,12 @@ angular.module('oshinkoConsole')
             $scope.project = project;
             $scope.context = context;
             return $q.all([
-              validate(name, workersInt),
-              validateConfigMap(configName, "cluster-config-name", "cluster configuration", $scope.context),
-              validateConfigMap(masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
-              validateConfigMap(workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
+              validate(clusterConfigs.clusterName, clusterConfigs.workersInt),
+              validateConfigMap(clusterConfigs.configName, "cluster-config-name", "cluster configuration", $scope.context),
+              validateConfigMap(clusterConfigs.masterConfigName, "cluster-masterconfig-name", "master spark configuration", $scope.context),
+              validateConfigMap(clusterConfigs.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", $scope.context)
             ]).then(function () {
-              clusterData.sendCreateCluster(clusterConfig, $scope.context).then(function (response) {
+              clusterData.sendCreateCluster(clusterConfigs, $scope.context).then(function (response) {
                 $uibModalInstance.close(response);
               }, function (error) {
                 $scope.formError = error.data.message;
