@@ -40,6 +40,10 @@
           <label for="cluster-expose-ui">Expose Apache Spark web ui via a route</label>
           <input id="cluster-expose-ui" class="form-control input-lg" type="checkbox" ng-model="fields.exposewebui"/>
         </div>
+        <div class="form-group">
+          <label for="cluster-metrics">Enable metrics on your cluster</label>
+          <input id="cluster-metrics" class="form-control input-lg" type="checkbox" ng-model="fields.enablemetrics"/>
+        </div>
         <div class="form-group"><a href="#" ng-click="toggleAdvanced()">Basic cluster configuration</a></div>
       </div>
     </fieldset>

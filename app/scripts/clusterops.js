@@ -95,15 +95,18 @@ angular.module('openshiftConsole')
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
 
-        return $q.all([
+        var steps = [
           scaleDeleteReplication(masterDeploymentName, context),
           scaleDeleteReplication(workerDeploymentName, context),
           deleteObject(masterDeploymentName, 'deploymentconfigs', context),
           deleteObject(workerDeploymentName, 'deploymentconfigs', context),
           deleteObject(clusterName, 'services', context),
           deleteRoute(clusterName, context),
-          deleteObject(clusterName + "-ui", 'services', context)
-        ]);
+          deleteObject(clusterName + "-ui", 'services', context),
+          deleteObject(clusterName + "-metrics", 'services', context)
+        ];
+
+        return $q.all(steps);
       }
 
       // Start create-related functions
@@ -242,7 +245,7 @@ angular.module('openshiftConsole')
         return deploymentConfig;
       }
 
-      function sparkDC(image, clusterName, sparkType, workerCount, ports, sparkConfig) {
+      function sparkDC(image, clusterName, sparkType, workerCount, ports, metrics, sparkConfig) {
         var suffix = sparkType === "master" ? "-m" : "-w";
         var input = {
           deploymentConfig: {
@@ -267,6 +270,9 @@ angular.module('openshiftConsole')
         }
         if (sparkConfig) {
           input.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs";
+        }
+        if (metrics) {
+          input.deploymentConfig.envVars.SPARK_METRICS_ON = "true";
         }
         input.scaling.replicas = workerCount ? workerCount : 1;
         var dc = makeDeploymentConfig(input, image, ports, sparkConfig);
@@ -303,6 +309,23 @@ angular.module('openshiftConsole')
           },
           annotations: {},
           name: serviceName + "-" + serviceType,
+          selectors: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": "master"
+          }
+        };
+        return makeService(input, serviceName, ports);
+      }
+
+      function metricsService(clusterName, ports) {
+        var serviceName = clusterName + "-metrics";
+        var input = {
+          labels: {
+            "oshinko-cluster": clusterName,
+            "oshinko-type": "oshinko-metrics"
+          },
+          annotations: {},
+          name: serviceName,
           selectors: {
             "oshinko-cluster": clusterName,
             "oshinko-type": "master"
@@ -380,11 +403,17 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function sendCreateCluster(clusterConfig, context) {
+      function sendCreateCluster(clusterConfigs, context) {
+        var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
         var workerPorts = [
           {
             "name": "spark-webui",
             "containerPort": 8081,
+            "protocol": "TCP"
+          },
+          {
+            "name": "spark-metrics",
+            "containerPort": 7777,
             "protocol": "TCP"
           }
         ];
@@ -397,6 +426,11 @@ angular.module('openshiftConsole')
           {
             "name": "spark-master",
             "containerPort": 7077,
+            "protocol": "TCP"
+          },
+          {
+            "name": "spark-metrics",
+            "containerPort": 7777,
             "protocol": "TCP"
           }
         ];
@@ -414,28 +448,44 @@ angular.module('openshiftConsole')
             targetPort: 8080
           }
         ];
+        var jolokiaServicePort = [
+          {
+            protocol: "TCP",
+            port: 7777,
+            targetPort: 7777
+          }
+        ];
+
+        var enableMetrics = clusterConfigs.enablemetrics;
 
         var sm = null;
         var sw = null;
         var smService = null;
         var suiService = null;
+        var jolokiaService = null;
         var deferred = $q.defer();
-        getFinalConfigs(clusterConfig.configName, clusterConfig.workerCount,
-          clusterConfig.workerConfigName, clusterConfig.masterConfigName).then(function (finalConfigs) {
-          sm = sparkDC(clusterConfig.sparkImage, clusterConfig.clusterName, "master", null, masterPorts, finalConfigs["masterConfigName"]);
-          sw = sparkDC(clusterConfig.sparkImage, clusterConfig.clusterName, "worker", finalConfigs["workerCount"], workerPorts, finalConfigs["workerConfigName"]);
-          smService = sparkService(clusterConfig.clusterName, clusterConfig.clusterName, "master", masterServicePort);
-          suiService = sparkService(clusterConfig.clusterName + "-ui", clusterConfig.clusterName, "webui", uiServicePort);
+        getFinalConfigs(clusterConfigs.configName, clusterConfigs.workerCount, clusterConfigs.workerConfigName, clusterConfigs.masterConfigName).then(function (finalConfigs) {
+          sm = sparkDC(sparkImage, clusterConfigs.clusterName, "master", null, masterPorts, enableMetrics, finalConfigs["masterConfigName"]);
+          sw = sparkDC(sparkImage, clusterConfigs.clusterName, "worker", finalConfigs["workerCount"], workerPorts, enableMetrics, finalConfigs["workerConfigName"]);
+          smService = sparkService(clusterConfigs.clusterName, clusterConfigs.clusterName, "master", masterServicePort);
+          suiService = sparkService(clusterConfigs.clusterName + "-ui", clusterConfigs.clusterName, "webui", uiServicePort);
 
           var steps = [
             createDeploymentConfig(sm, context),
             createDeploymentConfig(sw, context),
             createService(smService, context),
             createService(suiService, context)
+
           ];
 
+          // Only create the metrics service if we're going to be using it
+          if (clusterConfigs.enablemetrics) {
+            jolokiaService = metricsService(clusterConfigs.clusterName, jolokiaServicePort);
+            steps.push(createService(jolokiaService, context));
+          }
+
           // if expose webui was checked, we expose the apache spark webui via a route
-          if (clusterConfig.exposewebui) {
+          if (clusterConfigs.exposewebui) {
             steps.push(createRoute(suiService, context));
           }
 
