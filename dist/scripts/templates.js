@@ -221,6 +221,10 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<label for=\"cluster-expose-ui\">Expose Apache Spark web ui via a route</label>\n" +
     "<input id=\"cluster-expose-ui\" class=\"form-control input-lg\" type=\"checkbox\" ng-model=\"fields.exposewebui\"/>\n" +
     "</div>\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"cluster-metrics\">Enable metrics on your cluster</label>\n" +
+    "<input id=\"cluster-metrics\" class=\"form-control input-lg\" type=\"checkbox\" ng-model=\"fields.enablemetrics\"/>\n" +
+    "</div>\n" +
     "<div class=\"form-group\"><a href=\"#\" ng-click=\"toggleAdvanced()\">Basic cluster configuration</a></div>\n" +
     "</div>\n" +
     "</fieldset>\n" +
