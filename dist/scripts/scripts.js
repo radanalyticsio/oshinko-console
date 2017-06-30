@@ -17,26 +17,26 @@ label:"Spark Clusters",
 iconClass:"pficon  pficon-cluster"
 });
 }), hawtioPluginLoader.addModule(a);
-}(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "AlertMessageService", "$uibModal", function(a, b, c, d, e, f, g, h, i, j, k) {
-function l(a) {
-return !!r(a, "oshinko-cluster");
+}(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "$uibModal", function(a, b, c, d, e, f, g, h, i, j) {
+function k(a) {
+return !!q(a, "oshinko-cluster");
 }
-function m(a, b, c) {
+function l(a, b, c) {
 var d, e, f, g, h, i = {};
 return _.each(a, function(a) {
-l(a) && (d = r(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = r(a, "oshinko-type"), h = _.find(b, function(b) {
+k(a) && (d = q(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = q(a, "oshinko-type"), h = _.find(b, function(b) {
 var c = new LabelSelector(b.spec.selector);
 return c.matches(a);
 }), h && (g = _.get(h, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], h)), _.set(i, [ d, e, "pod", f ], a));
 }), _.each(b, function(a) {
-e = r(a, "oshinko-type"), "webui" === e && (d = r(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
+e = q(a, "oshinko-type"), "webui" === e && (d = q(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
 }), _.each(c, function(a) {
-d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
+d = q(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
 }), i;
 }
-var n, o, p, q = [];
+var m, n, o, p = [];
 a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {}, a.selectedTab = {};
-var r = i("label");
+var q = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
 link:"project/" + a.projectName
@@ -45,17 +45,15 @@ title:"Spark Clusters",
 link:"project/" + a.projectName + "/oshinko"
 } ], "" !== a.currentCluster && a.breadcrumbs.push({
 title:a.currentCluster
-}), j.getAlerts().forEach(function(b) {
-a.alerts[b.name] = b.data;
-}), j.clearAlerts(), g.tab && (a.selectedTab[g.tab] = !0);
-var s = function(b, c) {
+}), g.tab && (a.selectedTab[g.tab] = !0);
+var r = function(b, c) {
 try {
 a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length;
 } catch (d) {
 a.cluster_details = null;
 }
-}, t = function() {
-o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? s(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
+}, s = function() {
+n && m && (a.oshinkoClusters = l(n, m, o), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? r(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
 };
 a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
@@ -95,21 +93,21 @@ return b;
 var b = c.path() + "/" + encodeURIComponent(a);
 c.path(b);
 };
-var u = g.project;
-f.get(u).then(_.spread(function(b, c) {
-a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
-a.pods = o = b.by("metadata.name"), t();
-})), q.push(e.watch("services", c, function(b) {
-a.services = n = b.by("metadata.name"), t();
-})), q.push(e.watch("routes", c, function(b) {
-a.routes = p = b.by("metadata.name"), t();
+var t = g.project;
+f.get(t).then(_.spread(function(b, c) {
+a.project = b, a.projectContext = c, p.push(e.watch("pods", c, function(b) {
+a.pods = n = b.by("metadata.name"), s();
+})), p.push(e.watch("services", c, function(b) {
+a.services = m = b.by("metadata.name"), s();
+})), p.push(e.watch("routes", c, function(b) {
+a.routes = o = b.by("metadata.name"), s();
 })), a.$on("$destroy", function() {
-e.unwatchAll(q);
+e.unwatchAll(p);
 });
 })), a.$on("$destroy", function() {
-e.unwatchAll(q);
+e.unwatchAll(p);
 }), a.deleteCluster = function(b) {
-var c = k.open({
+var c = j.open({
 animation:!0,
 controller:"OshinkoClusterDeleteCtrl",
 templateUrl:"views/oshinko/delete-cluster.html",
@@ -138,7 +136,7 @@ message:b + " has been marked for deletion, but there were errors"
 }
 });
 }, a.newCluster = function() {
-var b = k.open({
+var b = j.open({
 animation:!0,
 controller:"OshinkoClusterNewCtrl",
 templateUrl:"views/oshinko/new-cluster.html",
@@ -165,7 +163,7 @@ message:"Cluster create failed"
 }
 });
 }, a.scaleCluster = function(b, c, d) {
-var e = k.open({
+var e = j.open({
 animation:!0,
 controller:"OshinkoClusterScaleCtrl",
 templateUrl:"views/oshinko/scale-cluster.html",
