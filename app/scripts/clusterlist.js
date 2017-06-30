@@ -8,7 +8,7 @@ angular.module('openshiftConsole')
   .controller('OshinkoClustersCtrl',
     function ($scope, $interval, $location, $route,
               DataService, ProjectsService, $routeParams,
-              $rootScope, $filter, AlertMessageService, $uibModal) {
+              $rootScope, $filter, $uibModal) {
       var watches = [];
       var services, pods, routes;
       $scope.projectName = $routeParams.project;
@@ -35,11 +35,6 @@ angular.module('openshiftConsole')
       if ($scope.currentCluster !== '') {
         $scope.breadcrumbs.push( {title: $scope.currentCluster});
       }
-
-      AlertMessageService.getAlerts().forEach(function (alert) {
-        $scope.alerts[alert.name] = alert.data;
-      });
-      AlertMessageService.clearAlerts();
 
       if($routeParams.tab) {
         $scope.selectedTab[$routeParams.tab] = true; // ex: tab=Group for Groups, pluralized in the template
