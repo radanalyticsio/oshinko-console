@@ -260,39 +260,60 @@ labelSelector:f("clusterName")("route") + "=" + a
 });
 }
 function k(a, c) {
-var d = a + "-m", e = a + "-w", f = [ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c), g(a + "-metrics", "services", c) ];
+var d = a + "-m", e = a + "-w", f = [ h(d, c), h(e, c), g(d, "deploymentconfigs", c), g(e, "deploymentconfigs", c), g(a, "services", c), j(a, c), g(a + "-ui", "services", c), g(a + "-metrics", "services", c), g(a + "-metrics", "configmaps", c) ];
 return b.all(f);
 }
-function l(a, b, c, d) {
-var e = [];
+function l(a) {
+var b = {
+apiVersion:"v1",
+kind:"ConfigMap",
+metadata:{
+name:a
+},
+data:{
+"openshift-hawkular-agent":'collection_interval_secs: 10\nendpoints:\n- type: jolokia\n  protocol: "http"\n  port: 7777\n  path: /jolokia\n  tags:\n    name: ${POD:name}\n  metrics:\n  - name: java.lang:type=Threading#ThreadCount\n    type: counter\n    id:   VM Thread Count\n  - name: java.lang:type=Memory#HeapMemoryUsage#used\n    type: gauge\n    id:   VM Heap Memory Used'
+}
+};
+return b;
+}
+function m(a, b) {
+return c.create("configmaps", null, a, b, null);
+}
+function n(a, b, c, d, e) {
+var f = [], g = [];
 angular.forEach(a.deploymentConfig.envVars, function(a, b) {
-e.push({
+f.push({
 name:b,
 value:a
 });
 });
-var f = angular.copy(a.labels);
-f.deploymentconfig = a.name;
-var g = {
+var h = angular.copy(a.labels);
+h.deploymentconfig = a.name;
+var i = {
 image:b.toString(),
 name:a.name,
 ports:c,
-env:e,
+env:f,
 resources:{},
 terminationMessagePath:"/dev/termination-log",
 imagePullPolicy:"IfNotPresent"
-}, h = [];
-d && (h = [ {
+};
+d && (g = [ {
 name:d,
 configMap:{
 name:d,
 defaultMode:420
 }
-} ], g.volumeMounts = [ {
+} ], i.volumeMounts = [ {
 name:d,
 readOnly:!0,
 mountPath:"/etc/oshinko-spark-configs"
-} ]), "master" === a.labels["oshinko-type"] ? (g.livenessProbe = {
+} ]), e && g.push({
+name:"hawkular-openshift-agent",
+configMap:{
+name:a.labels["oshinko-cluster"] + "-metrics"
+}
+}), "master" === a.labels["oshinko-type"] ? (i.livenessProbe = {
 httpGet:{
 path:"/",
 port:8080,
@@ -302,7 +323,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}, g.readinessProbe = {
+}, i.readinessProbe = {
 httpGet:{
 path:"/",
 port:8080,
@@ -312,7 +333,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}) :g.livenessProbe = {
+}) :i.livenessProbe = {
 httpGet:{
 path:"/",
 port:8081,
@@ -323,9 +344,9 @@ periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
 };
-var i;
-i = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
-var j = {
+var j;
+j = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
+var k = {
 apiVersion:"v1",
 kind:"DeploymentConfig",
 metadata:{
@@ -334,7 +355,7 @@ labels:a.labels,
 annotations:a.annotations
 },
 spec:{
-replicas:i,
+replicas:j,
 selector:{
 "oshinko-cluster":a.labels["oshinko-cluster"]
 },
@@ -343,11 +364,11 @@ type:"ConfigChange"
 } ],
 template:{
 metadata:{
-labels:f
+labels:h
 },
 spec:{
-volumes:h,
-containers:[ g ],
+volumes:g,
+containers:[ i ],
 restartPolicy:"Always",
 terminationGracePeriodSeconds:30,
 dnsPolicy:"ClusterFirst",
@@ -356,7 +377,7 @@ securityContext:{}
 }
 }
 };
-return a.deploymentConfig.deployOnNewImage && j.spec.triggers.push({
+return a.deploymentConfig.deployOnNewImage && k.spec.triggers.push({
 type:"ImageChange",
 imageChangeParams:{
 automatic:!0,
@@ -366,9 +387,9 @@ kind:b.kind,
 name:b.toString()
 }
 }
-}), j;
+}), k;
 }
-function m(a, b, c, d, e, f, g) {
+function o(a, b, c, d, e, f, g) {
 var h = "master" === c ? "-m" :"-w", i = {
 deploymentConfig:{
 envVars:{
@@ -389,10 +410,10 @@ minReplicas:1
 }
 };
 "worker" === c && (i.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", i.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g && (i.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), f && (i.deploymentConfig.envVars.SPARK_METRICS_ON = "true"), i.scaling.replicas = d ? d :1;
-var j = l(i, a, e, g);
+var j = n(i, a, e, g, f);
 return j;
 }
-function n(a, b, c) {
+function p(a, b, c) {
 if (!c || !c.length) return null;
 var d = {
 kind:"Service",
@@ -409,7 +430,7 @@ ports:c
 };
 return d;
 }
-function o(a, b, c, d) {
+function q(a, b, c, d) {
 var e = {
 labels:{
 "oshinko-cluster":b,
@@ -422,9 +443,9 @@ selectors:{
 "oshinko-type":"master"
 }
 };
-return n(e, a, d);
+return p(e, a, d);
 }
-function p(a, b) {
+function r(a, b) {
 var c = a + "-metrics", d = {
 labels:{
 "oshinko-cluster":a,
@@ -437,21 +458,21 @@ selectors:{
 "oshinko-type":"master"
 }
 };
-return n(d, c, b);
-}
-function q(a, b) {
-return c.create("deploymentconfigs", null, a, b, null);
-}
-function r(a, b) {
-return c.create("services", null, a, b, null);
+return p(d, c, b);
 }
 function s(a, b) {
+return c.create("deploymentconfigs", null, a, b, null);
+}
+function t(a, b) {
+return c.create("services", null, a, b, null);
+}
+function u(a, b) {
 var d = a.metadata.name, f = a.metadata.labels, g = {
 name:d + "-route"
 }, h = e.createRoute(g, d, f);
 return c.create("routes", null, h, b);
 }
-function t(a, d, e, f, g) {
+function v(a, d, e, f, g) {
 var h = b.defer(), i = {};
 return a ? c.get("configmaps", a, g, null).then(function(a) {
 a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (i.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (i.workerConfigName = a.data.sparkworkerconfig), d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
@@ -459,7 +480,7 @@ a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.spa
 d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
 }) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
 }
-function u(a, c) {
+function w(a, c) {
 var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
 name:"spark-webui",
 containerPort:8081,
@@ -492,25 +513,25 @@ targetPort:8080
 protocol:"TCP",
 port:7777,
 targetPort:7777
-} ], j = a.enablemetrics, k = null, l = null, n = null, u = null, v = null, w = b.defer();
-return t(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(t) {
-k = m(d, a.clusterName, "master", null, f, j, t.masterConfigName), l = m(d, a.clusterName, "worker", t.workerCount, e, j, t.workerConfigName), n = o(a.clusterName, a.clusterName, "master", g), u = o(a.clusterName + "-ui", a.clusterName, "webui", h);
-var x = [ q(k, c), q(l, c), r(n, c), r(u, c) ];
-a.enablemetrics && (v = p(a.clusterName, i), x.push(r(v, c))), a.exposewebui && x.push(s(u, c)), b.all(x).then(function(a) {
-w.resolve(a);
+} ], j = a.enablemetrics, k = null, n = null, p = null, w = null, x = null, y = null, z = b.defer();
+return v(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(v) {
+k = o(d, a.clusterName, "master", null, f, j, v.masterConfigName), n = o(d, a.clusterName, "worker", v.workerCount, e, j, v.workerConfigName), p = q(a.clusterName, a.clusterName, "master", g), w = q(a.clusterName + "-ui", a.clusterName, "webui", h);
+var A = [ s(k, c), s(n, c), t(p, c), t(w, c) ];
+a.enablemetrics && (x = r(a.clusterName, i), A.push(t(x, c)), y = l(a.clusterName + "-metrics", c), A.push(m(y, c))), a.exposewebui && A.push(u(w, c)), b.all(A).then(function(a) {
+z.resolve(a);
 })["catch"](function(a) {
-w.reject(a);
+z.reject(a);
 });
-}), w.promise;
+}), z.promise;
 }
-function v(a, c, d, e) {
+function x(a, c, d, e) {
 var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
 return b.all(h);
 }
 return {
 sendDeleteCluster:k,
-sendCreateCluster:u,
-sendScaleCluster:v
+sendCreateCluster:w,
+sendScaleCluster:x
 };
 } ]), angular.module("oshinkoConsole").controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
 function i(b, c, d, e) {
