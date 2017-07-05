@@ -103,15 +103,49 @@ angular.module('openshiftConsole')
           deleteObject(clusterName, 'services', context),
           deleteRoute(clusterName, context),
           deleteObject(clusterName + "-ui", 'services', context),
-          deleteObject(clusterName + "-metrics", 'services', context)
+          deleteObject(clusterName + "-metrics", 'services', context),
+          deleteObject(clusterName + "-metrics", 'configmaps', context)
         ];
 
         return $q.all(steps);
       }
 
+      function getMetricsConfigMap(mapName) {
+        var configMap = {
+          apiVersion: 'v1',
+          kind: 'ConfigMap',
+          metadata: {
+            name: mapName
+          },
+          data: {
+            "openshift-hawkular-agent": 'collection_interval_secs: 10\n' +
+            'endpoints:\n' +
+            '- type: jolokia\n' +
+            '  protocol: "http"\n' +
+            '  port: 7777\n' +
+            '  path: /jolokia\n' +
+            '  tags:\n' +
+            '    name: ${POD:name}\n' +
+            '  metrics:\n' +
+            '  - name: java.lang:type=Threading#ThreadCount\n' +
+            '    type: counter\n' +
+            '    id:   VM Thread Count\n' +
+            '  - name: java.lang:type=Memory#HeapMemoryUsage#used\n' +
+            '    type: gauge\n' +
+            '    id:   VM Heap Memory Used'
+          }
+        };
+        return configMap;
+      }
+
+      function createConfigMap(configMap, context) {
+        return DataService.create("configmaps", null, configMap, context, null);
+      }
+
       // Start create-related functions
-      function makeDeploymentConfig(input, imageSpec, ports, specialConfig) {
+      function makeDeploymentConfig(input, imageSpec, ports, specialConfig, metrics) {
         var env = [];
+        var volumes = [];
         angular.forEach(input.deploymentConfig.envVars, function (value, key) {
           env.push({name: key, value: value});
         });
@@ -128,7 +162,6 @@ angular.module('openshiftConsole')
           imagePullPolicy: "IfNotPresent"
         };
 
-        var volumes = [];
         if (specialConfig) {
           volumes = [
             {
@@ -147,6 +180,15 @@ angular.module('openshiftConsole')
             }
           ];
         }
+        if (metrics) {
+          volumes.push({
+            name: "hawkular-openshift-agent",
+            configMap: {
+              name: input.labels["oshinko-cluster"] + "-metrics"
+            }
+          });
+        }
+
 
         if (input.labels["oshinko-type"] === "master") {
           container.livenessProbe = {
@@ -275,7 +317,7 @@ angular.module('openshiftConsole')
           input.deploymentConfig.envVars.SPARK_METRICS_ON = "true";
         }
         input.scaling.replicas = workerCount ? workerCount : 1;
-        var dc = makeDeploymentConfig(input, image, ports, sparkConfig);
+        var dc = makeDeploymentConfig(input, image, ports, sparkConfig, metrics);
         return dc;
       }
 
@@ -463,6 +505,7 @@ angular.module('openshiftConsole')
         var smService = null;
         var suiService = null;
         var jolokiaService = null;
+        var clusterMetricsConfig = null;
         var deferred = $q.defer();
         getFinalConfigs(clusterConfigs.configName, clusterConfigs.workerCount, clusterConfigs.workerConfigName, clusterConfigs.masterConfigName).then(function (finalConfigs) {
           sm = sparkDC(sparkImage, clusterConfigs.clusterName, "master", null, masterPorts, enableMetrics, finalConfigs["masterConfigName"]);
@@ -475,13 +518,15 @@ angular.module('openshiftConsole')
             createDeploymentConfig(sw, context),
             createService(smService, context),
             createService(suiService, context)
-
           ];
 
           // Only create the metrics service if we're going to be using it
           if (clusterConfigs.enablemetrics) {
             jolokiaService = metricsService(clusterConfigs.clusterName, jolokiaServicePort);
             steps.push(createService(jolokiaService, context));
+
+            clusterMetricsConfig = getMetricsConfigMap(clusterConfigs.clusterName + "-metrics", context);
+            steps.push(createConfigMap(clusterMetricsConfig, context));
           }
 
           // if expose webui was checked, we expose the apache spark webui via a route
