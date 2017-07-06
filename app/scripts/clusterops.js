@@ -118,7 +118,7 @@ angular.module('openshiftConsole')
             name: mapName
           },
           data: {
-            "openshift-hawkular-agent": 'collection_interval_secs: 10\n' +
+            "hawkular-openshift-agent": 'collection_interval_secs: 10\n' +
             'endpoints:\n' +
             '- type: jolokia\n' +
             '  protocol: "http"\n' +
