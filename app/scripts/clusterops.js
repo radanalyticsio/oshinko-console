@@ -123,7 +123,7 @@ angular.module('openshiftConsole')
             '- type: jolokia\n' +
             '  protocol: "http"\n' +
             '  port: 7777\n' +
-            '  path: /jolokia\n' +
+            '  path: /jolokia/\n' +
             '  tags:\n' +
             '    name: ${POD:name}\n' +
             '  metrics:\n' +
