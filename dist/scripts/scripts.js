@@ -269,7 +269,7 @@ metadata:{
 name:a
 },
 data:{
-"hawkular-openshift-agent":'collection_interval_secs: 10\nendpoints:\n- type: jolokia\n  protocol: "http"\n  port: 7777\n  path: /jolokia\n  tags:\n    name: ${POD:name}\n  metrics:\n  - name: java.lang:type=Threading#ThreadCount\n    type: counter\n    id:   VM Thread Count\n  - name: java.lang:type=Memory#HeapMemoryUsage#used\n    type: gauge\n    id:   VM Heap Memory Used'
+"hawkular-openshift-agent":'collection_interval_secs: 10\nendpoints:\n- type: jolokia\n  protocol: "http"\n  port: 7777\n  path: /jolokia/\n  tags:\n    name: ${POD:name}\n  metrics:\n  - name: java.lang:type=Threading#ThreadCount\n    type: counter\n    id:   VM Thread Count\n  - name: java.lang:type=Memory#HeapMemoryUsage#used\n    type: gauge\n    id:   VM Heap Memory Used'
 }
 };
 return b;
