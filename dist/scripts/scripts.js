@@ -17,26 +17,26 @@ label:"Spark Clusters",
 iconClass:"pficon  pficon-cluster"
 });
 }), hawtioPluginLoader.addModule(a);
-}(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "$uibModal", function(a, b, c, d, e, f, g, h, i, j) {
-function k(a) {
-return !!q(a, "oshinko-cluster");
+}(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "$uibModal", "MetricsService", function(a, b, c, d, e, f, g, h, i, j, k) {
+function l(a) {
+return !!r(a, "oshinko-cluster");
 }
-function l(a, b, c) {
+function m(a, b, c) {
 var d, e, f, g, h, i = {};
 return _.each(a, function(a) {
-k(a) && (d = q(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = q(a, "oshinko-type"), h = _.find(b, function(b) {
+l(a) && (d = r(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = r(a, "oshinko-type"), h = _.find(b, function(b) {
 var c = new LabelSelector(b.spec.selector);
 return c.matches(a);
 }), h && (g = _.get(h, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], h)), _.set(i, [ d, e, "pod", f ], a));
 }), _.each(b, function(a) {
-e = q(a, "oshinko-type"), "webui" === e && (d = q(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
+e = r(a, "oshinko-type"), "webui" === e && (d = r(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
 }), _.each(c, function(a) {
-d = q(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
+d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
 }), i;
 }
-var m, n, o, p = [];
+var n, o, p, q = [];
 a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {}, a.selectedTab = {};
-var q = i("label");
+var r = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
 link:"project/" + a.projectName
@@ -45,15 +45,17 @@ title:"Spark Clusters",
 link:"project/" + a.projectName + "/oshinko"
 } ], "" !== a.currentCluster && a.breadcrumbs.push({
 title:a.currentCluster
-}), g.tab && (a.selectedTab[g.tab] = !0);
-var r = function(b, c) {
+}), g.tab && (a.selectedTab[g.tab] = !0), k.isAvailable().then(function(b) {
+a.metricsAvailable = b;
+});
+var s = function(b, c) {
 try {
-a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length;
+a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length, a.cluster_details.allPods = Object.values(a.cluster_details.worker.pod), a.cluster_details.allPods.push(Object.values(a.cluster_details.master.pod)[0]), a.cluster_details.containers = b + "-m|" + b + "-w";
 } catch (d) {
 a.cluster_details = null;
 }
-}, s = function() {
-n && m && (a.oshinkoClusters = l(n, m, o), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? r(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
+}, t = function() {
+o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? s(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
 };
 a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
@@ -93,19 +95,19 @@ return b;
 var b = c.path() + "/" + encodeURIComponent(a);
 c.path(b);
 };
-var t = g.project;
-f.get(t).then(_.spread(function(b, c) {
-a.project = b, a.projectContext = c, p.push(e.watch("pods", c, function(b) {
-a.pods = n = b.by("metadata.name"), s();
-})), p.push(e.watch("services", c, function(b) {
-a.services = m = b.by("metadata.name"), s();
-})), p.push(e.watch("routes", c, function(b) {
-a.routes = o = b.by("metadata.name"), s();
+var u = g.project;
+f.get(u).then(_.spread(function(b, c) {
+a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
+a.pods = o = b.by("metadata.name"), t();
+})), q.push(e.watch("services", c, function(b) {
+a.services = n = b.by("metadata.name"), t();
+})), q.push(e.watch("routes", c, function(b) {
+a.routes = p = b.by("metadata.name"), t();
 })), a.$on("$destroy", function() {
-e.unwatchAll(p);
+e.unwatchAll(q);
 });
 })), a.$on("$destroy", function() {
-e.unwatchAll(p);
+e.unwatchAll(q);
 }), a.deleteCluster = function(b) {
 var c = j.open({
 animation:!0,
@@ -269,7 +271,7 @@ metadata:{
 name:a
 },
 data:{
-"hawkular-openshift-agent":'collection_interval_secs: 10\nendpoints:\n- type: jolokia\n  protocol: "http"\n  port: 7777\n  path: /jolokia/\n  tags:\n    name: ${POD:name}\n  metrics:\n  - name: java.lang:type=Threading#ThreadCount\n    type: counter\n    id:   VM Thread Count\n  - name: java.lang:type=Memory#HeapMemoryUsage#used\n    type: gauge\n    id:   VM Heap Memory Used'
+"hawkular-openshift-agent":'collection_interval_secs: 60\nendpoints:\n- type: jolokia\n  protocol: "http"\n  port: 7777\n  path: /jolokia/\n  tags:\n    name: ${POD:name}\n  metrics:\n  - name: java.lang:type=Threading#ThreadCount\n    type: counter\n    id:   VM Thread Count\n  - name: java.lang:type=Memory#HeapMemoryUsage#used\n    type: gauge\n    id:   VM Heap Memory Used'
 }
 };
 return b;
@@ -397,7 +399,8 @@ OSHINKO_SPARK_CLUSTER:b
 name:b + h,
 labels:{
 "oshinko-cluster":b,
-"oshinko-type":c
+"oshinko-type":c,
+"oshinko-metrics-enabled":f ? "true" :"false"
 },
 annotations:{
 "created-by":"oshinko-console"
@@ -619,5 +622,353 @@ b.formError = a.data.message;
 b.formError = a.message;
 });
 }));
+};
+} ]), angular.module("oshinkoConsole").directive("clusterMetrics", [ "$interval", "$parse", "$timeout", "$q", "$rootScope", "ChartsService", "ConversionService", "MetricsCharts", "ClusterMetricsService", function(a, b, c, d, e, f, g, h, i) {
+return {
+restrict:"E",
+scope:{
+pods:"=",
+containers:"=",
+profile:"@",
+alerts:"=?"
+},
+templateUrl:function() {
+return "views/oshinko/clustermetrics.html";
+},
+link:function(b) {
+function c(a) {
+return null === a.value || void 0 === a.value;
+}
+function d(a) {
+var b;
+b = v ? a.compactDatasetLabel || a.label :"Average Usage";
+var d = {}, e = [ "Date" ], f = [ b ], g = [ e, f ], h = function(a) {
+var b = "" + a.start;
+return d[b] || (d[b] = {
+total:0,
+count:0
+}), d[b];
+};
+return _.each(z[a.descriptor], function(a) {
+_.each(a, function(a) {
+var b = h(a);
+(!x || x < a.end) && (x = a.end), c(a) || (b.total += a.value, b.count = b.count + 1);
+});
+}), _.each(d, function(b, c) {
+var d;
+d = b.count ? b.total / b.count :null, e.push(Number(c)), f.push(a.convert ? a.convert(d) :d);
+}), f.length > 1 && (a.lastValue = _.last(f) || 0), g;
+}
+function f(a, e) {
+var f = [], g = {
+type:"spline"
+};
+return b.showAverage ? (_.each(a[e.descriptor], function(a, b) {
+q(e.descriptor, b, a);
+}), g.type = "area-spline", v && e.compactType && (g.type = e.compactType), g.x = "Date", g.columns = d(e), g) :(_.each(a[e.descriptor], function(a, b) {
+q(e.descriptor, b, a);
+var d = b + "-dates";
+_.set(g, [ "xs", b ], d);
+var h = [ d ], i = [ b ];
+f.push(h), f.push(i), _.each(z[e.descriptor][b], function(a) {
+if (h.push(a.start), (!x || x < a.end) && (x = a.end), c(a)) i.push(a.value); else {
+var b = e.convert ? e.convert(a.value) :a.value;
+i.push(b);
+}
+});
+}), g.columns = _.sortBy(f, function(a) {
+return a[0];
+}), g);
+}
+function j(a) {
+w || (D = 0, b.showAverage = _.size(b.pods) > 7 || v, _.each(b.metrics, function(c) {
+var d, e = f(a, c), g = c.descriptor;
+v && c.compactCombineWith && (g = c.compactCombineWith, c.lastValue && (C[g].lastValue = (C[g].lastValue || 0) + c.lastValue)), t[g] ? (t[g].load(e), b.showAverage ? t[g].legend.hide() :t[g].legend.show()) :(d = E(c), d.data = e, t[g] = c3.generate(d));
+}));
+}
+function k() {
+return v ? "-15mn" :"-" + b.options.timeRange.value + "mn";
+}
+function l() {
+return 60 * b.options.timeRange.value * 1e3;
+}
+function m() {
+return v ? "1mn" :Math.floor(l() / u) + "ms";
+}
+function n() {
+var a = _.find(b.pods, "metadata.namespace");
+if (a) {
+var c = {
+pods:b.pods,
+namespace:a.metadata.namespace,
+bucketDuration:m()
+};
+return c.containerName = b.containers, x ? c.start = x :c.start = k(), c;
+}
+}
+function o(a) {
+if (!w) {
+if (D++, b.noData) return void (b.metricsError = {
+status:_.get(a, "status", 0),
+details:_.get(a, "data.errorMsg") || _.get(a, "statusText") || "Status code " + _.get(a, "status", 0)
+});
+if (!(D < 2) && b.alerts) {
+var c = "metrics-failed-" + b.uniqueID;
+b.alerts[c] = {
+type:"error",
+message:"An error occurred updating metrics.",
+links:[ {
+href:"",
+label:"Retry",
+onClick:function() {
+delete b.alerts[c], D = 1, r();
+}
+} ]
+};
+}
+}
+}
+function p() {
+var a = _.isEmpty(b.pods);
+return a ? (b.loaded = !0, !1) :!b.metricsError && D < 2;
+}
+function q(a, c, d) {
+b.noData = !1;
+var e = _.initial(d), f = _.get(z, [ a, c ]);
+if (!f) return void _.set(z, [ a, c ], e);
+var g = _.takeRight(f.concat(e), u);
+_.set(z, [ a, c ], g);
+}
+function r() {
+if (!A && p()) {
+y = Date.now();
+var a = n();
+i.getClusterMetrics(a).then(j, o)["finally"](function() {
+b.loaded = !0;
+});
+}
+}
+var s, t = {}, u = 30, v = "compact" === b.profile, w = !1;
+b.uniqueID = h.uniqueID();
+var x, y, z = {}, A = v, B = function(a) {
+return a >= 1024;
+};
+b.metrics = [ {
+label:"JVM Threads",
+descriptor:"custom/VM Thread Count",
+type:"pod",
+units:"threads",
+usageUnits:function() {
+return "threads";
+},
+compactDatasetLabel:"Active",
+compactType:"spline",
+chartID:"threads-active-" + b.uniqueID
+}, {
+label:"JVM Heap Memory",
+descriptor:"custom/VM Heap Memory Used",
+type:"pod",
+units:"MiB",
+convert:g.bytesToMiB,
+formatUsage:function(a) {
+return B(a) && (a /= 1024), h.formatUsage(a);
+},
+usageUnits:function(a) {
+return B(a) ? "GiB" :"MiB";
+},
+compactType:"spline",
+chartID:"vm-heap-mem" + b.uniqueID
+}, {
+label:"Pod Memory",
+units:"MiB",
+convert:g.bytesToMiB,
+formatUsage:function(a) {
+return B(a) && (a /= 1024), h.formatUsage(a);
+},
+usageUnits:function(a) {
+return B(a) ? "GiB" :"MiB";
+},
+descriptor:"memory/usage",
+type:"pod_container",
+chartID:"memory-" + b.uniqueID
+}, {
+label:"Pod CPU",
+units:"cores",
+convert:g.millicoresToCores,
+formatUsage:h.formatUsage,
+usageUnits:function() {
+return "cores";
+},
+descriptor:"cpu/usage_rate",
+type:"pod_container",
+chartID:"cpu-" + b.uniqueID
+} ];
+var C = _.indexBy(b.metrics, "descriptor");
+b.loaded = !1, b.noData = !0;
+var D = 0;
+i.getMetricsURL().then(function(a) {
+b.metricsURL = a;
+}), b.options = {
+rangeOptions:h.getTimeRangeOptions()
+}, b.options.timeRange = _.head(b.options.rangeOptions);
+var E = function(a) {
+var c = h.getDefaultSparklineConfig(a.chartID, a.units, v);
+return _.set(c, "legend.show", !v && !b.showAverage), c;
+};
+b.$watch("pods", function() {
+z = {}, x = null, delete b.metricsError, r();
+}, !0), b.$watch("options", function() {
+z = {}, x = null, delete b.metricsError, r();
+}, !0), s = a(r, h.getDefaultUpdateInterval(), !1), b.updateInView = function(a) {
+A = !a, a && (!y || Date.now() > y + h.getDefaultUpdateInterval()) && r();
+};
+var F = e.$on("metrics.charts.resize", function() {
+h.redraw(t);
+});
+b.$on("$destroy", function() {
+s && (a.cancel(s), s = null), F && (F(), F = null), angular.forEach(t, function(a) {
+a.destroy();
+}), t = null, w = !0;
+});
+}
+};
+} ]), angular.module("oshinkoConsole").factory("ClusterMetricsService", [ "$filter", "$http", "$q", "$rootScope", "APIDiscovery", function(a, b, c, d, e) {
+function f() {
+return angular.isDefined(k) ? c.when(k) :e.getMetricsURL().then(function(a) {
+return k = (a || "").replace(/\/$/, "");
+});
+}
+function g(a) {
+if (a.length) return _.each(a, function(a) {
+a.empty || !_.isNumber(a.avg) ? a.value = null :a.value = a.avg;
+}), a;
+}
+function h(a) {
+return a.join("|");
+}
+function i() {
+return f().then(function(a) {
+return a ? a + "/metrics/stats/query" :a;
+});
+}
+function j(a) {
+return f().then(function(b) {
+var c;
+return c = "counter" === a.type ? b + o :b + n, URI.expand(c, {
+podUID:a.pod.metadata.uid,
+containerName:a.containerName,
+metric:a.metric
+}).toString();
+});
+}
+var k, l, m, n = "/gauges/{containerName}%2F{podUID}%2F{metric}/data", o = "/counters/{containerName}%2F{podUID}%2F{metric}/data", p = function(a) {
+return f().then(function(c) {
+return !!c && (!a || (!!l || !m && b.get(c).then(function() {
+return l = !0, !0;
+}, function(a) {
+return m = !0, d.$broadcast("metrics-connection-failed", {
+url:c,
+response:a
+}), !1;
+})));
+});
+}, q = function(a) {
+var b = a.split("/");
+return {
+podUID:b[1],
+descriptor:b[2] + "/" + b[3]
+};
+}, r = function(a, c, d) {
+var e = _.indexBy(d.pods, "metadata.uid");
+return b.post(a, c, {
+auth:{},
+headers:{
+Accept:"application/json",
+"Content-Type":"application/json",
+"Hawkular-Tenant":d.namespace
+}
+}).then(function(a) {
+var b = {}, c = function(a, c) {
+var d = q(c), f = _.get(e, [ d.podUID, "metadata", "name" ]), h = g(a);
+_.set(b, [ d.descriptor, f ], h);
+};
+return _.each(a.data.counter, c), _.each(a.data.gauge, c), b;
+});
+}, s = _.template("pod_id:<%= uid %>"), t = function(a) {
+return i().then(function(b) {
+var d = {
+bucketDuration:a.bucketDuration,
+start:a.start
+};
+a.end && (d.end = a.end);
+var e = [], f = [], g = h(_.map(a.pods, "metadata.uid"));
+return a.containerName ? e.push(_.assign({
+tags:s({
+uid:g,
+containerName:a.containerName
+})
+}, d)) :e.push(_.assign({
+tags:s({
+uid:g
+})
+}, d)), _.each(e, function(c) {
+var d = r(b, c, a);
+f.push(d);
+}), c.all(f).then(function(a) {
+var b = {};
+return _.each(a, function(a) {
+_.assign(b, a);
+}), b;
+});
+});
+};
+return {
+isAvailable:p,
+getMetricsURL:f,
+get:function(a) {
+return j(a).then(function(c) {
+if (!c) return null;
+var d = {
+bucketDuration:a.bucketDuration,
+start:a.start
+};
+return a.end && (d.end = a.end), b.get(c, {
+auth:{},
+headers:{
+Accept:"application/json",
+"Hawkular-Tenant":a.namespace
+},
+params:d
+}).then(function(b) {
+return _.assign(b, {
+metricID:a.metric,
+data:g(b.data)
+});
+});
+});
+},
+getCurrentUsage:function(a) {
+return j(a).then(function(c) {
+if (!c) return null;
+var d = {
+bucketDuration:"1mn",
+start:"-1mn"
+};
+return b.get(c, {
+auth:{},
+headers:{
+Accept:"application/json",
+"Hawkular-Tenant":a.namespace
+},
+params:d
+}).then(function(b) {
+return _.assign(b, {
+metricID:a.metric,
+usage:_.head(g(b.data))
+});
+});
+});
+},
+getClusterMetrics:t
 };
 } ]);

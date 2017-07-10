@@ -46,6 +46,14 @@
                     <uib-tab-heading>Apps</uib-tab-heading>
                     <div>Placeholder for cluster -> app information</div>
                   </uib-tab>
+                  <uib-tab heading="Metrics" ng-if="metricsAvailable" active="selectedTab.metrics">
+                    <uib-tab-heading>Metrics</uib-tab-heading>
+                    <cluster-metrics
+                            pods="cluster_details.allPods"
+                            containers="cluster_details.containers"
+                            alerts="alerts">
+                    </cluster-metrics>
+                  </uib-tab>
                 </uib-tabset>
               </div><!-- /col-* -->
             </div>

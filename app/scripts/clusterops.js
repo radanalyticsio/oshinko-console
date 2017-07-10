@@ -118,7 +118,7 @@ angular.module('openshiftConsole')
             name: mapName
           },
           data: {
-            "hawkular-openshift-agent": 'collection_interval_secs: 10\n' +
+            "hawkular-openshift-agent": 'collection_interval_secs: 60\n' +
             'endpoints:\n' +
             '- type: jolokia\n' +
             '  protocol: "http"\n' +
@@ -298,7 +298,8 @@ angular.module('openshiftConsole')
           name: clusterName + suffix,
           labels: {
             "oshinko-cluster": clusterName,
-            "oshinko-type": sparkType
+            "oshinko-type": sparkType,
+            "oshinko-metrics-enabled": metrics ? "true" : "false"
           },
           annotations: {"created-by": "oshinko-console"},
           scaling: {
