@@ -66,6 +66,11 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<uib-tab-heading>Apps</uib-tab-heading>\n" +
     "<div>Placeholder for cluster -> app information</div>\n" +
     "</uib-tab>\n" +
+    "<uib-tab heading=\"Metrics\" ng-if=\"metricsAvailable\" active=\"selectedTab.metrics\">\n" +
+    "<uib-tab-heading>Metrics</uib-tab-heading>\n" +
+    "<cluster-metrics pods=\"cluster_details.allPods\" containers=\"cluster_details.containers\" alerts=\"alerts\">\n" +
+    "</cluster-metrics>\n" +
+    "</uib-tab>\n" +
     "</uib-tabset>\n" +
     "</div>\n" +
     "</div>\n" +
@@ -74,6 +79,53 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "</div>\n" +
     "</div>\n" +
     "</project-page>"
+  );
+
+
+  $templateCache.put('views/oshinko/clustermetrics.html',
+    "<div class=\"metrics\">\n" +
+    "<div ng-if=\"!metricsError\" class=\"metrics-options\">\n" +
+    "<div class=\"form-group\">\n" +
+    "<label for=\"timeRange\">Time Range:</label>\n" +
+    "<div class=\"select-range\">\n" +
+    "<ui-select ng-model=\"options.timeRange\" search-enabled=\"false\" ng-disabled=\"metricsError\" input-id=\"timeRange\">\n" +
+    "<ui-select-match>{{$select.selected.label}}</ui-select-match>\n" +
+    "<ui-select-choices repeat=\"range in options.rangeOptions\">\n" +
+    "{{range.label}}\n" +
+    "</ui-select-choices>\n" +
+    "</ui-select>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "</div>\n" +
+    "<ellipsis-pulser color=\"dark\" size=\"sm\" msg=\"Loading metrics\" ng-if=\"!loaded\"></ellipsis-pulser>\n" +
+    "<div ng-if=\"loaded && noData && !metricsError\" class=\"mar-top-md\">\n" +
+    "No metrics to display.\n" +
+    "</div>\n" +
+    "<div ng-if=\"metricsError\" class=\"empty-state-message text-center\">\n" +
+    "<h2>\n" +
+    "<span class=\"pficon pficon-error-circle-o\" aria-hidden=\"true\"></span>\n" +
+    "Metrics are not available.\n" +
+    "</h2>\n" +
+    "<p>\n" +
+    "An error occurred getting metrics<span ng-if=\"options.selectedContainer.name\">\n" +
+    "for container {{options.selectedContainer.name}}</span><span ng-if=\"metricsURL\">\n" +
+    "from <a ng-href=\"{{metricsURL}}\">{{metricsURL}}</a></span>.\n" +
+    "</p>\n" +
+    "<p class=\"text-muted\">\n" +
+    "{{metricsError.details}}\n" +
+    "</p>\n" +
+    "</div>\n" +
+    "<div ng-repeat=\"metric in metrics\" ng-show=\"!noData && !metricsError\" class=\"metrics-full\">\n" +
+    "<h2 class=\"metric-label\">\n" +
+    "{{metric.label}}\n" +
+    "<small ng-if=\"showAverage\">\n" +
+    "Average per pod\n" +
+    "</small>\n" +
+    "</h2>\n" +
+    "\n" +
+    "<div ng-attr-id=\"{{metric.chartID}}\" class=\"metrics-sparkline\"></div>\n" +
+    "</div>\n" +
+    "</div>"
   );
 
 

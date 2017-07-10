@@ -8,7 +8,7 @@ angular.module('openshiftConsole')
   .controller('OshinkoClustersCtrl',
     function ($scope, $interval, $location, $route,
               DataService, ProjectsService, $routeParams,
-              $rootScope, $filter, $uibModal) {
+              $rootScope, $filter, $uibModal, MetricsService) {
       var watches = [];
       var services, pods, routes;
       $scope.projectName = $routeParams.project;
@@ -39,6 +39,10 @@ angular.module('openshiftConsole')
       if($routeParams.tab) {
         $scope.selectedTab[$routeParams.tab] = true; // ex: tab=Group for Groups, pluralized in the template
       }
+
+      MetricsService.isAvailable().then(function(available) {
+        $scope.metricsAvailable = available;
+      });
 
       function oshinkoCluster(resource) {
         if (label(resource, "oshinko-cluster")) {
@@ -98,6 +102,9 @@ angular.module('openshiftConsole')
           $scope.cluster_details['name'] = $scope.cluster_details.master.svc[Object.keys($scope.cluster_details.master.svc)[0]].metadata.labels['oshinko-cluster'];
           $scope.cluster_details['workerCount'] = Object.keys($scope.cluster_details.worker.pod).length;
           $scope.cluster_details['masterCount'] = Object.keys($scope.cluster_details.master.pod).length;
+          $scope.cluster_details['allPods'] = Object.values($scope.cluster_details.worker.pod);
+          $scope.cluster_details['allPods'].push(Object.values($scope.cluster_details.master.pod)[0]);
+          $scope.cluster_details['containers'] = clusterName + "-m|" + clusterName + "-w";
         } catch (e) {
           // most likely recently deleted
           $scope.cluster_details = null;
