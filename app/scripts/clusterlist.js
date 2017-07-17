@@ -20,6 +20,7 @@ angular.module('openshiftConsole')
       $scope.cluster_details = null;
       $scope.alerts = $scope.alerts || {};
       $scope.selectedTab = {};
+      $scope.metricsAvailable = false;
       var label = $filter('label');
       $scope.cluster_id = $route.current.params.Id || '';
       $scope.breadcrumbs = [
@@ -41,7 +42,7 @@ angular.module('openshiftConsole')
       }
 
       MetricsService.isAvailable().then(function(available) {
-        $scope.metricsAvailable = available;
+        $scope.OSmetricsAvailable = available;
       });
 
       function oshinkoCluster(resource) {
@@ -105,6 +106,9 @@ angular.module('openshiftConsole')
           $scope.cluster_details['allPods'] = Object.values($scope.cluster_details.worker.pod);
           $scope.cluster_details['allPods'].push(Object.values($scope.cluster_details.master.pod)[0]);
           $scope.cluster_details['containers'] = clusterName + "-m|" + clusterName + "-w";
+          var masterPodName = Object.keys($scope.cluster_details.master.pod)[0];
+          var clusterMetrics = $scope.cluster_details.master.pod[masterPodName].metadata.labels["oshinko-metrics-enabled"] && $scope.cluster_details.master.pod[masterPodName].metadata.labels["oshinko-metrics-enabled"] === "true";
+          $scope.metricsAvailable = clusterMetrics && $scope.OSmetricsAvailable ? true : false;
         } catch (e) {
           // most likely recently deleted
           $scope.cluster_details = null;
