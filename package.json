@@ -4,7 +4,7 @@
   "description": "Oshinko Console extension",
   "main": "app.js",
   "scripts": {
-    "postinstall": "node test/upgrade-selenium.js && node_modules/protractor/bin/webdriver-manager update"
+    "postinstall": "node test/upgrade-selenium.js && node_modules/grunt-protractor-runner/scripts/webdriver-manager-update"
   },
   "repository": {
     "type": "git",
@@ -48,7 +48,6 @@
     "less": "2.6.1",
     "load-grunt-tasks": "0.4.0",
     "lodash": "3.10.1",
-    "protractor": "1.7.0",
     "protractor-screenshot-reporter": "0.0.5",
     "time-grunt": "0.3.2"
   },

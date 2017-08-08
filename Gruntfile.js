@@ -326,7 +326,8 @@ module.exports = function (grunt) {
         args: {
           // Arguments passed to the command
           suite: grunt.option('suite') || 'e2e',
-          baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/")
+          baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/"),
+          browser: grunt.option('browser') || "firefox"
         }
       },
       default: {
@@ -338,6 +339,11 @@ module.exports = function (grunt) {
             browser: grunt.option('browser') || "firefox"
           } // Target-specific arguments
         }
+      }
+    },
+    protractor_webdriver: {
+      options: {
+        // Task-specific options go here.
       }
     }
   });

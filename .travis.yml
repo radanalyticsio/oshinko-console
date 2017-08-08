@@ -1,1 +1,74 @@
+sudo: required
+## use node_js
 language: node_js
+node_js:
+  - "6"
+addons:
+  firefox: "46.0"
+## home folder is /home/travis/build/radanalyticsio/oshinko-console
+services:
+  - docker
+before_install:
+## add insecure-registry and restart docker
+  - pwd
+  - sudo cat /etc/default/docker
+  - sudo service docker stop
+  - sudo sed -i -e 's/sock/sock --insecure-registry 172.30.0.0\/16/' /etc/default/docker
+  - sudo cat /etc/default/docker
+  - sudo service docker start
+  - sudo service docker status
+## chmod needs sudo, so all other commands are with sudo
+  - sudo mkdir -p /home/travis/origin
+  - sudo chmod -R 766 /home/travis/origin
+## download oc 1.5.1 binary
+  - sudo wget https://github.com/openshift/origin/releases/download/v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz -P /home/travis/origin
+  - sudo ls -l /home/travis/origin
+  - sudo tar -C /home/travis/origin -xvzf /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz
+  - sudo ls -l /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit
+  - sudo cp /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit/oc /home/travis/origin
+  - sudo chmod -R 766 /home/travis/origin
+  - sudo ls -l /home/travis/origin
+  - sudo chmod -R +755 /home/travis/origin/*
+  - sudo cp /home/travis/origin/oc /bin
+  - sudo ls -l /bin
+  - oc version
+  - export PATH=$PATH:/home/travis/origin/
+  - echo $PATH
+## below cmd is important to get oc working in ubuntu
+  - sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:v1.5.1 -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
+  - oc cluster up --host-config-dir=/home/travis/origin
+  - sudo ls -l /home/travis/origin
+  - oc cluster down
+## get the latest release code
+  - sudo cp dist/scripts/templates.js /home/travis/origin/master
+  - sudo cp dist/scripts/scripts.js /home/travis/origin/master
+  - sudo cp dist/styles/oshinko.css /home/travis/origin/master
+  - sudo chmod -R 766 /home/travis/origin/master
+  - sudo ls -l /home/travis/origin/master
+## add changes to master-config.yaml
+  - "sudo sed -i -e \"s/extensionScripts: null/extensionScripts:\\n  - templates.js\\n  - scripts.js/\" /home/travis/origin/master/master-config.yaml"
+  - "sudo sed -i -e \"s/extensionStylesheets: null/extensionStylesheets:\\n  - oshinko.css/\" /home/travis/origin/master/master-config.yaml"
+  - sudo cat /home/travis/origin/master/master-config.yaml
+## oc cluster up
+  - oc cluster up --host-config-dir=/home/travis/origin --use-existing-config=true
+## find IP:PORT of openshift
+  - IPSTR=`oc status |grep server`
+  - echo $IPSTR
+  - IP=${IPSTR##*/}
+  - echo ${IP}
+install:
+  - npm install grunt-cli -g
+  - npm install
+  - npm install grunt-protractor-runner@1.2.1
+  - ./node_modules/grunt-protractor-runner/scripts/webdriver-manager-update
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+script:
+  - echo ${IP}
+## integration tests need headless setup
+  - grunt test-integration --baseUrl=https://${IP}
+notifications:
+ email:
+   on_success: never
+   on_failure: never
