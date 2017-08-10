@@ -65,6 +65,10 @@ before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 script:
+## Check to make sure the files in dist are in sync with the actual source code
+  - grunt build
+  - if [[ `sudo diff /home/travis/origin/master/scripts.js dist/scripts/scripts.js` ]]; then echo "Compiled scripts.js does not match dist"; exit 1; else echo "Compiled scripts.js matches source code"; fi
+  - if [[ `sudo diff /home/travis/origin/master/templates.js dist/scripts/templates.js` ]]; then echo "Compiled templates.js does not match dist"; exit 1; else echo "Compiled templates.js matches source code"; fi
   - echo ${IP}
 ## integration tests need headless setup
   - grunt test-integration --baseUrl=https://${IP}
