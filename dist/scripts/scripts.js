@@ -387,32 +387,45 @@ name:b.toString()
 }
 }), k;
 }
-function o(a, b, c, d, e, f, g) {
-var h = "master" === c ? "-m" :"-w", i = {
+function o(a) {
+return {
+MasterCount:a.masterCount,
+WorkerCount:a.workerCount,
+Name:a.configName || "",
+SparkMasterConfig:a.masterConfigName || "",
+SparkWorkerConfig:a.workerConfigName || "",
+SparkImage:a.sparkImage,
+ExposeWebUI:a.exposewebui,
+Metrics:a.metrics
+};
+}
+function p(a, b, c, d, e, f, g, h) {
+var i = "master" === c ? "-m" :"-w", j = {
 deploymentConfig:{
 envVars:{
 OSHINKO_SPARK_CLUSTER:b
 }
 },
-name:b + h,
+name:b + i,
 labels:{
 "oshinko-cluster":b,
 "oshinko-type":c,
 "oshinko-metrics-enabled":f ? "true" :"false"
 },
 annotations:{
-"created-by":"oshinko-console"
+"created-by":"oshinko-console",
+"oshinko-config":JSON.stringify(o(h))
 },
 scaling:{
 autoscaling:!1,
 minReplicas:1
 }
 };
-"worker" === c && (i.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", i.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g && (i.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), f && (i.deploymentConfig.envVars.SPARK_METRICS_ON = "true"), i.scaling.replicas = d ? d :1;
-var j = n(i, a, e, g, f);
-return j;
+"worker" === c && (j.deploymentConfig.envVars.SPARK_MASTER_ADDRESS = "spark://" + b + ":7077", j.deploymentConfig.envVars.SPARK_MASTER_UI_ADDRESS = "http://" + b + "-ui:8080"), g && (j.deploymentConfig.envVars.SPARK_CONF_DIR = "/etc/oshinko-spark-configs"), f && (j.deploymentConfig.envVars.SPARK_METRICS_ON = "true"), j.scaling.replicas = d ? d :1;
+var k = n(j, a, e, g, f);
+return k;
 }
-function p(a, b, c) {
+function q(a, b, c) {
 if (!c || !c.length) return null;
 var d = {
 kind:"Service",
@@ -429,7 +442,7 @@ ports:c
 };
 return d;
 }
-function q(a, b, c, d) {
+function r(a, b, c, d) {
 var e = {
 labels:{
 "oshinko-cluster":b,
@@ -442,9 +455,9 @@ selectors:{
 "oshinko-type":"master"
 }
 };
-return p(e, a, d);
+return q(e, a, d);
 }
-function r(a, b) {
+function s(a, b) {
 var c = a + "-metrics", d = {
 labels:{
 "oshinko-cluster":a,
@@ -457,29 +470,29 @@ selectors:{
 "oshinko-type":"master"
 }
 };
-return p(d, c, b);
-}
-function s(a, b) {
-return c.create("deploymentconfigs", null, a, b, null);
+return q(d, c, b);
 }
 function t(a, b) {
-return c.create("services", null, a, b, null);
+return c.create("deploymentconfigs", null, a, b, null);
 }
 function u(a, b) {
+return c.create("services", null, a, b, null);
+}
+function v(a, b) {
 var d = a.metadata.name, f = a.metadata.labels, g = {
 name:d + "-route"
 }, h = e.createRoute(g, d, f);
 return c.create("routes", null, h, b);
 }
-function v(a, d, e, f, g) {
-var h = b.defer(), i = {};
-return a ? c.get("configmaps", a, g, null).then(function(a) {
-a.data.workercount && (i.workerCount = parseInt(a.data.workercount)), a.data.sparkmasterconfig && (i.masterConfigName = a.data.sparkmasterconfig), a.data.sparkworkerconfig && (i.workerConfigName = a.data.sparkworkerconfig), d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
+function w(a, d) {
+var e = b.defer(), f = {};
+return f.clusterName = a.clusterName, a.configName ? c.get("configmaps", a.configName, d, null).then(function(b) {
+b.data.workercount && (f.workerCount = parseInt(b.data.workercount)), b.data.mastercount && (f.masterCount = parseInt(b.data.mastercount)), b.data.sparkmasterconfig && (f.masterConfigName = b.data.sparkmasterconfig), b.data.sparkworkerconfig && (f.workerConfigName = b.data.sparkworkerconfig), b.data.sparkimage && (f.sparkImage = b.data.sparkimage), b.data.exposeui && (f.exposewebui = b.data.exposeui), b.data.metrics && (f.metrics = b.data.metrics), a.workerCount && a.workerCount >= 0 && (f.workerCount = a.workerCount), a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), e.resolve(f);
 })["catch"](function() {
-d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i);
-}) :(d && (i.workerCount = d), e && (i.workerConfigName = e), f && (i.masterConfigName = f), h.resolve(i)), h.promise;
+a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), f.exposewebui = a.exposewebui, f.metrics = a.metrics, f.workerCount = a.workerCount, f.masterCount = a.masterCount, e.resolve(f);
+}) :(a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), f.exposewebui = a.exposewebui, f.metrics = a.metrics, f.workerCount = a.workerCount, f.masterCount = a.masterCount, e.resolve(f)), f.workerCount < 0 && (f.workerCount = 1), e.promise;
 }
-function w(a, c) {
+function x(a, c) {
 var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
 name:"spark-webui",
 containerPort:8081,
@@ -512,25 +525,25 @@ targetPort:8080
 protocol:"TCP",
 port:7777,
 targetPort:7777
-} ], j = a.enablemetrics, k = null, n = null, p = null, w = null, x = null, y = null, z = b.defer();
-return v(a.configName, a.workerCount, a.workerConfigName, a.masterConfigName).then(function(v) {
-k = o(d, a.clusterName, "master", null, f, j, v.masterConfigName), n = o(d, a.clusterName, "worker", v.workerCount, e, j, v.workerConfigName), p = q(a.clusterName, a.clusterName, "master", g), w = q(a.clusterName + "-ui", a.clusterName, "webui", h);
-var A = [ s(k, c), s(n, c), t(p, c), t(w, c) ];
-a.enablemetrics && (x = r(a.clusterName, i), A.push(t(x, c)), y = l(a.clusterName + "-metrics", c), A.push(m(y, c))), a.exposewebui && A.push(u(w, c)), b.all(A).then(function(a) {
+} ], j = a.enablemetrics, k = null, n = null, o = null, q = null, x = null, y = null, z = b.defer();
+return w(a, c).then(function(w) {
+k = p(d, a.clusterName, "master", null, f, j, w.masterConfigName, w), n = p(d, a.clusterName, "worker", w.workerCount, e, j, w.workerConfigName, w), o = r(a.clusterName, a.clusterName, "master", g), q = r(a.clusterName + "-ui", a.clusterName, "webui", h);
+var A = [ t(k, c), t(n, c), u(o, c), u(q, c) ];
+a.enablemetrics && (x = s(a.clusterName, i), A.push(u(x, c)), y = l(a.clusterName + "-metrics", c), A.push(m(y, c))), a.exposewebui && A.push(v(q, c)), b.all(A).then(function(a) {
 z.resolve(a);
 })["catch"](function(a) {
 z.reject(a);
 });
 }), z.promise;
 }
-function x(a, c, d, e) {
+function y(a, c, d, e) {
 var f = a + "-w", g = a + "-m", h = [ i(a, f, c, e), i(a, g, d, e) ];
 return b.all(h);
 }
 return {
 sendDeleteCluster:k,
-sendCreateCluster:w,
-sendScaleCluster:x
+sendCreateCluster:x,
+sendScaleCluster:y
 };
 } ]), angular.module("oshinkoConsole").controller("OshinkoClusterNewCtrl", [ "$q", "$scope", "dialogData", "clusterData", "$uibModalInstance", "ProjectsService", "DataService", "$routeParams", function(a, b, c, d, e, f, g, h) {
 function i(b, c, d, e) {
@@ -558,18 +571,19 @@ exposewebui:!0,
 sparkimage:"docker.io/radanalyticsio/openshift-spark:latest"
 };
 b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
-b.advanced = !b.advanced;
+b.advanced = !b.advanced, b.advanced ? b.fields.workers = -1 :b.fields.workers = 1;
 }, b.cancelfn = function() {
 e.dismiss("cancel");
 }, b.newCluster = function() {
 var c = b.advanced, g = {
 clusterName:b.fields.name.trim(),
+masterCount:1,
 workerCount:b.fields.workers,
 configName:c ? b.fields.configname :null,
 masterConfigName:c ? b.fields.masterconfigname :null,
 workerConfigName:c ? b.fields.workerconfigname :null,
 exposewebui:!c || b.fields.exposewebui,
-enablemetrics:!c || b.fields.enablemetrics
+metrics:!c || b.fields.enablemetrics
 };
 return f.get(h.project).then(_.spread(function(c, f) {
 return b.project = c, b.context = f, a.all([ j(g.clusterName, g.workersInt), i(g.configName, "cluster-config-name", "cluster configuration", b.context), i(g.masterConfigName, "cluster-masterconfig-name", "master spark configuration", b.context), i(g.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
