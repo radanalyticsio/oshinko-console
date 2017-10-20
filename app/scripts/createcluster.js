@@ -24,6 +24,12 @@ angular.module('oshinkoConsole')
 
       $scope.toggleAdvanced = function () {
         $scope.advanced = $scope.advanced ? false : true;
+        if ($scope.advanced) {
+          // set to -1 to indicate it's unset and to use the value in the cluster config
+          $scope.fields.workers = -1;
+        } else {
+          $scope.fields.workers = 1;
+        }
       };
 
       function validateConfigMap(name, errTarget, errName, context) {
@@ -88,12 +94,13 @@ angular.module('oshinkoConsole')
 
         var clusterConfigs = {
           clusterName: $scope.fields.name.trim(),
+          masterCount: 1,
           workerCount: $scope.fields.workers,
           configName: advanced ? $scope.fields.configname : null,
           masterConfigName: advanced ? $scope.fields.masterconfigname : null,
           workerConfigName: advanced ? $scope.fields.workerconfigname : null,
           exposewebui: advanced ? $scope.fields.exposewebui : true,
-          enablemetrics: advanced ? $scope.fields.enablemetrics : true
+          metrics: advanced ? $scope.fields.enablemetrics : true
         };
 
         return ProjectsService
