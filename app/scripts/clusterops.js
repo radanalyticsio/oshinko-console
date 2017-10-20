@@ -47,12 +47,8 @@ angular.module('openshiftConsole')
             }
           });
           mostRecentRC.spec.replicas = 0;
-          DataService.update('replicationcontrollers', mostRecentRC.metadata.name, mostRecentRC, context).then(function () {
-            DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(function (result) {
-              deferred.resolve(result);
-            }).catch(function (err) {
-              deferred.reject(err);
-            });
+          DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(function (result) {
+            deferred.resolve(result);
           }).catch(function (err) {
             deferred.reject(err);
           });

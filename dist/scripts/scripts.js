@@ -222,12 +222,8 @@ return c.list("replicationcontrollers", d, function(a) {
 var b = a.by("metadata.name");
 angular.forEach(b, function(a) {
 (!g || new Date(a.metadata.creationTimestamp) > new Date(g.metadata.creationTimestamp)) && (g && c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(angular.noop), g = a);
-}), g.spec.replicas = 0, c.update("replicationcontrollers", g.metadata.name, g, d).then(function() {
-c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(function(a) {
+}), g.spec.replicas = 0, c["delete"]("replicationcontrollers", g.metadata.name, d, null).then(function(a) {
 e.resolve(a);
-})["catch"](function(a) {
-e.reject(a);
-});
 })["catch"](function(a) {
 e.reject(a);
 });
