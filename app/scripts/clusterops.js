@@ -488,7 +488,7 @@ angular.module('openshiftConsole')
       }
 
       function sendCreateCluster(clusterConfigs, context) {
-        var sparkImage = "docker.io/radanalyticsio/openshift-spark:latest";
+        var sparkImage = "radanalyticsio/openshift-spark";
         var workerPorts = [
           {
             "name": "spark-webui",

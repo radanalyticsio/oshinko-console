@@ -17,7 +17,7 @@ angular.module('oshinkoConsole')
         workerconfigname: "",
         enablemetrics: true,
         exposewebui: true,
-        sparkimage: "docker.io/radanalyticsio/openshift-spark:latest"
+        sparkimage: "radanalyticsio/openshift-spark"
       };
       $scope.fields = fields;
       $scope.advanced = false;
