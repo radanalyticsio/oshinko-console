@@ -493,7 +493,7 @@ a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigN
 }) :(a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), f.exposewebui = a.exposewebui, f.metrics = a.metrics, f.workerCount = a.workerCount, f.masterCount = a.masterCount, e.resolve(f)), f.workerCount < 0 && (f.workerCount = 1), e.promise;
 }
 function x(a, c) {
-var d = "docker.io/radanalyticsio/openshift-spark:latest", e = [ {
+var d = "radanalyticsio/openshift-spark", e = [ {
 name:"spark-webui",
 containerPort:8081,
 protocol:"TCP"
@@ -568,7 +568,7 @@ masterconfigname:"",
 workerconfigname:"",
 enablemetrics:!0,
 exposewebui:!0,
-sparkimage:"docker.io/radanalyticsio/openshift-spark:latest"
+sparkimage:"radanalyticsio/openshift-spark"
 };
 b.fields = m, b.advanced = !1, b.toggleAdvanced = function() {
 b.advanced = !b.advanced, b.advanced ? b.fields.workers = -1 :b.fields.workers = 1;
