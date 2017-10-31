@@ -529,7 +529,7 @@ targetPort:7777
 return w(a, c).then(function(w) {
 k = p(d, a.clusterName, "master", null, f, j, w.masterConfigName, w), n = p(d, a.clusterName, "worker", w.workerCount, e, j, w.workerConfigName, w), o = r(a.clusterName, a.clusterName, "master", g), q = r(a.clusterName + "-ui", a.clusterName, "webui", h);
 var A = [ t(k, c), t(n, c), u(o, c), u(q, c) ];
-a.enablemetrics && (x = s(a.clusterName, i), A.push(u(x, c)), y = l(a.clusterName + "-metrics", c), A.push(m(y, c))), a.exposewebui && A.push(v(q, c)), b.all(A).then(function(a) {
+w.metrics && (x = s(a.clusterName, i), A.push(u(x, c)), y = l(a.clusterName + "-metrics", c), A.push(m(y, c))), a.exposewebui && A.push(v(q, c)), b.all(A).then(function(a) {
 z.resolve(a);
 })["catch"](function(a) {
 z.reject(a);
