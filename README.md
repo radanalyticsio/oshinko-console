@@ -42,4 +42,5 @@ assetConfig:
 
 #### Running integration tests
 1.  Have an instance up and running with the extension installed (See Getting Started above)
-2.  grunt test-integration --baseUrl=<address of your console>  (https://<ip address>:8443 would be common)
+2.  oc create configmap storedconfig --from-literal=mastercount=1 --from-literal=workercount=4
+3.  grunt test-integration --baseUrl=<address of your console>  (https://<ip address>:8443 would be common)

@@ -56,6 +56,8 @@ before_install:
   - echo $IPSTR
   - IP=${IPSTR##*/}
   - echo ${IP}
+  - docker pull docker.io/radanalyticsio/openshift-spark
+  - oc create configmap storedconfig --from-literal=mastercount=1 --from-literal=workercount=4
 install:
   - npm install grunt-cli -g
   - npm install

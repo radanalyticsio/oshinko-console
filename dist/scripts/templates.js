@@ -246,7 +246,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<label for=\"cluster-new-workers\">Number of workers</label>\n" +
     "<input id=\"cluster-new-workers\" class=\"form-control input-lg\" type=\"number\" ng-model=\"fields.workers\"/>\n" +
     "</div>\n" +
-    "<div class=\"form-group\"><a href=\"#\" ng-click=\"toggleAdvanced()\">Advanced cluster configuration</a></div>\n" +
+    "<div class=\"form-group\"><a id=\"toggle-adv\" href=\"#\" ng-click=\"toggleAdvanced()\">Advanced cluster configuration</a></div>\n" +
     "</div>\n" +
     "<div ng-show=\"advanced\">\n" +
     "<div class=\"form-group\">\n" +
@@ -277,7 +277,7 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<label for=\"cluster-metrics\">Enable metrics on your cluster</label>\n" +
     "<input id=\"cluster-metrics\" class=\"form-control input-lg\" type=\"checkbox\" ng-model=\"fields.enablemetrics\"/>\n" +
     "</div>\n" +
-    "<div class=\"form-group\"><a href=\"#\" ng-click=\"toggleAdvanced()\">Basic cluster configuration</a></div>\n" +
+    "<div class=\"form-group\"><a id=\"toggle-basic\" href=\"#\" ng-click=\"toggleAdvanced()\">Basic cluster configuration</a></div>\n" +
     "</div>\n" +
     "</fieldset>\n" +
     "</form>\n" +
