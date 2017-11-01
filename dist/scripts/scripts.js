@@ -19,24 +19,26 @@ iconClass:"pficon  pficon-cluster"
 }), hawtioPluginLoader.addModule(a);
 }(), angular.module("openshiftConsole").controller("OshinkoClustersCtrl", [ "$scope", "$interval", "$location", "$route", "DataService", "ProjectsService", "$routeParams", "$rootScope", "$filter", "$uibModal", "MetricsService", function(a, b, c, d, e, f, g, h, i, j, k) {
 function l(a) {
-return !!r(a, "oshinko-cluster");
+return !!s(a, "oshinko-cluster");
 }
-function m(a, b, c) {
-var d, e, f, g, h, i = {};
+function m(a, b, c, d) {
+var e, f, g, h, i, j = {};
 return _.each(a, function(a) {
-l(a) && (d = r(a, "oshinko-cluster"), f = _.get(a, "metadata.name", ""), e = r(a, "oshinko-type"), h = _.find(b, function(b) {
+l(a) && (e = s(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), f = s(a, "oshinko-type"), i = _.find(b, function(b) {
 var c = new LabelSelector(b.spec.selector);
 return c.matches(a);
-}), h && (g = _.get(h, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], h)), _.set(i, [ d, e, "pod", f ], a));
+}), i && (h = _.get(i, "metadata.name", ""), _.set(j, [ e, f, "svc", h ], i)), _.set(j, [ e, f, "pod", g ], a));
 }), _.each(b, function(a) {
-e = r(a, "oshinko-type"), "webui" === e && (d = r(a, "oshinko-cluster"), g = _.get(a, "metadata.name", ""), _.set(i, [ d, e, "svc", g ], a));
+f = s(a, "oshinko-type"), "webui" === f && (e = s(a, "oshinko-cluster"), h = _.get(a, "metadata.name", ""), _.set(j, [ e, f, "svc", h ], a));
 }), _.each(c, function(a) {
-d = r(a, "oshinko-cluster"), d && _.set(i, [ d, "uiroute" ], a);
-}), i;
+e = s(a, "oshinko-cluster"), e && _.set(j, [ e, "uiroute" ], a);
+}), _.each(d, function(a) {
+e = s(a, "oshinko-cluster"), e && _.set(j, [ e, "dc" ], a);
+}), j;
 }
-var n, o, p, q = [];
+var n, o, p, q, r = [];
 a.projectName = g.project, a.serviceName = g.service, a.currentCluster = g.cluster || "", a.projects = {}, a.oshinkoClusters = {}, a.oshinkoClusterNames = [], a.cluster_details = null, a.alerts = a.alerts || {}, a.selectedTab = {}, a.metricsAvailable = !1;
-var r = i("label");
+var s = i("label");
 a.cluster_id = d.current.params.Id || "", a.breadcrumbs = [ {
 title:a.projectName,
 link:"project/" + a.projectName
@@ -48,7 +50,7 @@ title:a.currentCluster
 }), g.tab && (a.selectedTab[g.tab] = !0), k.isAvailable().then(function(b) {
 a.OSmetricsAvailable = b;
 });
-var s = function(b, c) {
+var t = function(b, c) {
 try {
 a.cluster_details = c[b], a.cluster_details.name = a.cluster_details.master.svc[Object.keys(a.cluster_details.master.svc)[0]].metadata.labels["oshinko-cluster"], a.cluster_details.workerCount = Object.keys(a.cluster_details.worker.pod).length, a.cluster_details.masterCount = Object.keys(a.cluster_details.master.pod).length, a.cluster_details.allPods = Object.values(a.cluster_details.worker.pod), a.cluster_details.allPods.push(Object.values(a.cluster_details.master.pod)[0]), a.cluster_details.containers = b + "-m|" + b + "-w";
 var d = Object.keys(a.cluster_details.master.pod)[0], e = a.cluster_details.master.pod[d].metadata.labels["oshinko-metrics-enabled"] && "true" === a.cluster_details.master.pod[d].metadata.labels["oshinko-metrics-enabled"];
@@ -56,8 +58,8 @@ a.metricsAvailable = !(!e || !a.OSmetricsAvailable);
 } catch (f) {
 a.cluster_details = null;
 }
-}, t = function() {
-o && n && (a.oshinkoClusters = m(o, n, p), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? s(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
+}, u = function() {
+o && n && (a.oshinkoClusters = m(o, n, p, q), a.oshinkoClusterNames = Object.keys(a.oshinkoClusters), "" !== a.currentCluster && a.oshinkoClusters[a.currentCluster] ? t(a.currentCluster, a.oshinkoClusters) :a.cluster_details = null);
 };
 a.countWorkers = function(a) {
 if (!a || !a.worker || !a.worker.pod) return 0;
@@ -70,6 +72,8 @@ return c;
 }, a.getClusterName = function(a) {
 var b = Object.keys(a);
 return b[0];
+}, a.getClusterConfig = function(a) {
+return a && a.dc ? JSON.stringify(JSON.parse(a.dc.metadata.annotations["oshinko-config"]), void 0, 2) :"";
 }, a.getSparkWebUi = function(a) {
 var b = "";
 try {
@@ -97,19 +101,21 @@ return b;
 var b = c.path() + "/" + encodeURIComponent(a);
 c.path(b);
 };
-var u = g.project;
-f.get(u).then(_.spread(function(b, c) {
-a.project = b, a.projectContext = c, q.push(e.watch("pods", c, function(b) {
-a.pods = o = b.by("metadata.name"), t();
-})), q.push(e.watch("services", c, function(b) {
-a.services = n = b.by("metadata.name"), t();
-})), q.push(e.watch("routes", c, function(b) {
-a.routes = p = b.by("metadata.name"), t();
+var v = g.project;
+f.get(v).then(_.spread(function(b, c) {
+a.project = b, a.projectContext = c, r.push(e.watch("pods", c, function(b) {
+a.pods = o = b.by("metadata.name"), u();
+})), r.push(e.watch("services", c, function(b) {
+a.services = n = b.by("metadata.name"), u();
+})), r.push(e.watch("routes", c, function(b) {
+a.routes = p = b.by("metadata.name"), u();
+})), r.push(e.watch("deploymentconfigs", c, function(b) {
+a.dcs = q = b.by("metadata.name"), u();
 })), a.$on("$destroy", function() {
-e.unwatchAll(q);
+e.unwatchAll(r);
 });
 })), a.$on("$destroy", function() {
-e.unwatchAll(q);
+e.unwatchAll(r);
 }), a.deleteCluster = function(b) {
 var c = j.open({
 animation:!0,
