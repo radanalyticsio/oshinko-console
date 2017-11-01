@@ -10,7 +10,7 @@ angular.module('openshiftConsole')
               DataService, ProjectsService, $routeParams,
               $rootScope, $filter, $uibModal, MetricsService) {
       var watches = [];
-      var services, pods, routes;
+      var services, pods, routes, dcs;
       $scope.projectName = $routeParams.project;
       $scope.serviceName = $routeParams.service;
       $scope.currentCluster = $routeParams.cluster || '';
@@ -52,7 +52,7 @@ angular.module('openshiftConsole')
         return false;
       }
 
-      function groupByClusters(pods, services, routes) {
+      function groupByClusters(pods, services, routes, dcs) {
         var clusters = {};
         var clusterName;
         var type;
@@ -92,7 +92,12 @@ angular.module('openshiftConsole')
           if (clusterName) {
             _.set(clusters, [clusterName, 'uiroute'], route);
           }
-
+        });
+        _.each(dcs, function (dc) {
+          clusterName = label(dc, "oshinko-cluster");
+          if (clusterName) {
+            _.set(clusters, [clusterName, 'dc'], dc);
+          }
         });
         return clusters;
       }
@@ -119,7 +124,7 @@ angular.module('openshiftConsole')
         if (!pods || !services) {
           return;
         }
-        $scope.oshinkoClusters = groupByClusters(pods, services, routes);
+        $scope.oshinkoClusters = groupByClusters(pods, services, routes, dcs);
         $scope.oshinkoClusterNames = Object.keys($scope.oshinkoClusters);
         if ($scope.currentCluster !== '' && $scope.oshinkoClusters[$scope.currentCluster]) {
           setClusterDetails($scope.currentCluster, $scope.oshinkoClusters);
@@ -146,6 +151,12 @@ angular.module('openshiftConsole')
       $scope.getClusterName = function (cluster) {
         var name = Object.keys(cluster);
         return name[0];
+      };
+      $scope.getClusterConfig = function(cluster) {
+        if (!cluster || !cluster.dc) {
+          return "";
+        }
+        return JSON.stringify(JSON.parse(cluster.dc.metadata.annotations['oshinko-config']), undefined, 2);
       };
       $scope.getSparkWebUi = function (cluster) {
         var route = "";
@@ -226,6 +237,10 @@ angular.module('openshiftConsole')
 
           watches.push(DataService.watch("routes", context, function (routeData) {
             $scope.routes = routes = routeData.by("metadata.name");
+            groupClusters();
+          }));
+          watches.push(DataService.watch("deploymentconfigs", context, function (dcData) {
+            $scope.dcs = dcs = dcData.by("metadata.name");
             groupClusters();
           }));
 

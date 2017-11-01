@@ -14,6 +14,8 @@ angular.module('oshinkoConsoleTemplates', []).run(['$templateCache', function($t
     "<dd>\n" +
     "{{cluster_details.workerCount }}\n" +
     "</dd>\n" +
+    "<dt translateable=\"no\">Cluster configuration</dt>\n" +
+    "<dd><pre>{{getClusterConfig(cluster_details)}}</pre></dd>\n" +
     "</dl>\n" +
     "</div>\n" +
     "</div>\n" +
