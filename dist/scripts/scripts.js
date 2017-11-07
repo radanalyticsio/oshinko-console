@@ -401,8 +401,8 @@ Name:a.configName || "",
 SparkMasterConfig:a.masterConfigName || "",
 SparkWorkerConfig:a.workerConfigName || "",
 SparkImage:a.sparkImage,
-ExposeWebUI:a.exposewebui,
-Metrics:a.metrics
+ExposeWebUI:"" + a.exposewebui,
+Metrics:"" + a.metrics
 };
 }
 function p(a, b, c, d, e, f, g, h) {
