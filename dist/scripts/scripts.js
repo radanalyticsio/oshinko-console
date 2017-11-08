@@ -531,7 +531,7 @@ targetPort:8080
 protocol:"TCP",
 port:7777,
 targetPort:7777
-} ], j = a.enablemetrics, k = null, n = null, o = null, q = null, x = null, y = null, z = b.defer();
+} ], j = a.metrics, k = null, n = null, o = null, q = null, x = null, y = null, z = b.defer();
 return w(a, c).then(function(w) {
 k = p(d, a.clusterName, "master", null, f, j, w.masterConfigName, w), n = p(d, a.clusterName, "worker", w.workerCount, e, j, w.workerConfigName, w), o = r(a.clusterName, a.clusterName, "master", g), q = r(a.clusterName + "-ui", a.clusterName, "webui", h);
 var A = [ t(k, c), t(n, c), u(o, c), u(q, c) ];
