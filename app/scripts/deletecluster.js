@@ -22,8 +22,7 @@ angular.module('openshiftConsole')
               .then(function (values) {
                 var err = false;
                 angular.forEach(values, function (value) {
-                  // allow 404 error on delete since it doesn't exist
-                  if ((value.code >= 300 || value.code < 200) && value.code !== 404) {
+                  if(value) {
                     err = true;
                   }
                 });
