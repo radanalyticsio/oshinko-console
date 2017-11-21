@@ -22,44 +22,15 @@ angular.module('openshiftConsole')
     };
   })
   .factory('clusterData',
-    function ($http, $q, DataService, DeploymentsService, ApplicationGenerator, $filter) {
-
+    function ($http, $q, DataService, DeploymentsService) {
       // Start delete-related functions
       function deleteObject(name, resourceType, context) {
-        return DataService.delete(resourceType, name, context, null);
-      }
-
-      function scaleDeleteReplication(deploymentName, context) {
-        var deferred = $q.defer();
-        var mostRecentRC = null;
-        // we need to determine the most recent replication controller in the event that
-        // changes have been made to the deployment, we can not assume clustername-w-1
-        DataService.list('replicationcontrollers', context, function (result) {
-          var rcs = result.by("metadata.name");
-          angular.forEach(rcs, function (rc) {
-            if (!mostRecentRC || new Date(rc.metadata.creationTimestamp) > new Date(mostRecentRC.metadata.creationTimestamp)) {
-              // if we have a mostRecentRC, it's about to be replaced, so we
-              // can delete it as it's most definitely not the most recent one
-              if (mostRecentRC) {
-                DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(angular.noop);
-              }
-              mostRecentRC = rc;
-            }
-          });
-          mostRecentRC.spec.replicas = 0;
-          DataService.delete('replicationcontrollers', mostRecentRC.metadata.name, context, null).then(function (result) {
-            deferred.resolve(result);
-          }).catch(function (err) {
-            deferred.reject(err);
-          });
-        }, {
-          http: {
-            params: {
-              labelSelector: $filter('depName')('replicationController') + '=' + deploymentName
-            }
-          }
+        // noops below are to suppress any warnings when deleting a non-existant object
+        return DataService.delete(resourceType, name, context, { errorNotification: false }).then(function() {
+          angular.noop();
+        }, function() {
+          angular.noop();
         });
-        return deferred.promise;
       }
 
       function scaleReplication(clusterName, deploymentName, count, context) {
@@ -72,32 +43,15 @@ angular.module('openshiftConsole')
         return deferred.promise;
       }
 
-      function deleteRoute(clusterName, context) {
-        return DataService.list('routes', context, function (result) {
-          var routes = result.by("metadata.name");
-          angular.forEach(routes, function(route) {
-            deleteObject(route.metadata.name, 'routes', context);
-          });
-        }, {
-          http: {
-            params: {
-              labelSelector: $filter('clusterName')('route') + '=' + clusterName
-            }
-          }
-        });
-      }
-
       function sendDeleteCluster(clusterName, context) {
         var masterDeploymentName = clusterName + "-m";
         var workerDeploymentName = clusterName + "-w";
 
         var steps = [
-          scaleDeleteReplication(masterDeploymentName, context),
-          scaleDeleteReplication(workerDeploymentName, context),
           deleteObject(masterDeploymentName, 'deploymentconfigs', context),
           deleteObject(workerDeploymentName, 'deploymentconfigs', context),
+          deleteObject(clusterName + "-ui-route", 'routes', context),
           deleteObject(clusterName, 'services', context),
-          deleteRoute(clusterName, context),
           deleteObject(clusterName + "-ui", 'services', context),
           deleteObject(clusterName + "-metrics", 'services', context),
           deleteObject(clusterName + "-metrics", 'configmaps', context)
@@ -311,7 +265,7 @@ angular.module('openshiftConsole')
             "oshinko-metrics-enabled": metrics ? "true" : "false"
           },
           annotations: {
-            "created-by": "oshinko-console",
+            "created-by": "oshinko-webui",
             "oshinko-config": JSON.stringify(getClusterConfigObject(clusterConfig))
           },
           scaling: {
@@ -400,10 +354,21 @@ angular.module('openshiftConsole')
       function createRoute(srvObject, context) {
         var serviceName = srvObject.metadata.name;
         var labels = srvObject.metadata.labels;
-        var routeOptions = {
-          name: serviceName + "-route"
+        var route = {
+          "apiVersion": "v1",
+          "kind": "Route",
+          "metadata": {
+            "labels": labels,
+            "name": serviceName + "-route"
+          },
+          "spec": {
+            "to": {
+              "kind": "Service",
+              "name": serviceName
+            },
+            "wildcardPolicy": "None"
+          }
         };
-        var route = ApplicationGenerator.createRoute(routeOptions, serviceName, labels);
         return DataService.create('routes', null, route, context);
       }
 
@@ -488,7 +453,6 @@ angular.module('openshiftConsole')
       }
 
       function sendCreateCluster(clusterConfigs, context) {
-        var sparkImage = "radanalyticsio/openshift-spark";
         var workerPorts = [
           {
             "name": "spark-webui",
@@ -550,8 +514,8 @@ angular.module('openshiftConsole')
         var clusterMetricsConfig = null;
         var deferred = $q.defer();
         getFinalConfigs(clusterConfigs, context).then(function (finalConfigs) {
-          sm = sparkDC(sparkImage, clusterConfigs.clusterName, "master", null, masterPorts, enableMetrics, finalConfigs["masterConfigName"], finalConfigs);
-          sw = sparkDC(sparkImage, clusterConfigs.clusterName, "worker", finalConfigs["workerCount"], workerPorts, enableMetrics, finalConfigs["workerConfigName"], finalConfigs);
+          sm = sparkDC(finalConfigs.sparkImage, clusterConfigs.clusterName, "master", null, masterPorts, enableMetrics, finalConfigs["masterConfigName"], finalConfigs);
+          sw = sparkDC(finalConfigs.sparkImage, clusterConfigs.clusterName, "worker", finalConfigs["workerCount"], workerPorts, enableMetrics, finalConfigs["workerConfigName"], finalConfigs);
           smService = sparkService(clusterConfigs.clusterName, clusterConfigs.clusterName, "master", masterServicePort);
           suiService = sparkService(clusterConfigs.clusterName + "-ui", clusterConfigs.clusterName, "webui", uiServicePort);
 
