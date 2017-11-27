@@ -3,7 +3,10 @@
  */
 
 'use strict';
-
+// This file is meant to be mirrored in both oshinko web interfaces,
+// oshinko-console and oshinko-webui.  The only difference is the
+// following line.  Any other changes should be mirrored to the
+// other repo.
 angular.module('openshiftConsole')
   .filter('depName', function () {
     var labelMap = {
@@ -174,6 +177,11 @@ angular.module('openshiftConsole')
             periodSeconds: 10,
             successThreshold: 1,
             failureThreshold: 3
+          };
+          container.resources = {
+            limits: {
+              memory: "700Mi"
+            }
           };
         }
 

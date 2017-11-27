@@ -310,7 +310,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}) :i.livenessProbe = {
+}) :(i.livenessProbe = {
 httpGet:{
 path:"/",
 port:8081,
@@ -320,7 +320,11 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-};
+}, i.resources = {
+limits:{
+memory:"700Mi"
+}
+});
 var j;
 j = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
 var k = {
