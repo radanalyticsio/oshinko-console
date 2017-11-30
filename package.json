@@ -4,7 +4,7 @@
   "description": "Oshinko Console extension",
   "main": "app.js",
   "scripts": {
-    "postinstall": "node test/upgrade-selenium.js && node_modules/grunt-protractor-runner/scripts/webdriver-manager-update"
+    "postinstall": "node node_modules/grunt-protractor-runner/scripts/webdriver-manager-update"
   },
   "repository": {
     "type": "git",
@@ -38,16 +38,17 @@
     "grunt-htmlhint": "0.4.1",
     "grunt-newer": "0.7.0",
     "grunt-ng-annotate": "0.3.2",
-    "grunt-protractor-runner": "1.2.1",
+    "grunt-protractor-runner": "5.0.0",
     "grunt-svgmin": "0.4.0",
     "grunt-usemin": "2.4.0",
     "html-minifier": "1.1.1",
     "imagemin": "1.0.5",
-    "jasmine-spec-reporter": "1.1.2",
+    "jasmine-spec-reporter": "4.2.0",
     "jshint-stylish": "0.2.0",
     "less": "2.6.1",
     "load-grunt-tasks": "0.4.0",
     "lodash": "3.10.1",
+    "protractor": "5.2.0",
     "protractor-screenshot-reporter": "0.0.5",
     "time-grunt": "0.3.2"
   },

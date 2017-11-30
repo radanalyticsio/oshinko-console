@@ -4,7 +4,10 @@ language: node_js
 node_js:
   - "6"
 addons:
-  firefox: "46.0"
+  apt:
+    packages:
+      - net-tools
+  chrome: stable
 ## home folder is /home/travis/build/radanalyticsio/oshinko-console
 services:
   - docker
@@ -36,9 +39,12 @@ before_install:
   - oc version
   - export PATH=$PATH:/home/travis/origin/
   - echo $PATH
+  - ip addr show eth0
+  - export HOST_IP_ADDRESS="$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
+  - echo "Host IP is $HOST_IP_ADDRESS"
 ## below cmd is important to get oc working in ubuntu
   - sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:$OC_VERSION -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
-  - oc cluster up --host-config-dir=/home/travis/origin
+  - oc cluster up --host-config-dir=/home/travis/origin --public-hostname=$HOST_IP_ADDRESS
   - sudo ls -l /home/travis/origin
   - oc cluster down
 ## get the latest release code
@@ -52,7 +58,7 @@ before_install:
   - "sudo sed -i -e \"s/extensionStylesheets: null/extensionStylesheets:\\n  - oshinko.css/\" /home/travis/origin/master/master-config.yaml"
   - sudo cat /home/travis/origin/master/master-config.yaml
 ## oc cluster up
-  - oc cluster up --host-config-dir=/home/travis/origin --use-existing-config=true
+  - oc cluster up --host-config-dir=/home/travis/origin --use-existing-config=true --public-hostname=$HOST_IP_ADDRESS
 ## find IP:PORT of openshift
   - IPSTR=`oc status |grep server`
   - echo $IPSTR
@@ -63,8 +69,6 @@ before_install:
 install:
   - npm install grunt-cli -g
   - npm install
-  - npm install grunt-protractor-runner@1.2.1
-  - ./node_modules/grunt-protractor-runner/scripts/webdriver-manager-update
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start

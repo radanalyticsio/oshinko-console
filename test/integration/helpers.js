@@ -22,9 +22,11 @@ exports.login = function(loginPageAlreadyLoaded) {
   // The login page doesn't use angular, so we have to use the underlying WebDriver instance
   var driver = browser.driver;
   if (!loginPageAlreadyLoaded) {
+    browser.waitForAngularEnabled(false);
     browser.get('/');
+    browser.refresh();
     driver.wait(function() {
-      return driver.isElementPresent(by.name("username"));
+      return element(by.name("username")).isPresent();
     }, 3000);
   }
 
@@ -33,8 +35,9 @@ exports.login = function(loginPageAlreadyLoaded) {
   driver.findElement(by.css("button[type='submit']")).click();
 
   driver.wait(function() {
-    return driver.isElementPresent(by.css(".navbar-iconic .username"));
+    return element(by.css(".navbar-iconic .username")).isPresent();
   }, 5000);
+  browser.waitForAngularEnabled(true);
 };
 
 exports.clickAndGo = function(buttonText, uri) {
