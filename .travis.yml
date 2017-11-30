@@ -20,12 +20,14 @@ before_install:
 ## chmod needs sudo, so all other commands are with sudo
   - sudo mkdir -p /home/travis/origin
   - sudo chmod -R 766 /home/travis/origin
-## download oc 1.5.1 binary
-  - sudo wget https://github.com/openshift/origin/releases/download/v1.5.1/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz -P /home/travis/origin
+## download oc 3.6.0 binary
+  - export OC_VERSION=v3.6.0
+  - export OC_DOWNLOAD_PREFIX=openshift-origin-client-tools-v3.6.0-c4dd4cf
+  - sudo wget https://github.com/openshift/origin/releases/download/$OC_VERSION/$OC_DOWNLOAD_PREFIX-linux-64bit.tar.gz -P /home/travis/origin
   - sudo ls -l /home/travis/origin
-  - sudo tar -C /home/travis/origin -xvzf /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit.tar.gz
-  - sudo ls -l /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit
-  - sudo cp /home/travis/origin/openshift-origin-client-tools-v1.5.1-7b451fc-linux-64bit/oc /home/travis/origin
+  - sudo tar -C /home/travis/origin -xvzf /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit.tar.gz
+  - sudo ls -l /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit
+  - sudo cp /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit/oc /home/travis/origin
   - sudo chmod -R 766 /home/travis/origin
   - sudo ls -l /home/travis/origin
   - sudo chmod -R +755 /home/travis/origin/*
@@ -35,7 +37,7 @@ before_install:
   - export PATH=$PATH:/home/travis/origin/
   - echo $PATH
 ## below cmd is important to get oc working in ubuntu
-  - sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:v1.5.1 -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
+  - sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:$OC_VERSION -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
   - oc cluster up --host-config-dir=/home/travis/origin
   - sudo ls -l /home/travis/origin
   - oc cluster down
