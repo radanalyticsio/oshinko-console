@@ -327,7 +327,7 @@ module.exports = function (grunt) {
           // Arguments passed to the command
           suite: grunt.option('suite') || 'e2e',
           baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/"),
-          browser: grunt.option('browser') || "firefox"
+          browser: grunt.option('browser') || "chrome"
         }
       },
       default: {
@@ -336,7 +336,7 @@ module.exports = function (grunt) {
           args: {
             suite: grunt.option('suite') || 'e2e',
             baseUrl: grunt.option('baseUrl') || ("https://localhost:8443/" + contextRoot + "/"),
-            browser: grunt.option('browser') || "firefox"
+            browser: grunt.option('browser') || "chrome"
           } // Target-specific arguments
         }
       }
@@ -387,7 +387,7 @@ module.exports = function (grunt) {
     'uglify',
     'usemin',
     'htmlmin',
-    'compress',
+    'compress'
   ]);
 
   grunt.registerTask('dev', [
