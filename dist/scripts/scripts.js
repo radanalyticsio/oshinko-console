@@ -310,7 +310,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}) :(i.livenessProbe = {
+}) :i.livenessProbe = {
 httpGet:{
 path:"/",
 port:8081,
@@ -320,11 +320,7 @@ timeoutSeconds:1,
 periodSeconds:10,
 successThreshold:1,
 failureThreshold:3
-}, i.resources = {
-limits:{
-memory:"700Mi"
-}
-});
+};
 var j;
 j = a.scaling.autoscaling ? a.scaling.minReplicas || 1 :a.scaling.replicas;
 var k = {
@@ -482,7 +478,7 @@ return c.create("routes", null, f, b);
 function s(a, d) {
 var e = b.defer(), f = {};
 return f.clusterName = a.clusterName, a.configName ? c.get("configmaps", a.configName, d, null).then(function(b) {
-b.data.workercount && (f.workerCount = parseInt(b.data.workercount)), b.data.mastercount && (f.masterCount = parseInt(b.data.mastercount)), b.data.sparkmasterconfig && (f.masterConfigName = b.data.sparkmasterconfig), b.data.sparkworkerconfig && (f.workerConfigName = b.data.sparkworkerconfig), b.data.sparkimage && (f.sparkImage = b.data.sparkimage), b.data.exposeui && (f.exposewebui = b.data.exposeui), b.data.metrics && (f.metrics = b.data.metrics), a.workerCount && a.workerCount >= 0 && (f.workerCount = a.workerCount), a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), e.resolve(f);
+b.data.workercount && (f.workerCount = parseInt(b.data.workercount)), b.data.mastercount && (f.masterCount = parseInt(b.data.mastercount)), b.data.sparkmasterconfig && (f.masterConfigName = b.data.sparkmasterconfig), b.data.sparkworkerconfig && (f.workerConfigName = b.data.sparkworkerconfig), b.data.sparkimage ? a.sparkImage && !a.sparkDefaultUsed ? f.sparkImage = a.sparkImage :f.sparkImage = b.data.sparkimage :f.sparkImage = a.sparkImage, b.data.exposeui && (f.exposewebui = b.data.exposeui), b.data.metrics && (f.metrics = b.data.metrics), a.workerCount && a.workerCount >= 0 && (f.workerCount = a.workerCount), a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), e.resolve(f);
 })["catch"](function() {
 a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), f.exposewebui = a.exposewebui, f.metrics = a.metrics, f.workerCount = a.workerCount, f.masterCount = a.masterCount, e.resolve(f);
 }) :(a.workerConfigName && (f.workerConfigName = a.workerConfigName), a.masterConfigName && (f.masterConfigName = a.masterConfigName), a.sparkImage && (f.sparkImage = a.sparkImage), f.exposewebui = a.exposewebui, f.metrics = a.metrics, f.workerCount = a.workerCount, f.masterCount = a.masterCount, e.resolve(f)), f.workerCount < 0 && (f.workerCount = 1), e.promise;
@@ -579,7 +575,8 @@ masterConfigName:c ? b.fields.masterconfigname :null,
 workerConfigName:c ? b.fields.workerconfigname :null,
 exposewebui:!c || b.fields.exposewebui,
 metrics:!c || b.fields.enablemetrics,
-sparkImage:c && "" !== b.fields.sparkimage ? b.fields.sparkimage :"radanalyticsio/openshift-spark"
+sparkImage:c && "" !== b.fields.sparkimage ? b.fields.sparkimage :"radanalyticsio/openshift-spark",
+sparkDefaultUsed:!b.advanced || "" === b.fields.sparkimage
 };
 return f.get(h.project).then(_.spread(function(c, f) {
 return b.project = c, b.context = f, a.all([ j(g.clusterName, g.workersInt), i(g.configName, "cluster-config-name", "cluster configuration", b.context), i(g.masterConfigName, "cluster-masterconfig-name", "master spark configuration", b.context), i(g.workerConfigName, "cluster-workerconfig-name", "worker spark configuration", b.context) ]).then(function() {
