@@ -102,6 +102,7 @@ angular.module('oshinkoConsole')
           exposewebui: advanced ? $scope.fields.exposewebui : true,
           metrics: advanced ? $scope.fields.enablemetrics : true,
           sparkImage: advanced && $scope.fields.sparkimage !== "" ? $scope.fields.sparkimage  : "radanalyticsio/openshift-spark",
+          sparkDefaultUsed: $scope.advanced && $scope.fields.sparkimage !== "" ? false  : true
         };
 
         return ProjectsService
