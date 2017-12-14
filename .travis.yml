@@ -79,7 +79,8 @@ script:
   - if [[ `sudo diff /home/travis/origin/master/templates.js dist/scripts/templates.js` ]]; then echo "Compiled templates.js does not match dist"; exit 1; else echo "Compiled templates.js matches source code"; fi
   - echo ${IP}
 ## integration tests need headless setup
-  - grunt test-integration --baseUrl=https://${IP}
+  - curl -k -v https://${IP}/console/
+  - grunt test-integration --baseUrl=https://${IP}/console/
 notifications:
  email:
    on_success: never
