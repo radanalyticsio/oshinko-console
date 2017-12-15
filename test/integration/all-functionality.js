@@ -3,9 +3,14 @@
 var h = require('./helpers.js');
 
 describe('Initial page functionality', function () {
-  it('should login', function () {
+  it('should show login page', function () {
     h.commonSetup();
-    h.login(false);
+    browser.get('/login');
+    browser.sleep(5000);
+    browser.driver.findElement(by.name("username")).sendKeys("developer");
+    browser.driver.findElement(by.name("password")).sendKeys("dpass");
+    browser.driver.findElement(by.css("button[type='submit']")).click();
+    browser.sleep(5000);
   });
 });
 
@@ -21,6 +26,7 @@ describe('Cluster page functionality', function () {
     browser.wait(EC.visibilityOf(element(by.id('clustername-testcluster'))));
 
     // Scale
+    browser.refresh();
     browser.wait(EC.visibilityOf(element(by.id('testcluster-actions'))));
     element(by.id('testcluster-actions')).click();
     element(by.id('testcluster-scalebutton')).click();
@@ -29,6 +35,7 @@ describe('Cluster page functionality', function () {
     browser.wait(EC.textToBePresentInElement(element(by.name('workercount-testcluster')), "3"));
 
     //Delete
+    browser.refresh();
     element(by.id('testcluster-actions')).click();
     element(by.id('testcluster-deletebutton')).click();
     element(by.id('deletebutton')).click();
@@ -46,6 +53,7 @@ describe('Test advanced create functionality', function () {
     element(by.id('toggle-adv')).click();
     element(by.id('cluster-new-name')).sendKeys('advcluster');
     element(by.id('createbutton')).click();
+    browser.refresh();
     browser.wait(EC.visibilityOf(element(by.id('advcluster-actions'))));
     // Delete
     element(by.id('advcluster-actions')).click();
@@ -65,11 +73,13 @@ describe('Test advanced create functionality', function () {
     element(by.id('cluster-new-name')).sendKeys('advcluster');
     element(by.id('cluster-config-name')).sendKeys('storedconfig');
     element(by.id('createbutton')).click();
+    browser.refresh();
     browser.wait(EC.visibilityOf(element(by.id('advcluster-actions'))));
     // Delete
     element(by.id('advcluster-actions')).click();
     element(by.id('advcluster-deletebutton')).click();
     element(by.id('deletebutton')).click();
+    browser.refresh();
     browser.wait(EC.invisibilityOf(element(by.name('advcluster-actions'))));
   });
 });
