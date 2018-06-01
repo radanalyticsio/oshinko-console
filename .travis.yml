@@ -12,59 +12,13 @@ addons:
 services:
   - docker
 before_install:
-## add insecure-registry and restart docker
-  - pwd
+  - wget https://www.slimjet.com/chrome/download-chrome.php?file=lnx%2Fchrome64_66.0.3359.181.deb -O chrome.deb
+  - sudo dpkg -i ./chrome.deb
+  - sudo apt-get update -qq
+  - sudo sed -i "s/\DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry=172.30.0.0\/16 /g" /etc/default/docker
   - sudo cat /etc/default/docker
-  - sudo service docker stop
-  - sudo sed -i -e 's/sock/sock --insecure-registry 172.30.0.0\/16/' /etc/default/docker
-  - sudo cat /etc/default/docker
-  - sudo service docker start
-  - sudo service docker status
-## chmod needs sudo, so all other commands are with sudo
-  - sudo mkdir -p /home/travis/origin
-  - sudo chmod -R 766 /home/travis/origin
-## download oc 3.6.0 binary
-  - export OC_VERSION=v3.6.0
-  - export OC_DOWNLOAD_PREFIX=openshift-origin-client-tools-v3.6.0-c4dd4cf
-  - sudo wget https://github.com/openshift/origin/releases/download/$OC_VERSION/$OC_DOWNLOAD_PREFIX-linux-64bit.tar.gz -P /home/travis/origin
-  - sudo ls -l /home/travis/origin
-  - sudo tar -C /home/travis/origin -xvzf /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit.tar.gz
-  - sudo ls -l /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit
-  - sudo cp /home/travis/origin/$OC_DOWNLOAD_PREFIX-linux-64bit/oc /home/travis/origin
-  - sudo chmod -R 766 /home/travis/origin
-  - sudo ls -l /home/travis/origin
-  - sudo chmod -R +755 /home/travis/origin/*
-  - sudo cp /home/travis/origin/oc /bin
-  - sudo ls -l /bin
-  - oc version
-  - export PATH=$PATH:/home/travis/origin/
-  - echo $PATH
-  - ip addr show eth0
-  - export HOST_IP_ADDRESS="$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
-  - echo "Host IP is $HOST_IP_ADDRESS"
-## below cmd is important to get oc working in ubuntu
-  - sudo docker run -v /:/rootfs -ti --rm --entrypoint=/bin/bash --privileged openshift/origin:$OC_VERSION -c "mv /rootfs/bin/findmnt /rootfs/bin/findmnt.backup"
-  - oc cluster up --host-config-dir=/home/travis/origin --public-hostname=$HOST_IP_ADDRESS
-  - sudo ls -l /home/travis/origin
-  - oc cluster down
-## get the latest release code
-  - sudo cp dist/scripts/templates.js /home/travis/origin/master
-  - sudo cp dist/scripts/scripts.js /home/travis/origin/master
-  - sudo cp dist/styles/oshinko.css /home/travis/origin/master
-  - sudo chmod -R 766 /home/travis/origin/master
-  - sudo ls -l /home/travis/origin/master
-## add changes to master-config.yaml
-  - "sudo sed -i -e \"s/extensionScripts: null/extensionScripts:\\n  - templates.js\\n  - scripts.js/\" /home/travis/origin/master/master-config.yaml"
-  - "sudo sed -i -e \"s/extensionStylesheets: null/extensionStylesheets:\\n  - oshinko.css/\" /home/travis/origin/master/master-config.yaml"
-  - sudo cat /home/travis/origin/master/master-config.yaml
-## oc cluster up
-  - oc cluster up --host-config-dir=/home/travis/origin --use-existing-config=true --public-hostname=$HOST_IP_ADDRESS
-## find IP:PORT of openshift
-  - IPSTR=`oc status |grep server`
-  - echo $IPSTR
-  - IP=${IPSTR##*/}
-  - echo ${IP}
-  - docker pull docker.io/radanalyticsio/openshift-spark
+  - sudo service docker restart
+  - ./test/prepare.sh
   - oc create configmap storedconfig --from-literal=mastercount=1 --from-literal=workercount=4
 install:
   - npm install grunt-cli -g
@@ -77,10 +31,13 @@ script:
   - grunt build
   - if [[ `sudo diff /home/travis/origin/master/scripts.js dist/scripts/scripts.js` ]]; then echo "Compiled scripts.js does not match dist"; exit 1; else echo "Compiled scripts.js matches source code"; fi
   - if [[ `sudo diff /home/travis/origin/master/templates.js dist/scripts/templates.js` ]]; then echo "Compiled templates.js does not match dist"; exit 1; else echo "Compiled templates.js matches source code"; fi
+  - export IP="$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
   - echo ${IP}
 ## integration tests need headless setup
 ##  - curl -k -v https://${IP}/console/
-  - grunt test-integration --baseUrl=https://${IP}/console/
+  - export CHROME_VERSION=$(google-chrome --version)
+  - echo "Chrome version is $CHROME_VERSION"
+  - grunt test-integration --baseUrl=https://${IP}:8443/console/
 notifications:
  email:
    on_success: never

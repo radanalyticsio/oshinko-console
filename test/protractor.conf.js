@@ -133,6 +133,7 @@ exports.config = {
 
    // Optional: override global seleniumAddress on this capability only.
    // seleniumAddress: null
+    acceptInsecureCerts: true
   },
 
   // If you would like to run more than one instance of WebDriver on the same
