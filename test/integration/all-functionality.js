@@ -51,7 +51,7 @@ describe('Cluster page functionality', function () {
 });
 
 describe('Test advanced create functionality', function () {
-  it('should create, scale, and delete a cluster', function () {
+  it('should use advanced create to create, scale, and delete a cluster', function () {
     var EC = protractor.ExpectedConditions;
     // Create a cluster
     browser.get('/console/project/myproject/oshinko');

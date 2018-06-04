@@ -33,11 +33,11 @@ function install_extension() {
   oc get configmap webconsole-config -o yaml
   #restart web console
   oc project openshift-web-console
-  export CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
-  oc delete pod $CONSOLE_POD
-  sleep 5
-  export CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
-  oc logs $CONSOLE_POD
+  export OLD_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
+  oc delete pod $OLD_CONSOLE_POD
+  sleep 15
+  export NEW_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
+  oc logs $NEW_CONSOLE_POD
   echo "Listing of all pods"
   oc get pods --all-namespaces
 }
