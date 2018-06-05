@@ -18,9 +18,21 @@ function prepare() {
 
 function install_extension() {
   # serve our extension code as an s2i application
+  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    echo "Doing s2i for pull request"
+    export COMMIT_HASH=$(git rev-parse HEAD)
+    echo "TRAVIS_PULL_REQUEST_BRANCH is ${TRAVIS_PULL_REQUEST_BRANCH}"
+    echo "TRAVIS_PULL_REQUEST is ${TRAVIS_PULL_REQUEST}"
+    echo "TRAVIS_PULL_REQUEST_SLUG is ${TRAVIS_PULL_REQUEST_SLUG}"
+    echo "TRAVIS_PULL_REQUEST_SHA is ${TRAVIS_PULL_REQUEST_SHA}"
+    echo "COMMIT_HASH is ${COMMIT_HASH}"
+    export SOURCE_TREE="${TRAVIS_PULL_REQUEST_SLUG}#${TRAVIS_PULL_REQUEST_BRANCH}"
+  else
+    export SOURCE_TREE="${TRAVIS_REPO_SLUG}#${TRAVIS_COMMIT}"
+  fi
   oc login -u system:admin
   oc new-project oshinko-console
-  oc new-app centos/httpd-24-centos7~https://github.com/${TRAVIS_REPO_SLUG}#${TRAVIS_COMMIT} --context-dir=dist
+  oc new-app centos/httpd-24-centos7~https://github.com/${SOURCE_TREE} --context-dir=dist
   sleep 30
   oc create route edge --service oshinko-console
   sleep 2
