@@ -171,10 +171,10 @@ exports.config = {
   // The timeout in milliseconds for each script run on the browser. This should
   // be longer than the maximum time your application needs to stabilize between
   // tasks.
-  allScriptsTimeout: 11000,
+  allScriptsTimeout: 60000,
 
   // How long to wait for a page to load.
-  getPageTimeout: 10000,
+  getPageTimeout: 15000,
 
   // A callback function called once configs are read but before any environment
   // setup. This will only run once, and before onPrepare.

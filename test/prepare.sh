@@ -24,7 +24,6 @@ function install_extension() {
     echo "TRAVIS_PULL_REQUEST_BRANCH is ${TRAVIS_PULL_REQUEST_BRANCH}"
     echo "TRAVIS_PULL_REQUEST is ${TRAVIS_PULL_REQUEST}"
     echo "TRAVIS_PULL_REQUEST_SLUG is ${TRAVIS_PULL_REQUEST_SLUG}"
-    echo "TRAVIS_PULL_REQUEST_SHA is ${TRAVIS_PULL_REQUEST_SHA}"
     echo "COMMIT_HASH is ${COMMIT_HASH}"
     export SOURCE_TREE="${TRAVIS_PULL_REQUEST_SLUG}#${TRAVIS_PULL_REQUEST_BRANCH}"
   else
@@ -33,9 +32,9 @@ function install_extension() {
   oc login -u system:admin
   oc new-project oshinko-console
   oc new-app centos/httpd-24-centos7~https://github.com/${SOURCE_TREE} --context-dir=dist
-  sleep 30
+  sleep 30s
   oc create route edge --service oshinko-console
-  sleep 2
+  sleep 2s
   export CONSOLE_BASE_ROUTE=$(oc get route oshinko-console --template={{.spec.host}})
   # change the console config to reference our extension
   oc project openshift-web-console
@@ -49,7 +48,7 @@ function install_extension() {
   oc project openshift-web-console
   export OLD_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
   oc delete pod $OLD_CONSOLE_POD
-  sleep 20
+  sleep 20s
   export NEW_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
   oc logs $NEW_CONSOLE_POD
   echo "Listing of all pods"
