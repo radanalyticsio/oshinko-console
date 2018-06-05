@@ -12,6 +12,8 @@ function prepare() {
   oc login -u system:admin
   export REGISTRY_URL=$(oc get svc -n default docker-registry -o jsonpath='{.spec.clusterIP}:{.spec.ports[0].port}')
   oc login -u developer -p developer
+  oc project myproject
+  oc create configmap storedconfig --from-literal=mastercount=1 --from-literal=workercount=4
 }
 
 function install_extension() {
@@ -19,9 +21,9 @@ function install_extension() {
   oc login -u system:admin
   oc new-project oshinko-console
   oc new-app centos/httpd-24-centos7~https://github.com/${TRAVIS_REPO_SLUG}#${TRAVIS_COMMIT} --context-dir=dist
-  sleep 20
+  sleep 30
   oc create route edge --service oshinko-console
-  sleep 5
+  sleep 2
   export CONSOLE_BASE_ROUTE=$(oc get route oshinko-console --template={{.spec.host}})
   # change the console config to reference our extension
   oc project openshift-web-console
@@ -35,7 +37,7 @@ function install_extension() {
   oc project openshift-web-console
   export OLD_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
   oc delete pod $OLD_CONSOLE_POD
-  sleep 15
+  sleep 20
   export NEW_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
   oc logs $NEW_CONSOLE_POD
   echo "Listing of all pods"

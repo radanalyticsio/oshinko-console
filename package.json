@@ -4,7 +4,7 @@
   "description": "Oshinko Console extension",
   "main": "app.js",
   "scripts": {
-    "postinstall": "node node_modules/grunt-protractor-runner/scripts/webdriver-manager-update"
+    "postinstall": "node node_modules/protractor/node_modules/webdriver-manager/bin/webdriver-manager update --gecko=false"
   },
   "repository": {
     "type": "git",

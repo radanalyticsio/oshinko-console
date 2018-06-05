@@ -12,14 +12,11 @@ addons:
 services:
   - docker
 before_install:
-  - wget https://www.slimjet.com/chrome/download-chrome.php?file=lnx%2Fchrome64_66.0.3359.181.deb -O chrome.deb
-  - sudo dpkg -i ./chrome.deb
   - sudo apt-get update -qq
   - sudo sed -i "s/\DOCKER_OPTS=\"/DOCKER_OPTS=\"--insecure-registry=172.30.0.0\/16 /g" /etc/default/docker
   - sudo cat /etc/default/docker
   - sudo service docker restart
   - ./test/prepare.sh
-  - oc create configmap storedconfig --from-literal=mastercount=1 --from-literal=workercount=4
 install:
   - npm install grunt-cli -g
   - npm install
