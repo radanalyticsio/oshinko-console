@@ -3,14 +3,20 @@
 var h = require('./helpers.js');
 
 describe('Initial page functionality', function () {
-  it('should show login page', function () {
+  it('should show the login page and login', function () {
     h.commonSetup();
+    browser.waitForAngularEnabled(false);
     browser.get('/login');
-    browser.sleep(5000);
-    browser.driver.findElement(by.name("username")).sendKeys("developer");
-    browser.driver.findElement(by.name("password")).sendKeys("dpass");
-    browser.driver.findElement(by.css("button[type='submit']")).click();
-    browser.sleep(5000);
+    // The login page doesn't use angular, so we have to use the underlying WebDriver instance
+    var driver = browser.driver;
+    driver.wait(function() {
+      return driver.findElements(by.name("username"));
+    }, 10000);
+
+    h.login(true);
+    browser.waitForAngularEnabled(true);
+    expect(browser.getTitle()).toEqual("OpenShift Web Console");
+    expect(element(by.css(".navbar-iconic .username")).getText()).toEqual("developer");
   });
 });
 
@@ -45,7 +51,7 @@ describe('Cluster page functionality', function () {
 });
 
 describe('Test advanced create functionality', function () {
-  it('should create, scale, and delete a cluster', function () {
+  it('should use advanced create to create, scale, and delete a cluster', function () {
     var EC = protractor.ExpectedConditions;
     // Create a cluster
     browser.get('/console/project/myproject/oshinko');
