@@ -808,7 +808,7 @@ descriptor:"cpu/usage_rate",
 type:"pod_container",
 chartID:"cpu-" + b.uniqueID
 } ];
-var C = _.indexBy(b.metrics, "descriptor");
+var C = _.keyBy(b.metrics, "descriptor");
 b.loaded = !1, b.noData = !0;
 var D = 0;
 i.getMetricsURL().then(function(a) {
@@ -884,7 +884,7 @@ podUID:b[1],
 descriptor:b[2] + "/" + b[3]
 };
 }, r = function(a, c, d) {
-var e = _.indexBy(d.pods, "metadata.uid");
+var e = _.keyBy(d.pods, "metadata.uid");
 return b.post(a, c, {
 auth:{},
 headers:{
