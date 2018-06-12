@@ -112,7 +112,7 @@ angular.module('oshinkoConsole')
           chartID: "cpu-" + scope.uniqueID
         }];
 
-        var metricByID = _.indexBy(scope.metrics, 'descriptor');
+        var metricByID = _.keyBy(scope.metrics, 'descriptor');
 
         // Set to true when any data has been loaded (or failed to load).
         scope.loaded = false;
