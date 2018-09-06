@@ -38,12 +38,15 @@ function install_extension() {
   export CONSOLE_BASE_ROUTE=$(oc get route oshinko-console --template={{.spec.host}})
   # change the console config to reference our extension
   oc project openshift-web-console
-  oc get configmap webconsole-config -o yaml > webconfig.yaml
-  sed -i "s#scriptURLs\: \[\]#scriptURLs\:\n        - https://$CONSOLE_BASE_ROUTE/scripts/scripts.js\n        - https://$CONSOLE_BASE_ROUTE/scripts/templates.js#" webconfig.yaml
-  sed -i "s#stylesheetURLs: \[\]#stylesheetURLs\:\n        - https://$CONSOLE_BASE_ROUTE/styles/oshinko.css\n#" webconfig.yaml
+  # This is not the standard webconsole-config configmap.  Instead we need to edit the one used by the web console operator used in oc cluster up
+  oc get openshiftwebconsoleconfigs.webconsole.operator.openshift.io -o yaml > webconfig.yaml
+  echo "Here is the original webconsole config"
+  cat webconfig.yaml
+  sed -i "s#scriptURLs\: null#scriptURLs\:\n        - https://$CONSOLE_BASE_ROUTE/scripts/scripts.js\n        - https://$CONSOLE_BASE_ROUTE/scripts/templates.js#" webconfig.yaml
+  sed -i "s#stylesheetURLs: null#stylesheetURLs\:\n        - https://$CONSOLE_BASE_ROUTE/styles/oshinko.css\n#" webconfig.yaml
   oc replace -f webconfig.yaml
   echo "Here is the updated config for webconsole"
-  oc get configmap webconsole-config -o yaml
+  oc get openshiftwebconsoleconfigs.webconsole.operator.openshift.io -o yaml
   #restart web console
   oc project openshift-web-console
   export OLD_CONSOLE_POD=$(oc get pods -l webconsole=true --template="{{range .items}}{{.metadata.name}}{{end}}")
