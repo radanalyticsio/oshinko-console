@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export OPENSHIFT_VERSION=v3.10
+export OPENSHIFT_VERSION=v3.11
 
 function prepare() {
   ip addr show eth0
   export HOST_IP_ADDRESS="$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)"
   echo "Host IP is $HOST_IP_ADDRESS"
-  sudo docker cp $(docker create docker.io/openshift/origin:$OPENSHIFT_VERSION):/bin/oc /usr/local/bin/oc
+  sudo docker cp $(docker create quay.io/openshift/origin-cli:$OPENSHIFT_VERSION):/bin/oc /usr/local/bin/oc
   oc cluster up --public-hostname=$HOST_IP_ADDRESS
   docker pull docker.io/radanalyticsio/openshift-spark
   oc login -u system:admin
