@@ -1,5 +1,8 @@
 Oshinko Console Extensions
 ==========================
+
+**NOTE: This application is being deprecated and will be set into read-only archive mode on 1 December 2019**
+
 The Oshinko console extensions in [OpenShift Origin](https://github.com/openshift/origin).
 
 Contributing
